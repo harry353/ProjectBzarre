@@ -39,24 +39,6 @@ def run_case(description, days):
         print("No data returned. Skipping ingestion and plotting.")
         return
 
-    print("\n[DEBUG] XRS GOES dataframe dtypes:")
-    print(df.dtypes.to_string())
-    print("\n[DEBUG] First rows (full width):")
-    with pd.option_context(
-        "display.max_rows",
-        None,
-        "display.max_columns",
-        None,
-        "display.width",
-        None,
-    ):
-        print(df.head())
-    print("\nDataFrame schema (column -> dtype):")
-    print(df.dtypes.to_string())
-    print("\nFirst rows:")
-    with pd.option_context("display.max_rows", None, "display.max_columns", None, "display.width", None):
-        print(df.head())
-
     print("Ingesting into test DB...")
     db_path = "test_xray.db"
     if os.path.exists(db_path):

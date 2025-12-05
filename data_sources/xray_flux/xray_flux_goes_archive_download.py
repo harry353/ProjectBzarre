@@ -120,7 +120,8 @@ def download_xrs_goes_archive(day, dest_folder="."):
 
     try:
         return _resample_archive_file(dest_path)
-    except Exception:
+    except Exception as exc:
+        print(f"[WARN] Failed to process archive file {dest_path}: {exc}")
         return pd.DataFrame()
     finally:
         if downloaded_here and os.path.exists(dest_path):
@@ -151,12 +152,13 @@ def download_xrs_goes_archive_parallel(
 def _resample_archive_file(nc_path: str) -> pd.DataFrame:
     with h5py.File(nc_path, "r") as ds:
         time_var = ds["time"][:]
+        time_attrs = dict(ds["time"].attrs)
         xrsa = ds["xrsa_flux"][:]
         xrsb = ds["xrsb_flux"][:]
         xrsa_flags = ds.get("xrsa_flags")
         xrsb_flags = ds.get("xrsb_flags")
 
-    timestamps = _convert_archive_times(time_var, ds["time"].attrs)
+    timestamps = _convert_archive_times(time_var, time_attrs)
 
     primary_xrsa = np.zeros_like(xrsa, dtype=int)
     primary_xrsb = np.zeros_like(xrsb, dtype=int)
