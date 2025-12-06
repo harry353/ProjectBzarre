@@ -28,7 +28,7 @@ DEFAULT_START = date(2000, 1, 1)
 DEFAULT_END = date(2000, 1, 3)
 STATUS_PATH = PROJECT_ROOT / "data_source_status.csv"
 TRACKER_TIME_COLUMNS = {
-    "CMELASCODataSource": ["Datetime"],
+    "CMEDataSource": ["Datetime", "time21_5"],
 }
 
 

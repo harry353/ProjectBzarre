@@ -15,7 +15,6 @@ def plot_cme_lasco(df: pd.DataFrame, title_suffix: str | None = None) -> None:
     frame = df.dropna(subset=["Datetime"]).sort_values("Datetime")
 
     if frame.empty:
-        print("No LASCO CME entries include valid timestamps to plot.")
         return
 
     plt.figure(figsize=(12, 4))

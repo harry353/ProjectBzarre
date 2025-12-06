@@ -20,16 +20,14 @@ from common.http import http_get
 
 LOOKBACK_DAYS = 30
 TIME_COLUMNS_MAP = {
-    "CMEDataSource": ["time21_5", "startTime"],
-    "CMELASCODataSource": ["datetime_utc"],
+    "CMEDataSource": ["Datetime", "time21_5", "startTime"],
     "FlaresDataSource": ["event_time"],
     "SolarFlareDonkiDataSource": ["endTime", "peakTime", "beginTime"],
     "XRayFluxGOESDataSource": "__index__",
 }
 DIRECTORY_URLS = {
     "AEDataSource": "https://wdc.kugi.kyoto-u.ac.jp/ae_realtime/data_dir/",
-    "CMEDataSource": "https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/CMEAnalysis",
-    "CMELASCODataSource": "https://cdaw.gsfc.nasa.gov/CME_list/UNIVERSAL_ver2/text_ver/",
+    "CMEDataSource": "https://cdaw.gsfc.nasa.gov/CME_list/UNIVERSAL_ver2/text_ver/",
     "DstDataSource": "https://wdc.kugi.kyoto-u.ac.jp/dst_provisional/",
     "IMFACEDataSource": "https://www.ngdc.noaa.gov/dscovr/data/",
     "KpIndexDataSource": "https://kp.gfz.de/app/json/",
@@ -348,7 +346,7 @@ def _expand_two_digit_year(two_digit):
 
 FILENAME_DATE_EXTRACTORS = {
     "AEDataSource": lambda name: _parse_two_digit_date(name, prefixes=("al", "au")),
-    "CMELASCODataSource": _parse_cme_lasco_filename,
+    "CMEDataSource": _parse_cme_lasco_filename,
     "DstDataSource": _parse_dst_filename,
     "IMFACEDataSource": _parse_imf_filename,
     "FlaresDataSource": _parse_goes_science_filename,

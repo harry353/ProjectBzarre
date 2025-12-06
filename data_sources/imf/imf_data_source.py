@@ -104,11 +104,6 @@ class IMFACEDataSource(SpaceWeatherAPI):
 
     def _plot_single(self, df: pd.DataFrame):
         payload = df.drop(columns=["dataset"], errors="ignore").copy()
-        if "time_tag" in payload.columns:
-            payload["time_tag"] = pd.to_datetime(payload["time_tag"], errors="coerce")
-            ts_min = payload["time_tag"].min()
-            ts_max = payload["time_tag"].max()
-            print(f"Plotting timestamps from {ts_min} to {ts_max}")
         if {"bx_gse", "by_gse", "bz_gse"}.issubset(payload.columns):
             plot_imf_ace(payload)
         else:
