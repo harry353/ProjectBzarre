@@ -10,7 +10,7 @@ IMFDiscovrDataSource,
 KpIndexDataSource,2000-01-03T21:00:00
 RadioFluxDataSource,
 SWCompDataSource,
-SolarFlareDataSource,
+SolarFlareDonkiDataSource,
 SolarWindDataSource,
 SunspotNumberDataSource,2000-01-03T00:00:00
 SuperMAGDataSource,2000-01-03T23:59:00

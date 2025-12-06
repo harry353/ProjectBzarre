@@ -24,7 +24,7 @@ TIME_COLUMNS_MAP = {
     "CMELASCODataSource": ["datetime_utc"],
     "FlaresArchiveDataSource": ["event_time"],
     "FlaresDataSource": ["event_time"],
-    "SolarFlareDataSource": ["endTime", "peakTime", "beginTime"],
+    "SolarFlareDonkiDataSource": ["endTime", "peakTime", "beginTime"],
     "XRayFluxGOESDataSource": "__index__",
     "XRayFluxGOESArchiveDataSource": "__index__",
 }
@@ -39,7 +39,7 @@ DIRECTORY_URLS = {
     "RadioFluxDataSource": "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/",
     "FlaresDataSource": "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/",
     "FlaresArchiveDataSource": "https://www.ncei.noaa.gov/data/goes-space-environment-monitor/access/science/xrs/",
-    "SolarFlareDataSource": "https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR",
+    "SolarFlareDonkiDataSource": "https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR",
     "SolarWindDataSource": "https://www.ngdc.noaa.gov/dscovr/data/",
     "SunspotNumberDataSource": "https://kp.gfz.de/app/json/",
     "SuperMAGDataSource": "https://supermag.jhuapl.edu/services/indices.php",

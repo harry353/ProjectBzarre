@@ -120,7 +120,7 @@ def _download_day(day: date) -> pd.DataFrame:
 
 
 def _dataset_to_frame(ds: xr.Dataset, day: date, satellite: str) -> pd.DataFrame:
-    count = int(ds.dims.get("time", 0))
+    count = int(ds.sizes.get("time", 0))
     if count == 0:
         return pd.DataFrame(columns=OUTPUT_COLUMNS)
 
@@ -134,6 +134,8 @@ def _dataset_to_frame(ds: xr.Dataset, day: date, satellite: str) -> pd.DataFrame
     df["flare_id"] = df["flare_id"].apply(_decode_str)
 
     df["peak_flux_wm2"] = df["flare_class"].map(_parse_flare_class)
+    df["peak_flux_wm2"] = df["peak_flux_wm2"].fillna(df.get("xrsb_flux"))
+    df["peak_flux_wm2"] = df["peak_flux_wm2"].fillna(df.get("xrsb_flux"))
     df["source_day"] = day.isoformat()
     df["satellite"] = satellite
 

@@ -1,23 +1,23 @@
-import os
 import sys
-from datetime import date
 from pathlib import Path
-
-import pandas as pd
+from datetime import date, timedelta
+import os
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from data_sources.flares.flares_data_source import FlaresDataSource
+from data_sources.solar_flare_donki.solar_flare_donki_data_source import (
+    SolarFlareDonkiDataSource,
+)
 
 
 def run_case(description, days):
     print("\n--------------------------------------------------")
-    print(f"FLARES TEST: {description}")
+    print(f"FLARE TEST: {description}")
     print("--------------------------------------------------")
 
-    ds = FlaresDataSource(days=days)
+    ds = SolarFlareDonkiDataSource(days=days)
     print(f"Date range: {ds.range_str()}")
 
     print("Downloading...")
@@ -28,11 +28,8 @@ def run_case(description, days):
         print("No data returned. Skipping ingestion and plotting.")
         return
 
-    with pd.option_context("display.max_rows", None, "display.max_columns", None):
-        print(df.head())
-
     print("Ingesting into test DB...")
-    db_path = "test_flares.db"
+    db_path = "test_flare_donki.db"
     if os.path.exists(db_path):
         os.remove(db_path)
 
@@ -45,8 +42,7 @@ def run_case(description, days):
 
 
 def main():
-    run_case("GOES flare summary sample", (date(2024, 2, 6), date(2024, 2, 9)))
-
+    run_case("Integer days = 7", 7)
 
 if __name__ == "__main__":
     main()

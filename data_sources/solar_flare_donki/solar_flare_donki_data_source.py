@@ -1,11 +1,11 @@
 from space_weather_api import SpaceWeatherAPI
 from space_weather_warehouse import SpaceWeatherWarehouse
-from data_sources.solar_flare.solar_flare_download import download_flares
-from data_sources.solar_flare.solar_flare_ingest import ingest_flares
-from data_sources.solar_flare.solar_flare_plot import plot_flares
+from data_sources.solar_flare_donki.solar_flare_donki_download import download_flares
+from data_sources.solar_flare_donki.solar_flare_donki_ingest import ingest_flares
+from data_sources.solar_flare_donki.solar_flare_donki_plot import plot_flares
 
 
-class SolarFlareDataSource(SpaceWeatherAPI):
+class SolarFlareDonkiDataSource(SpaceWeatherAPI):
     """
     Access the NASA DONKI solar flare catalog.
     """
