@@ -91,6 +91,7 @@ def download_imf_discovr(start_date, end_date, max_workers=8):
     return pd.concat(results).sort_values("time_tag").reset_index(drop=True)
 
 
+
 def _extract(df):
     required = ["time", "bt", "bx_gse", "by_gse", "bz_gse"]
 

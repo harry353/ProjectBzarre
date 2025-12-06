@@ -31,8 +31,7 @@ DIRECTORY_URLS = {
     "CMEDataSource": "https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/CMEAnalysis",
     "CMELASCODataSource": "https://cdaw.gsfc.nasa.gov/CME_list/UNIVERSAL_ver2/text_ver/",
     "DstDataSource": "https://wdc.kugi.kyoto-u.ac.jp/dst_provisional/",
-    "IMFACEDataSource": "https://cdaweb.gsfc.nasa.gov/pub/data/ace/mag/level_2_cdaweb/mfi_h3/",
-    "IMFDiscovrDataSource": "https://www.ngdc.noaa.gov/dscovr/data/",
+    "IMFACEDataSource": "https://www.ngdc.noaa.gov/dscovr/data/",
     "KpIndexDataSource": "https://kp.gfz.de/app/json/",
     "RadioFluxDataSource": "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/",
     "FlaresDataSource": "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/",
@@ -335,6 +334,10 @@ def _parse_discovr_filename(filename, prefix):
         return None
     return _parse_compact_date(match.group(1))
 
+def _parse_imf_filename(filename):
+    return _parse_compact_filename(filename, "ac_h3_mfi") or _parse_discovr_filename(
+        filename, "oe_m1m_dscovr"
+    )
 
 def _expand_two_digit_year(two_digit):
     two_digit = int(two_digit)
@@ -347,9 +350,8 @@ FILENAME_DATE_EXTRACTORS = {
     "AEDataSource": lambda name: _parse_two_digit_date(name, prefixes=("al", "au")),
     "CMELASCODataSource": _parse_cme_lasco_filename,
     "DstDataSource": _parse_dst_filename,
+    "IMFACEDataSource": _parse_imf_filename,
     "FlaresDataSource": _parse_goes_science_filename,
-    "IMFACEDataSource": lambda name: _parse_compact_filename(name, "ac_h3_mfi"),
-    "IMFDiscovrDataSource": lambda name: _parse_discovr_filename(name, "oe_m1m_dscovr"),
     "SolarWindDataSource": lambda name: _parse_discovr_filename(name, "oe_f1m_dscovr"),
     "SWCompDataSource": lambda name: _parse_compact_filename(name, "ac_h3_sw2"),
     "XRayFluxGOESDataSource": _parse_goes_science_filename,
