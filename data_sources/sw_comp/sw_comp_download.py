@@ -11,6 +11,9 @@ import requests
 from common.http import http_get
 
 BASE_URL = "https://cdaweb.gsfc.nasa.gov/pub/data/ace/swics/level_2_cdaweb/sw2_h3"
+LEGACY_BASE_URL = (
+    "https://cdaweb.gsfc.nasa.gov/pub/data/ace/swics/level_2_cdaweb/swi_h2"
+)
 COMPOSITION_VARS: Dict[str, str] = {
     "O7to6": "o7_o6",
     "C6to5": "c6_c5",
@@ -52,12 +55,15 @@ def download_sw_comp(
 
 
 def _fetch_day(day, session: requests.Session) -> Optional[pd.DataFrame]:
+    base_url, versions = _source_for_day(day)
     year = day.year
-    versions = _versions_for_day(day)
 
     for version in versions:
-        filename = f"ac_h3_sw2_{day:%Y%m%d}_v{version:02d}.cdf"
-        url = f"{BASE_URL}/{year}/{filename}"
+        if base_url == LEGACY_BASE_URL:
+            filename = f"ac_h2_swi_{day:%Y%m%d}_v{version:02d}.cdf"
+        else:
+            filename = f"ac_h3_sw2_{day:%Y%m%d}_v{version:02d}.cdf"
+        url = f"{base_url}/{year}/{filename}"
 
         response = http_get(
             url,
@@ -81,11 +87,15 @@ def _fetch_day(day, session: requests.Session) -> Optional[pd.DataFrame]:
     return None
 
 
-def _versions_for_day(day: date):
-    boundary = date(2015, 1, 1)
-    if day < boundary:
-        return (3,)
-    return (4,)
+def _source_for_day(day: date):
+    legacy_boundary = date(2011, 8, 21)
+    modern_boundary = date(2015, 1, 1)
+
+    if day < legacy_boundary:
+        return LEGACY_BASE_URL, (9,)
+    if day < modern_boundary:
+        return BASE_URL, (3,)
+    return BASE_URL, (4,)
 
 
 def _parse_cdf(handle: BytesIO) -> pd.DataFrame:
