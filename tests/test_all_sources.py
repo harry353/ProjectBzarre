@@ -47,7 +47,6 @@ DIRECTORY_URLS = {
     "XRayFluxGOESDataSource": "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/",
     "XRayFluxGOESArchiveDataSource": "https://www.ncei.noaa.gov/data/goes-space-environment-monitor/access/science/xrs/",
 }
-
 DATE_TOKEN_REGEXES = [
     re.compile(r"d(?P<ymd>\d{8})"),
     re.compile(r"(?P<y>\d{4})[-_/](?P<m>\d{2})[-_/](?P<d>\d{2})"),
@@ -197,11 +196,45 @@ def _find_latest_from_directory(class_name, directory):
     if response is None:
         return None
 
+    parser = FILENAME_DATE_EXTRACTORS.get(class_name)
+    if parser is not None:
+        latest = _latest_from_filenames(response.text, parser)
+        if latest is not None:
+            return latest
+
     latest = None
     for candidate in _extract_dates_from_text(response.text):
         if latest is None or candidate > latest:
             latest = candidate
     return latest
+
+
+def _latest_from_filenames(text, parser):
+    latest = None
+    for name in _extract_filenames(text):
+        try:
+            candidate = parser(name)
+        except Exception:
+            candidate = None
+        if candidate is None:
+            continue
+        if latest is None or candidate > latest:
+            latest = candidate
+    return latest
+
+
+def _extract_filenames(text):
+    pattern = re.compile(r'href=["\']([^"\']+)["\']', re.IGNORECASE)
+    names = set()
+    for raw in pattern.findall(text):
+        token = raw.strip()
+        if not token or token in {".", ".."}:
+            continue
+        token = token.rstrip("/")
+        if not token:
+            continue
+        names.add(token.split("/")[-1])
+    return names
 
 
 def _extract_dates_from_text(text):
@@ -238,6 +271,95 @@ def _parse_y_m_d(y, m, d):
         return date(int(y), int(m), int(d))
     except ValueError:
         return None
+
+
+def _parse_two_digit_date(filename, prefixes):
+    lowered = filename.lower()
+    for prefix in prefixes:
+        pattern = re.compile(rf"{re.escape(prefix)}(\d{{6}})")
+        match = pattern.search(lowered)
+        if not match:
+            continue
+        token = match.group(1)
+        try:
+            yy = int(token[:2])
+            mm = int(token[2:4])
+            dd = int(token[4:])
+            year = _expand_two_digit_year(yy)
+            return date(year, mm, dd)
+        except ValueError:
+            return None
+    return None
+
+
+def _parse_cme_lasco_filename(filename):
+    match = re.search(r"univ(\d{4})_(\d{2})", filename.lower())
+    if not match:
+        return None
+    try:
+        year = int(match.group(1))
+        month = int(match.group(2))
+        return date(year, month, 1)
+    except ValueError:
+        return None
+
+
+def _parse_dst_filename(filename):
+    match = re.search(r"dst(\d{4})\.for\.request", filename.lower())
+    if not match:
+        return None
+    token = match.group(1)
+    try:
+        year = _expand_two_digit_year(int(token[:2]))
+        month = int(token[2:])
+        return date(year, month, 1)
+    except ValueError:
+        return None
+
+
+def _parse_goes_science_filename(filename):
+    match = re.search(r"_d(\d{8})_", filename.lower())
+    if not match:
+        return None
+    return _parse_compact_date(match.group(1))
+
+
+def _parse_compact_filename(filename, prefix):
+    pattern = re.compile(rf"{re.escape(prefix)}_(\d{{8}})", re.IGNORECASE)
+    match = pattern.search(filename)
+    if not match:
+        return None
+    return _parse_compact_date(match.group(1))
+
+
+def _parse_discovr_filename(filename, prefix):
+    pattern = re.compile(rf"{re.escape(prefix)}_s(\d{{8}})\d{{6}}", re.IGNORECASE)
+    match = pattern.search(filename)
+    if not match:
+        return None
+    return _parse_compact_date(match.group(1))
+
+
+def _expand_two_digit_year(two_digit):
+    two_digit = int(two_digit)
+    if two_digit >= 70:
+        return 1900 + two_digit
+    return 2000 + two_digit
+
+
+FILENAME_DATE_EXTRACTORS = {
+    "AEDataSource": lambda name: _parse_two_digit_date(name, prefixes=("al", "au")),
+    "CMELASCODataSource": _parse_cme_lasco_filename,
+    "DstDataSource": _parse_dst_filename,
+    "FlaresDataSource": _parse_goes_science_filename,
+    "FlaresArchiveDataSource": _parse_goes_science_filename,
+    "IMFACEDataSource": lambda name: _parse_compact_filename(name, "ac_h3_mfi"),
+    "IMFDiscovrDataSource": lambda name: _parse_discovr_filename(name, "oe_m1m_dscovr"),
+    "SolarWindDataSource": lambda name: _parse_discovr_filename(name, "oe_f1m_dscovr"),
+    "SWCompDataSource": lambda name: _parse_compact_filename(name, "ac_h3_sw2"),
+    "XRayFluxGOESDataSource": _parse_goes_science_filename,
+    "XRayFluxGOESArchiveDataSource": _parse_goes_science_filename,
+}
 
 
 if __name__ == "__main__":
