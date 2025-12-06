@@ -25,7 +25,6 @@ TIME_COLUMNS_MAP = {
     "FlaresDataSource": ["event_time"],
     "SolarFlareDonkiDataSource": ["endTime", "peakTime", "beginTime"],
     "XRayFluxGOESDataSource": "__index__",
-    "XRayFluxGOESArchiveDataSource": "__index__",
 }
 DIRECTORY_URLS = {
     "AEDataSource": "https://wdc.kugi.kyoto-u.ac.jp/ae_realtime/data_dir/",
@@ -43,7 +42,6 @@ DIRECTORY_URLS = {
     "SuperMAGDataSource": "https://supermag.jhuapl.edu/services/indices.php",
     "SWCompDataSource": "https://cdaweb.gsfc.nasa.gov/pub/data/ace/swics/level_2_cdaweb/sw2_h3/",
     "XRayFluxGOESDataSource": "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/",
-    "XRayFluxGOESArchiveDataSource": "https://www.ncei.noaa.gov/data/goes-space-environment-monitor/access/science/xrs/",
 }
 DATE_TOKEN_REGEXES = [
     re.compile(r"d(?P<ymd>\d{8})"),
@@ -355,7 +353,6 @@ FILENAME_DATE_EXTRACTORS = {
     "SolarWindDataSource": lambda name: _parse_discovr_filename(name, "oe_f1m_dscovr"),
     "SWCompDataSource": lambda name: _parse_compact_filename(name, "ac_h3_sw2"),
     "XRayFluxGOESDataSource": _parse_goes_science_filename,
-    "XRayFluxGOESArchiveDataSource": _parse_goes_science_filename,
 }
 
 
