@@ -1,8 +1,10 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timedelta
 import importlib
 import inspect
 import io
 import pkgutil
+import re
 import sys
 from contextlib import redirect_stdout, redirect_stderr
 from pathlib import Path
@@ -14,11 +16,14 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from space_weather_api import SpaceWeatherAPI
+from common.http import http_get
 
 LOOKBACK_DAYS = 30
 TIME_COLUMNS_MAP = {
     "CMEDataSource": ["time21_5", "startTime"],
     "CMELASCODataSource": ["datetime_utc"],
+    "FlaresArchiveDataSource": ["event_time"],
+    "FlaresDataSource": ["event_time"],
     "SolarFlareDataSource": ["endTime", "peakTime", "beginTime"],
     "XRayFluxGOESDataSource": "__index__",
     "XRayFluxGOESArchiveDataSource": "__index__",
@@ -32,6 +37,8 @@ DIRECTORY_URLS = {
     "IMFDiscovrDataSource": "https://www.ngdc.noaa.gov/dscovr/data/",
     "KpIndexDataSource": "https://kp.gfz.de/app/json/",
     "RadioFluxDataSource": "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/",
+    "FlaresDataSource": "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/",
+    "FlaresArchiveDataSource": "https://www.ncei.noaa.gov/data/goes-space-environment-monitor/access/science/xrs/",
     "SolarFlareDataSource": "https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR",
     "SolarWindDataSource": "https://www.ngdc.noaa.gov/dscovr/data/",
     "SunspotNumberDataSource": "https://kp.gfz.de/app/json/",
@@ -40,6 +47,12 @@ DIRECTORY_URLS = {
     "XRayFluxGOESDataSource": "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/",
     "XRayFluxGOESArchiveDataSource": "https://www.ncei.noaa.gov/data/goes-space-environment-monitor/access/science/xrs/",
 }
+
+DATE_TOKEN_REGEXES = [
+    re.compile(r"d(?P<ymd>\d{8})"),
+    re.compile(r"(?P<y>\d{4})[-_/](?P<m>\d{2})[-_/](?P<d>\d{2})"),
+    re.compile(r"(?<!\d)(?P<ymd>\d{8})(?!\d)"),
+]
 
 
 def iter_data_source_classes():
@@ -70,18 +83,21 @@ def resolve_kwargs(cls):
 
 def main():
     print("Testing latest release date for all data sources...\n")
-    for cls in iter_data_source_classes():
-        print(f"-> {cls.__name__}")
-        try:
-            latest = find_latest_release(cls)
-            if latest is None:
-                print("   Most recent release: <no data>")
-            else:
-                directory = DIRECTORY_URLS.get(cls.__name__, "<unknown directory>")
-                print(f"   Most recent release: {latest}")
-                print(f"   Source directory: {directory}")
-        except Exception as exc:
-            print(f"   [ERROR] Failed to fetch {cls.__name__}: {exc}")
+    classes = list(iter_data_source_classes())
+    results = _fetch_all_latest_parallel(classes)
+
+    for cls in classes:
+        name = cls.__name__
+        print(f"-> {name}")
+        latest, error = results.get(name, (None, RuntimeError("No result produced")))
+        if error is not None:
+            print(f"   [ERROR] Failed to fetch {name}: {error}")
+        elif latest is None:
+            print("   Most recent release: <no data>")
+        else:
+            directory = DIRECTORY_URLS.get(name, "<unknown directory>")
+            print(f"   Most recent release: {latest}")
+            print(f"   Source directory: {directory}")
         print()
     print("\nAll sources processed.")
 
@@ -130,6 +146,40 @@ def _to_date(value):
 
 
 def find_latest_release(cls):
+    directory = DIRECTORY_URLS.get(cls.__name__)
+    if directory:
+        latest = _find_latest_from_directory(cls.__name__, directory)
+        if latest is not None:
+            return latest
+
+    return _find_latest_via_download(cls)
+
+
+def _fetch_all_latest_parallel(classes):
+    if not classes:
+        return {}
+
+    # Threaded IO fetch speeds up network bound downloads.
+    max_workers = min(8, len(classes)) or 1
+    results = {}
+
+    def task(cls):
+        try:
+            latest = find_latest_release(cls)
+            return cls.__name__, latest, None
+        except Exception as exc:
+            return cls.__name__, None, exc
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_cls = {executor.submit(task, cls): cls for cls in classes}
+        for future in as_completed(future_to_cls):
+            name, latest, error = future.result()
+            results[name] = (latest, error)
+
+    return results
+
+
+def _find_latest_via_download(cls):
     kwargs = resolve_kwargs(cls)
     ds = cls(**kwargs)
     buffer = io.StringIO()
@@ -140,6 +190,54 @@ def find_latest_release(cls):
         return None
 
     return determine_latest(cls.__name__, df)
+
+
+def _find_latest_from_directory(class_name, directory):
+    response = http_get(directory, log_name=class_name, timeout=30)
+    if response is None:
+        return None
+
+    latest = None
+    for candidate in _extract_dates_from_text(response.text):
+        if latest is None or candidate > latest:
+            latest = candidate
+    return latest
+
+
+def _extract_dates_from_text(text):
+    seen = set()
+    for pattern in DATE_TOKEN_REGEXES:
+        for match in pattern.finditer(text):
+            groups = match.groupdict()
+            if "ymd" in groups:
+                token = groups["ymd"]
+                if token in seen:
+                    continue
+                seen.add(token)
+                result = _parse_compact_date(token)
+            else:
+                token = "-".join([groups["y"], groups["m"], groups["d"]])
+                if token in seen:
+                    continue
+                seen.add(token)
+                result = _parse_y_m_d(groups["y"], groups["m"], groups["d"])
+
+            if result is not None:
+                yield result
+
+
+def _parse_compact_date(token):
+    try:
+        return datetime.strptime(token, "%Y%m%d").date()
+    except ValueError:
+        return None
+
+
+def _parse_y_m_d(y, m, d):
+    try:
+        return date(int(y), int(m), int(d))
+    except ValueError:
+        return None
 
 
 if __name__ == "__main__":
