@@ -22,7 +22,6 @@ LOOKBACK_DAYS = 30
 TIME_COLUMNS_MAP = {
     "CMEDataSource": ["time21_5", "startTime"],
     "CMELASCODataSource": ["datetime_utc"],
-    "FlaresArchiveDataSource": ["event_time"],
     "FlaresDataSource": ["event_time"],
     "SolarFlareDonkiDataSource": ["endTime", "peakTime", "beginTime"],
     "XRayFluxGOESDataSource": "__index__",
@@ -38,7 +37,6 @@ DIRECTORY_URLS = {
     "KpIndexDataSource": "https://kp.gfz.de/app/json/",
     "RadioFluxDataSource": "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/",
     "FlaresDataSource": "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/",
-    "FlaresArchiveDataSource": "https://www.ncei.noaa.gov/data/goes-space-environment-monitor/access/science/xrs/",
     "SolarFlareDonkiDataSource": "https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR",
     "SolarWindDataSource": "https://www.ngdc.noaa.gov/dscovr/data/",
     "SunspotNumberDataSource": "https://kp.gfz.de/app/json/",
@@ -352,7 +350,6 @@ FILENAME_DATE_EXTRACTORS = {
     "CMELASCODataSource": _parse_cme_lasco_filename,
     "DstDataSource": _parse_dst_filename,
     "FlaresDataSource": _parse_goes_science_filename,
-    "FlaresArchiveDataSource": _parse_goes_science_filename,
     "IMFACEDataSource": lambda name: _parse_compact_filename(name, "ac_h3_mfi"),
     "IMFDiscovrDataSource": lambda name: _parse_discovr_filename(name, "oe_m1m_dscovr"),
     "SolarWindDataSource": lambda name: _parse_discovr_filename(name, "oe_f1m_dscovr"),

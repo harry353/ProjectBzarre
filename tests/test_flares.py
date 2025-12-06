@@ -3,8 +3,6 @@ import sys
 from datetime import date
 from pathlib import Path
 
-import pandas as pd
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -28,16 +26,17 @@ def run_case(description, days):
         print("No data returned. Skipping ingestion and plotting.")
         return
 
-    with pd.option_context("display.max_rows", None, "display.max_columns", None):
-        print(df.head())
+    datasets = sorted(df["dataset"].dropna().unique()) if "dataset" in df.columns else ["realtime"]
+    print(f"Datasets detected: {', '.join(datasets)}")
 
     print("Ingesting into test DB...")
-    db_path = "test_flares.db"
-    if os.path.exists(db_path):
-        os.remove(db_path)
-
-    inserted = ds.ingest(df, db_path=db_path)
-    print(f"Inserted rows: {inserted}")
+    for dataset in datasets:
+        db_path = f"test_flares_{dataset}.db"
+        if os.path.exists(db_path):
+            os.remove(db_path)
+        subset = df if "dataset" not in df.columns else df[df["dataset"] == dataset]
+        inserted = ds.ingest(subset.copy(), db_path=db_path)
+        print(f"[{dataset}] Inserted rows: {inserted}")
 
     print("Plotting...")
     ds.plot(df)
@@ -45,7 +44,7 @@ def run_case(description, days):
 
 
 def main():
-    run_case("GOES flare summary sample", (date(2024, 2, 6), date(2024, 2, 9)))
+    run_case("GOES flare summary sample", (date(2005, 2, 6), date(2005, 2, 9)))
 
 
 if __name__ == "__main__":
