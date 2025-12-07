@@ -3,3 +3,4 @@ __pycache__/
 .pytest_cache/
 *.cache
 data_source_status.csv
+*.db
