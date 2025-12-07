@@ -3,6 +3,7 @@ import tempfile
 from datetime import date, timedelta
 from io import BytesIO
 from typing import Dict, Optional
+import re
 
 import cdflib
 import pandas as pd
@@ -55,15 +56,15 @@ def download_sw_comp(
 
 
 def _fetch_day(day, session: requests.Session) -> Optional[pd.DataFrame]:
-    base_url, versions = _source_for_day(day)
+    base_url, prefix = _source_for_day(day)
     year = day.year
 
-    for version in versions:
-        if base_url == LEGACY_BASE_URL:
-            filename = f"ac_h2_swi_{day:%Y%m%d}_v{version:02d}.cdf"
-        else:
-            filename = f"ac_h3_sw2_{day:%Y%m%d}_v{version:02d}.cdf"
-        url = f"{base_url}/{year}/{filename}"
+    filename = _resolve_swics_filename(base_url, prefix, day, session)
+    if filename is None:
+        print(f"[INFO] No ACE/SWICS composition data for {day:%Y-%m-%d}")
+        return None
+
+    url = f"{base_url}/{year}/{filename}"
 
         response = http_get(
             url,
@@ -92,10 +93,10 @@ def _source_for_day(day: date):
     modern_boundary = date(2015, 1, 1)
 
     if day < legacy_boundary:
-        return LEGACY_BASE_URL, (9,)
+        return LEGACY_BASE_URL, "ac_h2_swi"
     if day < modern_boundary:
-        return BASE_URL, (3,)
-    return BASE_URL, (4,)
+        return BASE_URL, "ac_h3_sw2"
+    return BASE_URL, "ac_h3_sw2"
 
 
 def _parse_cdf(handle: BytesIO) -> pd.DataFrame:
@@ -121,3 +122,22 @@ def _parse_cdf(handle: BytesIO) -> pd.DataFrame:
         os.remove(tmp_path)
 
     return df.reindex(columns=OUTPUT_COLUMNS)
+
+
+def _resolve_swics_filename(base_url: str, prefix: str, day: date, session: requests.Session) -> Optional[str]:
+    directory = f"{base_url}/{day.year}/"
+    response = http_get(
+        directory,
+        session=session,
+        log_name="SW COMP",
+        timeout=60,
+        allowed_statuses={404},
+    )
+    if response is None or response.status_code == 404:
+        return None
+
+    pattern = re.compile(rf"({prefix}_{day:%Y%m%d}_v\d{{2}}\.cdf)", re.IGNORECASE)
+    match = pattern.search(response.text)
+    if not match:
+        return None
+    return match.group(1)
