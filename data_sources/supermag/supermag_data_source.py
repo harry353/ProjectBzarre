@@ -24,9 +24,9 @@ class SuperMAGDataSource(SpaceWeatherAPI):
         Download SuperMAG indices for the configured date range.
         """
         max_days = (self.end_date - self.start_date).days + 1
-        if max_days > 7:
+        if max_days > 30:
             raise ValueError(
-                "SuperMAG downloads are limited to 7 days. "
+                "SuperMAG downloads are limited to 30 days. "
                 "For larger windows please use https://supermag.jhuapl.edu/mag."
             )
         return download_supermag_indices(

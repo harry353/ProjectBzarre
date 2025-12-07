@@ -44,7 +44,7 @@ def run_case(description, days):
 
 
 def main():
-    run_case("ACE sample (pre-2015)", (date(2014, 2, 1), date(2014, 2, 5)))
+    run_case("ACE sample (pre-2015)", (date(2014, 1, 1), date(2014, 1, 5)))
     run_case("DSCOVR sample (post-2015)", (date(2017, 1, 1), date(2017, 1, 3)))
 
 

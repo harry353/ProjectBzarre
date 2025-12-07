@@ -12,7 +12,7 @@ import requests
 
 from common.http import http_get
 
-BASE_URL = "https://cdaweb.gsfc.nasa.gov/pub/data/ace/mag/level_2_cdaweb/mfi_h3"
+BASE_URL = "https://cdaweb.gsfc.nasa.gov/pub/data/ace/mag/level_2_cdaweb/mfi_h1"
 OUTPUT_COLUMNS = ["time_tag", "bx_gse", "by_gse", "bz_gse", "bt"]
 FILL_VALUE = -1e20
 
@@ -118,7 +118,7 @@ def _resolve_filename(day: date, session: requests.Session) -> Optional[str]:
     if response is None or response.status_code == 404:
         return None
 
-    pattern = re.compile(rf"(ac_h3_mfi_{day:%Y%m%d}_v\d{{2}}\.cdf)", re.IGNORECASE)
+    pattern = re.compile(rf"(ac_h1_mfi_{day:%Y%m%d}_v\d{{2}}\.cdf)", re.IGNORECASE)
     match = pattern.search(response.text)
     if not match:
         return None

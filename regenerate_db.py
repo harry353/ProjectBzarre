@@ -378,7 +378,19 @@ def _run_source_over_weeks(
     last_request: Dict[str, float],
     throttle_lock: threading.Lock,
 ) -> None:
-    for week_start, week_end in week_ranges:
+    class_name = cls.__name__
+    friendly = _friendly_name(class_name)
+    boundary = tracker.get(class_name)
+    boundary_date = boundary.date() if boundary else None
+    if boundary_date is not None:
+        pending = [window for window in week_ranges if window[1] > boundary_date]
+        if not pending:
+            print(_stamp(f"[SKIP] {friendly} already processed through {boundary_date.isoformat()}"))
+            return
+    else:
+        pending = week_ranges
+
+    for week_start, week_end in pending:
         _run_single_week(
             cls,
             warehouse,
