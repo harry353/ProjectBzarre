@@ -12,8 +12,8 @@ import time
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Iterator, List, Tuple, Type
-from concurrent.futures import ThreadPoolExecutor
 import threading
+from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 import requests
@@ -30,12 +30,19 @@ DB_PATH = PROJECT_ROOT / "space_weather.db"
 DATA_SOURCES_DIR = PROJECT_ROOT / "data_sources"
 MODULE_SUFFIX = "_data_source"
 DEFAULT_START = date(2005, 1, 1)
-DEFAULT_END = date(2005, 1, 7)
+DEFAULT_END = date(2005, 12, 31)
+CHUNK_DAYS = 30
 STATUS_PATH = PROJECT_ROOT / "data_source_status.csv"
 TRACKER_TIME_COLUMNS = {
     "CMEDataSource": ["Datetime", "time21_5"],
 }
 TRACKER_LOCK = threading.Lock()
+LOG_TIME_FORMAT = "%H:%M:%S"
+
+
+def _stamp(message: str) -> str:
+    now = datetime.now().strftime(LOG_TIME_FORMAT)
+    return f"[{now}] {message}"
 
 
 def parse_args() -> Tuple[date, date]:
@@ -99,11 +106,13 @@ def load_data_source_classes() -> List[Type[SpaceWeatherAPI]]:
     return classes
 
 
-def iter_week_ranges(start_date: date, end_date: date) -> Iterator[Tuple[date, date]]:
+def iter_date_windows(start_date: date, end_date: date, chunk_days: int = CHUNK_DAYS) -> Iterator[Tuple[date, date]]:
+    if chunk_days <= 0:
+        raise ValueError("chunk_days must be positive.")
     cursor = start_date
-    delta = timedelta(days=7)
+    delta = timedelta(days=chunk_days)
     while cursor <= end_date:
-        stop = min(cursor + timedelta(days=6), end_date)
+        stop = min(cursor + timedelta(days=chunk_days - 1), end_date)
         yield cursor, stop
         cursor += delta
 
@@ -164,34 +173,34 @@ def process_source_week(
     friendly = _friendly_name(class_name)
     boundary = tracker.get(class_name)
     if boundary is not None and boundary.date() >= week_end:
-        print(f"[SKIP] {friendly} already processed through {boundary.date().isoformat()}")
+        print(_stamp(f"[SKIP] {friendly} already processed through {boundary.date().isoformat()}"))
         return
 
     window_label = f"{week_start.isoformat()} -> {week_end.isoformat()}"
-    print(f"Processing {friendly} for {window_label}...")
+    print(_stamp(f"Processing {friendly} for {window_label}..."))
 
     try:
         source = cls(**build_source_kwargs(cls, week_start, week_end))
         df = source.download()
     except Exception as exc:
-        print(f"[ERROR] {friendly} download failed for {window_label}: {exc}")
+        print(_stamp(f"[ERROR] {friendly} download failed for {window_label}: {exc}"))
         return
 
     if df is None or df.empty:
-        print(f"[INFO] No data for {friendly} during {window_label}. Continuing.")
+        print(_stamp(f"[INFO] No data for {friendly} during {window_label}. Continuing."))
         return
 
     try:
         inserted = source.ingest(df, warehouse=warehouse)
     except Exception as exc:
-        print(f"[ERROR] {friendly} ingest failed for {window_label}: {exc}")
+        print(_stamp(f"[ERROR] {friendly} ingest failed for {window_label}: {exc}"))
         return
 
     if inserted:
-        print(f"[OK] Inserted {inserted} rows for {window_label}.")
+        print(_stamp(f"[OK] {friendly} inserted {inserted} rows for {window_label}."))
         _record_latest_timestamp(class_name, df, tracker, class_names, lock)
     else:
-        print(f"[INFO] {friendly} returned data but nothing was stored for {window_label}.")
+        print(_stamp(f"[INFO] {friendly} returned data but nothing was stored for {window_label}."))
 
 
 def _record_latest_timestamp(
@@ -282,64 +291,70 @@ def main() -> None:
     start_date, end_date = parse_args()
     run_started = time.time()
     print(
-        f"Processing range {start_date.isoformat()} -> {end_date.isoformat()}"
+        _stamp(
+            f"Processing range {start_date.isoformat()} -> {end_date.isoformat()}"
+        )
     )
 
     classes = load_data_source_classes()
     if not classes:
-        print("No data sources found. Nothing to do.")
+        print(_stamp("No data sources found. Nothing to do."))
         return
 
     class_names = [cls.__name__ for cls in classes]
     tracker, is_new_tracker = load_or_initialize_tracker(STATUS_PATH, class_names)
 
     if is_new_tracker or not DB_PATH.exists():
-        print("Starting with a fresh database.")
+        print(_stamp("Starting with a fresh database."))
         reset_database(DB_PATH)
     else:
         print(
-            f"Resuming from existing status file ({STATUS_PATH}) and database ({DB_PATH})."
+            _stamp(
+                f"Resuming from existing status file ({STATUS_PATH}) and database ({DB_PATH})."
+            )
         )
 
     warehouse = SpaceWeatherWarehouse(str(DB_PATH))
     session_map = {cls.__name__: requests.Session() for cls in classes}
     last_request = {cls.__name__: 0.0 for cls in classes}
 
-    week_ranges = list(iter_week_ranges(start_date, end_date))
+    week_ranges = list(iter_date_windows(start_date, end_date))
     total_weeks = len(week_ranges)
-    for index, (week_start, week_end) in enumerate(week_ranges, start=1):
-        print(
-            f"\n=== Week {index} / {total_weeks}: {week_start.isoformat()} -> {week_end.isoformat()} ==="
+    print(
+        _stamp(
+            f"Processing {len(classes)} data sources across {total_weeks} "
+            f"{CHUNK_DAYS}-day windows..."
         )
-        with ThreadPoolExecutor(max_workers=len(classes) or 1) as executor:
-            futures = []
-            for cls in classes:
-                name = cls.__name__
-                elapsed = time.time() - last_request[name]
-                if last_request[name] and elapsed < 2:
-                    time.sleep(2 - elapsed)
-                futures.append(
-                    executor.submit(
-                        _run_single_week,
-                        cls,
-                        warehouse,
-                        week_start,
-                        week_end,
-                        tracker,
-                        class_names,
-                        TRACKER_LOCK,
-                        session_map[name],
-                    )
+    )
+    throttle_locks = {cls.__name__: threading.Lock() for cls in classes}
+    with ThreadPoolExecutor(max_workers=len(classes) or 1) as executor:
+        futures = []
+        for cls in classes:
+            name = cls.__name__
+            futures.append(
+                executor.submit(
+                    _run_source_over_weeks,
+                    cls,
+                    warehouse,
+                    week_ranges,
+                    tracker,
+                    class_names,
+                    TRACKER_LOCK,
+                    session_map[name],
+                    last_request,
+                    throttle_locks[name],
                 )
-                last_request[name] = time.time()
-            for future in futures:
-                future.result()
+            )
+        for future in futures:
+            future.result()
 
     duration = time.time() - run_started
     minutes = duration / 60
     print(
-        "\nDatabase regeneration complete in "
-        f"{duration:.2f} seconds ({minutes:.2f} minutes)."
+        _stamp(
+            "Database regeneration complete in "
+            f"{duration:.2f} seconds ({minutes:.2f} minutes)."
+        )
     )
     for session in session_map.values():
         session.close()
@@ -352,6 +367,52 @@ def _friendly_name(class_name: str) -> str:
     return f"{label} data"
 
 
+def _run_source_over_weeks(
+    cls: Type[SpaceWeatherAPI],
+    warehouse: SpaceWeatherWarehouse,
+    week_ranges: List[Tuple[date, date]],
+    tracker: Dict[str, datetime | None],
+    class_names: List[str],
+    lock: threading.Lock,
+    session: requests.Session,
+    last_request: Dict[str, float],
+    throttle_lock: threading.Lock,
+) -> None:
+    for week_start, week_end in week_ranges:
+        _run_single_week(
+            cls,
+            warehouse,
+            week_start,
+            week_end,
+            tracker,
+            class_names,
+            lock,
+            session,
+            last_request,
+            throttle_lock,
+        )
+
+
+def _respect_throttle(
+    class_name: str,
+    last_request: Dict[str, float],
+    lock: threading.Lock,
+    delay: float = 2.0,
+) -> None:
+    wait = 0.0
+    now = time.time()
+    with lock:
+        previous = last_request.get(class_name, 0.0)
+        if previous:
+            elapsed = now - previous
+            if elapsed < delay:
+                wait = delay - elapsed
+    if wait > 0:
+        time.sleep(wait)
+    with lock:
+        last_request[class_name] = time.time()
+
+
 def _run_single_week(
     cls: Type[SpaceWeatherAPI],
     warehouse: SpaceWeatherWarehouse,
@@ -361,7 +422,11 @@ def _run_single_week(
     class_names: List[str],
     lock: threading.Lock,
     session: requests.Session,
+    last_request: Dict[str, float],
+    throttle_lock: threading.Lock,
 ) -> None:
+    class_name = cls.__name__
+    _respect_throttle(class_name, last_request, throttle_lock)
     set_thread_session(session)
     process_source_week(cls, warehouse, week_start, week_end, tracker, class_names, lock)
 
