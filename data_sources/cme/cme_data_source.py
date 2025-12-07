@@ -119,9 +119,15 @@ class CMEDataSource(SpaceWeatherAPI):
         payload["sort_time"] = pd.NaT
 
         if "Datetime" in payload.columns:
-            payload["Datetime"] = pd.to_datetime(payload["Datetime"], errors="coerce", utc=True)
+            payload["Datetime"] = (
+                pd.to_datetime(payload["Datetime"], errors="coerce", utc=True)
+                .dt.tz_convert(None)
+            )
         if "time21_5" in payload.columns:
-            payload["time21_5"] = pd.to_datetime(payload["time21_5"], errors="coerce", utc=True)
+            payload["time21_5"] = (
+                pd.to_datetime(payload["time21_5"], errors="coerce", utc=True)
+                .dt.tz_convert(None)
+            )
 
         if "dataset" in payload.columns:
             mask_lasco = payload["dataset"] == DATASET_LASCO

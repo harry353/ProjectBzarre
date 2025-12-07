@@ -1,8 +1,8 @@
 from space_weather_api import SpaceWeatherAPI
 from space_weather_warehouse import SpaceWeatherWarehouse
-from data_sources.solar_flare_donki.solar_flare_donki_download import download_flares
-from data_sources.solar_flare_donki.solar_flare_donki_ingest import ingest_flares
-from data_sources.solar_flare_donki.solar_flare_donki_plot import plot_flares
+from archived_sources.solar_flare_donki.solar_flare_donki_download import download_flares
+from archived_sources.solar_flare_donki.solar_flare_donki_ingest import ingest_flares
+from archived_sources.solar_flare_donki.solar_flare_donki_plot import plot_flares
 
 
 class SolarFlareDonkiDataSource(SpaceWeatherAPI):

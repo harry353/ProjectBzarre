@@ -24,8 +24,8 @@ from space_weather_warehouse import SpaceWeatherWarehouse  # noqa: E402
 DB_PATH = PROJECT_ROOT / "space_weather.db"
 DATA_SOURCES_DIR = PROJECT_ROOT / "data_sources"
 MODULE_SUFFIX = "_data_source"
-DEFAULT_START = date(2000, 1, 1)
-DEFAULT_END = date(2000, 1, 3)
+DEFAULT_START = date(2005, 1, 1)
+DEFAULT_END = date(2005, 12, 31)
 STATUS_PATH = PROJECT_ROOT / "data_source_status.csv"
 TRACKER_TIME_COLUMNS = {
     "CMEDataSource": ["Datetime", "time21_5"],

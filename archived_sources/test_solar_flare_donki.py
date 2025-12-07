@@ -7,7 +7,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from data_sources.solar_flare_donki.solar_flare_donki_data_source import (
+from archived_sources.solar_flare_donki.solar_flare_donki_data_source import (
     SolarFlareDonkiDataSource,
 )
 

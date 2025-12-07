@@ -1,3 +1,4 @@
+from datetime import date
 import os
 import sys
 from pathlib import Path
@@ -37,7 +38,7 @@ def run_case(description, days):
     print("Plot complete.")
 
 def main():
-    run_case("Integer days = 7", 365)
+    run_case("Integer days = 7", (date(2021, 1, 1), date(2021, 10, 1)))
 
 
 if __name__ == "__main__":

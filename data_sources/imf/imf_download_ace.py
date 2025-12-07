@@ -1,5 +1,6 @@
 import os
 import tempfile
+import re
 from datetime import date, timedelta
 from io import BytesIO
 from typing import Optional
@@ -12,7 +13,6 @@ import requests
 from common.http import http_get
 
 BASE_URL = "https://cdaweb.gsfc.nasa.gov/pub/data/ace/mag/level_2_cdaweb/mfi_h3"
-CDF_VERSIONS = (3, 2, 1)
 OUTPUT_COLUMNS = ["time_tag", "bx_gse", "by_gse", "bz_gse", "bt"]
 FILL_VALUE = -1e20
 
@@ -49,31 +49,28 @@ def download_imf_ace(
 
 
 def _fetch_day(day, session: requests.Session):
-    year = day.year
-    for version in CDF_VERSIONS:
-        filename = f"ac_h3_mfi_{day:%Y%m%d}_v{version:02d}.cdf"
-        url = f"{BASE_URL}/{year}/{filename}"
+    filename = _resolve_filename(day, session)
+    if filename is None:
+        print(f"[INFO] No ACE/MAG data found for {day:%Y-%m-%d}")
+        return None
 
-        response = http_get(
-            url,
-            session=session,
-            log_name="IMF ACE",
-            timeout=60,
-            allowed_statuses={404},
-        )
-        if response is None:
-            continue
-        if response.status_code == 404:
-            continue
+    url = f"{BASE_URL}/{day.year}/{filename}"
+    response = http_get(
+        url,
+        session=session,
+        log_name="IMF ACE",
+        timeout=60,
+        allowed_statuses={404},
+    )
+    if response is None or response.status_code == 404:
+        print(f"[INFO] No ACE/MAG data found for {day:%Y-%m-%d}")
+        return None
 
-        try:
-            return _parse_cdf(BytesIO(response.content))
-        except Exception as exc:
-            print(f"[WARN] Failed to parse {filename}: {exc}")
-            continue
-
-    print(f"[INFO] No ACE/MAG data found for {day:%Y-%m-%d}")
-    return None
+    try:
+        return _parse_cdf(BytesIO(response.content))
+    except Exception as exc:
+        print(f"[WARN] Failed to parse {filename}: {exc}")
+        return None
 
 
 def _parse_cdf(handle: BytesIO) -> pd.DataFrame:
@@ -107,3 +104,22 @@ def _parse_cdf(handle: BytesIO) -> pd.DataFrame:
         if cdf is not None and hasattr(cdf, "close"):
             cdf.close()
         os.remove(tmp_path)
+
+
+def _resolve_filename(day: date, session: requests.Session) -> Optional[str]:
+    directory = f"{BASE_URL}/{day.year}/"
+    response = http_get(
+        directory,
+        session=session,
+        log_name="IMF ACE",
+        timeout=60,
+        allowed_statuses={404},
+    )
+    if response is None or response.status_code == 404:
+        return None
+
+    pattern = re.compile(rf"(ac_h3_mfi_{day:%Y%m%d}_v\d{{2}}\.cdf)", re.IGNORECASE)
+    match = pattern.search(response.text)
+    if not match:
+        return None
+    return match.group(1)

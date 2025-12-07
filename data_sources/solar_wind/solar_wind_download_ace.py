@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import tempfile
 from datetime import date, timedelta
+import re
 from typing import Optional
 
 import cdflib
@@ -15,7 +16,6 @@ from space_weather_api import format_date
 ACE_BASE_URL = (
     "https://cdaweb.gsfc.nasa.gov/pub/data/ace/swepam/level_2_cdaweb/swe_h0"
 )
-CDF_VERSION = 6
 COLUMNS = ["time_tag", "density", "speed", "temperature"]
 
 
@@ -45,19 +45,19 @@ def download_solar_wind_ace(start_date: date, end_date: date) -> pd.DataFrame:
 
 
 def _fetch_day(day: date) -> Optional[pd.DataFrame]:
-    filename = f"ac_h0_swe_{day:%Y%m%d}_v{CDF_VERSION:02d}.cdf"
-    url = f"{ACE_BASE_URL}/{day.year}/{filename}"
+    resolved = _resolve_filename(day)
+    if resolved is None:
+        print(f"[INFO] No ACE/SWEPAM data for {format_date(day)}")
+        return None
 
     response = http_get(
-        url,
+        resolved,
         timeout=60,
         log_name="Solar Wind ACE",
         allowed_statuses={404},
     )
 
-    if response is None:
-        return None
-    if response.status_code == 404:
+    if response is None or response.status_code == 404:
         print(f"[INFO] No ACE/SWEPAM data for {format_date(day)}")
         return None
 
@@ -93,3 +93,21 @@ def _clean_variable(cdf: cdflib.CDF, variable: str) -> np.ndarray:
     if fill_value is not None:
         values = np.where(np.isclose(values, float(fill_value)), np.nan, values)
     return values
+
+
+def _resolve_filename(day: date) -> Optional[str]:
+    directory = f"{ACE_BASE_URL}/{day.year}/"
+    response = http_get(
+        directory,
+        timeout=60,
+        log_name="Solar Wind ACE",
+        allowed_statuses={404},
+    )
+    if response is None or response.status_code == 404:
+        return None
+
+    pattern = re.compile(rf"ac_h0_swe_{day:%Y%m%d}_v(\d{{2}})\.cdf", re.IGNORECASE)
+    match = pattern.search(response.text)
+    if not match:
+        return None
+    return f"{directory}{match.group(0)}"

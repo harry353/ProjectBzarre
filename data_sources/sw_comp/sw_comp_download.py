@@ -66,26 +66,24 @@ def _fetch_day(day, session: requests.Session) -> Optional[pd.DataFrame]:
 
     url = f"{base_url}/{year}/{filename}"
 
-        response = http_get(
-            url,
-            session=session,
-            log_name="SW COMP",
-            timeout=60,
-            allowed_statuses={404},
-        )
-        if response is None:
-            continue
-        if response.status_code == 404:
-            continue
+    response = http_get(
+        url,
+        session=session,
+        log_name="SW COMP",
+        timeout=60,
+        allowed_statuses={404},
+    )
+    if response is None:
+        return None
+    if response.status_code == 404:
+        print(f"[INFO] No ACE/SWICS composition data for {day:%Y-%m-%d}")
+        return None
 
-        try:
-            return _parse_cdf(BytesIO(response.content))
-        except Exception as exc:
-            print(f"[WARN] Failed to parse {filename}: {exc}")
-            continue
-
-    print(f"[INFO] No ACE/SWICS composition data for {day:%Y-%m-%d}")
-    return None
+    try:
+        return _parse_cdf(BytesIO(response.content))
+    except Exception as exc:
+        print(f"[WARN] Failed to parse {filename}: {exc}")
+        return None
 
 
 def _source_for_day(day: date):

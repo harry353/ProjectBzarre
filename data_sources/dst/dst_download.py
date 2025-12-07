@@ -6,8 +6,9 @@ import requests
 
 from common.http import http_get
 
-BASE_RT = "https://wdc.kugi.kyoto-u.ac.jp/dst_realtime"
-BASE_FINAL = "https://wdc.kugi.kyoto-u.ac.jp/dst_provisional"
+DST_FINAL_BASE = "https://wdc.kugi.kyoto-u.ac.jp/dst_final"
+DST_PROVISIONAL_BASE = "https://wdc.kugi.kyoto-u.ac.jp/dst_provisional"
+DST_REALTIME_BASE = "https://wdc.kugi.kyoto-u.ac.jp/dst_realtime"
 DST_COLUMNS = ["time_tag", "dst"]
 
 
@@ -21,11 +22,11 @@ def download_dst(
         raise ValueError("start_date must be on or before end_date.")
 
     session = session or requests.Session()
-    today = date.today()
 
     frames = []
     for month_start in _month_range(start_date, end_date):
-        url = _select_url_for_month(month_start, today)
+        base_url = _base_for_month(month_start)
+        url = _build_month_url(base_url, month_start)
         df = _fetch_month(url, month_start, session)
         if df is None:
             continue
@@ -55,23 +56,20 @@ def _month_range(start: date, end: date) -> Iterator[date]:
             current = date(current.year, current.month + 1, 1)
 
 
-def _select_url_for_month(month_date: date, today: date) -> str:
-    boundary = date(today.year, today.month, 1)
-    for _ in range(4):
-        if boundary.month == 1:
-            boundary = date(boundary.year - 1, 12, 1)
-        else:
-            boundary = date(boundary.year, boundary.month - 1, 1)
+def _base_for_month(month_date: date) -> str:
+    if month_date < date(2020, 1, 1):
+        return DST_FINAL_BASE
+    if month_date <= date(2025, 6, 30):
+        return DST_PROVISIONAL_BASE
+    return DST_REALTIME_BASE
 
+
+def _build_month_url(base_url: str, month_date: date) -> str:
     year = month_date.year
     suffix = f"{str(year)[2:]}{month_date.month:02d}.for.request"
-
-    if month_date >= boundary:
-        if month_date.year == today.year and month_date.month == today.month:
-            return f"{BASE_RT}/presentmonth/dst{suffix}"
-        return f"{BASE_RT}/{year}{month_date.month:02d}/dst{suffix}"
-
-    return f"{BASE_FINAL}/{year}{month_date.month:02d}/dst{suffix}"
+    if base_url == DST_REALTIME_BASE and month_date == date.today().replace(day=1):
+        return f"{base_url}/presentmonth/dst{suffix}"
+    return f"{base_url}/{year}{month_date.month:02d}/dst{suffix}"
 
 
 def _fetch_month(url: str, month_start: date, session: requests.Session):

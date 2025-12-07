@@ -1,6 +1,10 @@
 from datetime import datetime, date, timedelta
 import time
 
+from common.logging import enable_colored_logging
+
+enable_colored_logging()
+
 
 def format_date(value):
     """
