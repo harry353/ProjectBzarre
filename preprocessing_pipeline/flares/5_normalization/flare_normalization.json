@@ -1,0 +1,50 @@
+{
+  "hours_since_last_flare": {
+    "mean": 3.1131826376996803,
+    "std": 2.969990625381794
+  },
+  "hours_until_next_flare": {
+    "mean": 3.1136389455629008,
+    "std": 2.9699675063220026
+  },
+  "flare_count_last_6h": {
+    "mean": 1.0667301670763127,
+    "std": 1.1002137985556826
+  },
+  "flare_count_last_24h": {
+    "mean": 1.9818827258581777,
+    "std": 1.5840244826367453
+  },
+  "flare_count_last_72h": {
+    "mean": 2.802576828948951,
+    "std": 2.000305098512787
+  },
+  "last_flare_peak_flux": {
+    "mean": -6.087916954882414,
+    "std": 0.6287032582073304
+  },
+  "last_flare_integrated_flux": {
+    "mean": -3.0281880738195692,
+    "std": 0.7066951092985972
+  },
+  "last_flare_background_flux": {
+    "mean": -6.523454218496631,
+    "std": 0.802984433535749
+  },
+  "last_flare_xrsb_flux": {
+    "mean": -6.087609680256619,
+    "std": 0.6288502519118842
+  },
+  "last_flare_energy_proxy": {
+    "mean": -9.116105028701984,
+    "std": 1.315827287705996
+  },
+  "delta_last_flare_peak_flux": {
+    "median": -2.2058423130220031e-07,
+    "iqr": 9.034825900113173e-07
+  },
+  "flare_energy_ratio": {
+    "median": 0.9669246733986925,
+    "iqr": 0.34353212972564295
+  }
+}

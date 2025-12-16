@@ -1,0 +1,24 @@
+2025-12-14 17:01:41,760 - INFO - === Final training started ===
+2025-12-14 17:01:42,480 - INFO - Train+val shape: (97450, 119), Test shape: (45147, 119)
+2025-12-14 17:02:34,879 - INFO - === Final training started ===
+2025-12-14 17:02:35,624 - INFO - Train+val shape: (97450, 119), Test shape: (45147, 119)
+2025-12-14 17:03:06,059 - INFO - === Final training started ===
+2025-12-14 17:03:06,776 - INFO - Train+val shape: (97450, 119), Test shape: (45147, 119)
+2025-12-14 17:03:19,141 - INFO - Final metrics: {'mae': 0.4347296357154846, 'rmse': 0.7075950524334537, 'residual_mean': 0.10647054761648178, 'residual_std': 0.6995389461517334, 'max_residual': 6.158995151519775, 'min_residual': -16.53701400756836, 'worst_error': -16.53701400756836, 'worst_index': 33752}
+2025-12-14 17:03:19,141 - INFO - Predictions saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline/models/final_model/final_test_predictions.parquet
+2025-12-14 17:03:19,141 - INFO - === Final training complete ===
+2025-12-14 17:20:29,289 - INFO - === Final training started ===
+2025-12-14 17:20:30,163 - INFO - Train+val shape: (97450, 119), Test shape: (45147, 119)
+2025-12-14 17:20:37,598 - INFO - Final metrics: {'mae': 0.4347296357154846, 'rmse': 0.7075950524334537, 'residual_mean': 0.10647054761648178, 'residual_std': 0.6995389461517334, 'max_residual': 6.158995151519775, 'min_residual': -16.53701400756836, 'worst_error': -16.53701400756836, 'worst_index': 33752}
+2025-12-14 17:20:37,598 - INFO - Predictions saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline/models/final_model/final_test_predictions.parquet
+2025-12-14 17:20:37,598 - INFO - === Final training complete ===
+2025-12-14 18:13:25,974 - INFO - === Final training started ===
+2025-12-14 18:13:26,550 - INFO - Train+val shape: (97450, 114), Test shape: (45147, 114)
+2025-12-14 18:13:35,389 - INFO - Final metrics: {'mae': 0.43575820326805115, 'rmse': 0.7087153405086014, 'residual_mean': 0.1091952845454216, 'residual_std': 0.7002527117729187, 'max_residual': 6.243426322937012, 'min_residual': -16.62735939025879, 'worst_error': -16.62735939025879, 'worst_index': 33752}
+2025-12-14 18:13:35,389 - INFO - Predictions saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline/models/final_model/final_test_predictions.parquet
+2025-12-14 18:13:35,389 - INFO - === Final training complete ===
+2025-12-16 02:35:31,192 - INFO - === Final training started ===
+2025-12-16 02:35:32,537 - INFO - Train+val shape: (192804, 164), Test shape: (43051, 164)
+2025-12-16 02:35:51,590 - INFO - Final metrics: {'mae': 0.4207242429256439, 'rmse': 0.6526558637629292, 'residual_mean': 0.0619211308658123, 'residual_std': 0.6497117877006531, 'max_residual': 6.5986409187316895, 'min_residual': -18.059146881103516, 'worst_error': -18.059146881103516, 'worst_index': 29416}
+2025-12-16 02:35:51,590 - INFO - Predictions saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline/models/final_model/final_test_predictions.parquet
+2025-12-16 02:35:51,590 - INFO - === Final training complete ===

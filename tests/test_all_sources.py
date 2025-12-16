@@ -24,17 +24,23 @@ TIME_COLUMNS_MAP = {
     "FlaresDataSource": ["event_time"],
     "SolarFlareDonkiDataSource": ["endTime", "peakTime", "beginTime"],
     "XRayFluxGOESDataSource": "__index__",
+    "SolarWindACEDataSource": ["time_tag"],
+    "SolarWindDSCOVRDataSource": ["time_tag"],
+    "IMFACEDataSource": ["time_tag"],
+    "IMFDSCOVRDataSource": ["time_tag"],
 }
 DIRECTORY_URLS = {
     "AEDataSource": "https://wdc.kugi.kyoto-u.ac.jp/ae_realtime/data_dir/",
     "CMEDataSource": "https://cdaw.gsfc.nasa.gov/CME_list/UNIVERSAL_ver2/text_ver/",
     "DstDataSource": "https://wdc.kugi.kyoto-u.ac.jp/dst_provisional/",
-    "IMFACEDataSource": "https://www.ngdc.noaa.gov/dscovr/data/",
+    "IMFACEDataSource": "https://cdaweb.gsfc.nasa.gov/pub/data/ace/mag/level_2_cdaweb/mfi_h1/",
+    "IMFDSCOVRDataSource": "https://www.ngdc.noaa.gov/dscovr/data/",
     "KpIndexDataSource": "https://kp.gfz.de/app/json/",
     "RadioFluxDataSource": "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/",
     "FlaresDataSource": "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/",
     "SolarFlareDonkiDataSource": "https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR",
-    "SolarWindDataSource": "https://www.ngdc.noaa.gov/dscovr/data/",
+    "SolarWindACEDataSource": "https://cdaweb.gsfc.nasa.gov/pub/data/ace/swepam/level_2_cdaweb/swe_h0/",
+    "SolarWindDSCOVRDataSource": "https://www.ngdc.noaa.gov/dscovr/data/",
     "SunspotNumberDataSource": "https://kp.gfz.de/app/json/",
     "SuperMAGDataSource": "https://supermag.jhuapl.edu/services/indices.php",
     "SWCompDataSource": "https://cdaweb.gsfc.nasa.gov/pub/data/ace/swics/level_2_cdaweb/sw2_h3/",
@@ -332,10 +338,20 @@ def _parse_discovr_filename(filename, prefix):
         return None
     return _parse_compact_date(match.group(1))
 
-def _parse_imf_filename(filename):
-    return _parse_compact_filename(filename, "ac_h3_mfi") or _parse_discovr_filename(
-        filename, "oe_m1m_dscovr"
-    )
+
+def _parse_ace_swe_filename(filename):
+    pattern = re.compile(r"ac_h0_swe_(\d{8})_v\d{2}\.cdf", re.IGNORECASE)
+    match = pattern.search(filename)
+    if not match:
+        return None
+    return _parse_compact_date(match.group(1))
+
+def _parse_imf_ace_filename(filename):
+    return _parse_compact_filename(filename, "ac_h3_mfi")
+
+
+def _parse_imf_dscovr_filename(filename):
+    return _parse_discovr_filename(filename, "oe_m1m_dscovr")
 
 def _expand_two_digit_year(two_digit):
     two_digit = int(two_digit)
@@ -348,9 +364,11 @@ FILENAME_DATE_EXTRACTORS = {
     "AEDataSource": lambda name: _parse_two_digit_date(name, prefixes=("al", "au")),
     "CMEDataSource": _parse_cme_lasco_filename,
     "DstDataSource": _parse_dst_filename,
-    "IMFACEDataSource": _parse_imf_filename,
+    "IMFACEDataSource": _parse_imf_ace_filename,
+    "IMFDSCOVRDataSource": _parse_imf_dscovr_filename,
     "FlaresDataSource": _parse_goes_science_filename,
-    "SolarWindDataSource": lambda name: _parse_discovr_filename(name, "oe_f1m_dscovr"),
+    "SolarWindACEDataSource": _parse_ace_swe_filename,
+    "SolarWindDSCOVRDataSource": lambda name: _parse_discovr_filename(name, "oe_f1m_dscovr"),
     "SWCompDataSource": lambda name: _parse_compact_filename(name, "ac_h3_sw2"),
     "XRayFluxGOESDataSource": _parse_goes_science_filename,
 }

@@ -3,6 +3,7 @@ from typing import Iterator, Optional
 
 import pandas as pd
 import requests
+import re
 
 from common.http import http_get
 
@@ -25,9 +26,12 @@ def download_dst(
 
     frames = []
     for month_start in _month_range(start_date, end_date):
-        base_url = _base_for_month(month_start)
-        url = _build_month_url(base_url, month_start)
-        df = _fetch_month(url, month_start, session)
+        if month_start <= date(1999, 12, 31):
+            df = _fetch_month_html(month_start, session)
+        else:
+            base_url = _base_for_month(month_start)
+            url = _build_month_url(base_url, month_start)
+            df = _fetch_month(url, month_start, session)
         if df is None:
             continue
         frames.append(df)
@@ -91,6 +95,52 @@ def _fetch_month(url: str, month_start: date, session: requests.Session):
             dst = _parse_dst_value(raw_value)
             if dst is None:
                 continue
+            rows.append({"day": day, "hour": hour, "dst": dst})
+
+    if not rows:
+        return None
+
+    df = pd.DataFrame(rows)
+    df["year"] = month_start.year
+    df["month"] = month_start.month
+    df["time_tag"] = pd.to_datetime(
+        dict(
+            year=df["year"],
+            month=df["month"],
+            day=df["day"],
+            hour=df["hour"],
+        ),
+        errors="coerce",
+    )
+    df = df.dropna(subset=["time_tag"])
+    return df[["time_tag", "dst"]]
+
+
+def _fetch_month_html(month_start: date, session: requests.Session):
+    url = f"{DST_FINAL_BASE}/{month_start.year}{month_start.month:02d}/index.html"
+    resp = http_get(url, session=session, log_name="DstHTML", timeout=60)
+    if resp is None:
+        return None
+
+    capture = False
+    rows = []
+    for line in resp.text.splitlines():
+        if "<pre" in line:
+            capture = True
+            continue
+        if "</pre" in line and capture:
+            break
+        if not capture:
+            continue
+
+        matches = re.findall(r"-?\d+", line)
+        if len(matches) < 25:
+            continue
+        day = int(matches[0])
+        if not 1 <= day <= 31:
+            continue
+        values = [int(token) for token in matches[1:25]]
+        for hour, dst in enumerate(values[:24]):
             rows.append({"day": day, "hour": hour, "dst": dst})
 
     if not rows:

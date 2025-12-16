@@ -1,0 +1,8 @@
+{
+  "n_estimators": 1181,
+  "max_depth": 5,
+  "min_child_weight": 2.8095599408981826,
+  "early_stopping_rounds": 72,
+  "learning_rate": 0.013534730668818953,
+  "val_mae": 0.25602808594703674
+}
