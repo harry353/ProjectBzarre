@@ -44,7 +44,7 @@ def run_case(description, days):
 
 
 def main():
-    run_case("GOES flare summary sample", (date(2005, 2, 6), date(2005, 2, 9)))
+    run_case("GOES flare summary sample", (date(2005, 12, 6), date(2005, 12, 9)))
 
 
 if __name__ == "__main__":
