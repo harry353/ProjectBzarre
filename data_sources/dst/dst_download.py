@@ -26,7 +26,7 @@ def download_dst(
 
     frames = []
     for month_start in _month_range(start_date, end_date):
-        if month_start <= date(1999, 12, 31):
+        if month_start <= date(2004, 12, 31):
             df = _fetch_month_html(month_start, session)
         else:
             base_url = _base_for_month(month_start)
