@@ -3,7 +3,7 @@ from __future__ import annotations
 import sqlite3
 import sys
 from pathlib import Path
-from typing import Dict, Iterable
+from typing import Dict, Iterable, List
 
 import pandas as pd
 
@@ -32,31 +32,31 @@ SOURCES = [
     },
     {
         "name": "kp",
-        "db": FINAL_DIR / "kp_index" / "kp_index_fin.db",
+        "db": FINAL_DIR / "kp_index" / "kp_fin.db",
         "tables": {
             "train": "kp_train",
             "validation": "kp_validation",
             "test": "kp_test",
         },
     },
-    {
-        "name": "sunspot",
-        "db": FINAL_DIR / "sunspot_number" / "sunspot_number_fin.db",
-        "tables": {
-            "train": "sunspot_train",
-            "validation": "sunspot_validation",
-            "test": "sunspot_test",
-        },
-    },
-    {
-        "name": "flares",
-        "db": FINAL_DIR / "flares" / "flare_fin.db",
-        "tables": {
-            "train": "flare_train",
-            "validation": "flare_validation",
-            "test": "flare_test",
-        },
-    },
+    # {
+    #     "name": "sunspot",
+    #     "db": FINAL_DIR / "sunspot_number" / "sunspot_number_fin.db",
+    #     "tables": {
+    #         "train": "sunspot_train",
+    #         "validation": "sunspot_validation",
+    #         "test": "sunspot_test",
+    #     },
+    # },
+#    {
+#        "name": "flares",
+#        "db": FINAL_DIR / "flares" / "flare_fin.db",
+#        "tables": {
+#            "train": "flare_train",
+#            "validation": "flare_validation",
+#            "test": "flare_test",
+#        },
+#    },
     {
         "name": "cme",
         "db": FINAL_DIR / "cme" / "cme_fin.db",
@@ -84,68 +84,81 @@ SOURCES = [
             "test": "xray_flux_test",
         },
     },
+    # {
+    #     "name": "radio_flux",
+    #     "db": FINAL_DIR / "radio_flux" / "radio_flux_fin.db",
+    #     "tables": {
+    #         "train": "radio_flux_train",
+    #         "validation": "radio_flux_validation",
+    #         "test": "radio_flux_test",
+    #     },
+    # },
     {
         "name": "storm_labels",
-        "db": FINAL_DIR / "features_targets" / "storm_labels.db",
+        "db": FINAL_DIR / "features_targets" / "daily_bin_class" / "storm_labels_daily_onset.db",
         "tables": {
-            "train": "severity_train",
-            "validation": "severity_validation",
-            "test": "severity_test",
-        },
-    },
-    {
-        "name": "ssc_labels",
-        "db": FINAL_DIR / "features_targets" / "storm_labels.db",
-        "tables": {
-            "train": "ssc_train",
-            "validation": "ssc_validation",
-            "test": "ssc_test",
-        },
-    },
-    {
-        "name": "main_phase_labels",
-        "db": FINAL_DIR / "features_targets" / "storm_labels.db",
-        "tables": {
-            "train": "main_phase_train",
-            "validation": "main_phase_validation",
-            "test": "main_phase_test",
+            "train": "storm_daily_train",
+            "validation": "storm_daily_validation",
+            "test": "storm_daily_test",
         },
     },
 ]
 
-OUTPUT_DB = FINAL_DIR / "final" / "all_sources_intersection.db"
+OUTPUT_DB = FINAL_DIR / "final" / "all_preprocessed_sources.db"
+
+CHUNK_SIZE = 50_000
 
 
-def _load_table(db_path: Path, table: str) -> pd.DataFrame:
-    with sqlite3.connect(db_path) as conn:
-        df = pd.read_sql_query(f"SELECT * FROM {table}", conn)
+def _detect_time_col(conn: sqlite3.Connection, table: str) -> str:
+    cols = [row[1] for row in conn.execute(f"PRAGMA table_info({table})")]
+    for candidate in ("timestamp", "time_tag", "date"):
+        if candidate in cols:
+            return candidate
+    raise RuntimeError(f"Table '{table}' has no timestamp column.")
 
-    for candidate in ("timestamp", "time_tag"):
-        if candidate in df.columns:
-            time_col = candidate
-            break
+
+def _normalize_time(series: pd.Series, time_col: str) -> pd.Series:
+    parsed = pd.to_datetime(series, errors="coerce")
+    if time_col == "date":
+        if parsed.dt.tz is not None:
+            parsed = parsed.dt.tz_convert(None)
     else:
-        raise RuntimeError(f"Table '{table}' in {db_path} has no timestamp column.")
+        if parsed.dt.tz is None:
+            parsed = parsed.dt.tz_localize("UTC")
+        else:
+            parsed = parsed.dt.tz_convert("UTC")
+        parsed = parsed.dt.tz_localize(None)
+    return parsed
 
-    df[time_col] = pd.to_datetime(df[time_col], utc=True, errors="coerce")
-    df = df.dropna(subset=[time_col])
-    df = df.set_index(time_col).sort_index()
-    return df
 
-
-def _intersect_and_merge(frames: Dict[str, pd.DataFrame]) -> pd.DataFrame:
-    common_index = None
-    for df in frames.values():
-        common_index = df.index if common_index is None else common_index.intersection(df.index)
-
-    if common_index is None or common_index.empty:
-        raise RuntimeError("No overlapping timestamps found across sources.")
-
-    aligned_frames = [df.loc[common_index] for df in frames.values()]
-    combined = pd.concat(aligned_frames, axis=1)
-    combined.index.name = "timestamp"
-    combined = combined.reset_index()
-    return combined
+def _write_temp_table(
+    out_conn: sqlite3.Connection,
+    db_path: Path,
+    table: str,
+    tmp_table: str,
+    prefix: str,
+) -> List[str]:
+    with sqlite3.connect(db_path) as src_conn:
+        time_col = _detect_time_col(src_conn, table)
+        query = f"SELECT * FROM {table}"
+        first = True
+        for chunk in pd.read_sql_query(query, src_conn, chunksize=CHUNK_SIZE):
+            if time_col not in chunk.columns:
+                raise RuntimeError(f"Missing time column '{time_col}' in {db_path}:{table}")
+            parsed = _normalize_time(chunk[time_col], time_col)
+            chunk = chunk.assign(time_key=parsed)
+            chunk = chunk.dropna(subset=["time_key"])
+            chunk = chunk.drop(columns=[time_col])
+            chunk = chunk.rename(columns={c: f"{prefix}_{c}" for c in chunk.columns if c != "time_key"})
+            chunk["time_key"] = chunk["time_key"].dt.strftime("%Y-%m-%d %H:%M:%S")
+            if first:
+                chunk.to_sql(tmp_table, out_conn, if_exists="replace", index=False)
+                first = False
+            else:
+                chunk.to_sql(tmp_table, out_conn, if_exists="append", index=False)
+    out_conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{tmp_table}_time ON {tmp_table}(time_key)")
+    cols = [row[1] for row in out_conn.execute(f"PRAGMA table_info({tmp_table})")]
+    return cols
 
 
 def main() -> None:
@@ -154,20 +167,57 @@ def main() -> None:
     splits = ("train", "validation", "test")
     with sqlite3.connect(OUTPUT_DB) as out_conn:
         for split in splits:
-            frames: Dict[str, pd.DataFrame] = {}
+            label_col = None
+            temp_tables: List[str] = []
+            temp_columns: Dict[str, List[str]] = {}
+
             for cfg in SOURCES:
                 db_path = cfg["db"]
-                table = cfg["tables"][split]
                 if not db_path.exists():
                     raise FileNotFoundError(f"Required final DB missing: {db_path}")
-                frames[cfg["name"]] = _load_table(db_path, table)
 
-            combined = _intersect_and_merge(frames)
-            table_name = f"combined_{split}"
-            combined.to_sql(table_name, out_conn, if_exists="replace", index=False)
-            print(f"[OK] Wrote {table_name} with {len(combined):,} rows")
+                src_table = cfg["tables"][split]
+                tmp_table = f"tmp_{cfg['name']}_{split}"
+                temp_tables.append(tmp_table)
+                temp_columns[tmp_table] = _write_temp_table(
+                    out_conn, db_path, src_table, tmp_table, cfg["name"]
+                )
 
-    print(f"[OK] Combined dataset saved to {OUTPUT_DB}")
+                if cfg["name"] == "storm_labels":
+                    label_col = f"{cfg['name']}_storm_severity_next_8h"
+
+            if not temp_tables:
+                raise RuntimeError(f"No data merged for split '{split}'.")
+
+            select_cols: List[str] = []
+            join_sql = f"FROM {temp_tables[0]} t0"
+            first_cols = [c for c in temp_columns[temp_tables[0]] if c != "time_key"]
+            select_cols.append("t0.time_key AS timestamp")
+            select_cols.extend([f"t0.{c}" for c in first_cols])
+
+            for idx, tmp in enumerate(temp_tables[1:], start=1):
+                alias = f"t{idx}"
+                join_sql += f" INNER JOIN {tmp} {alias} USING (time_key)"
+                cols = [c for c in temp_columns[tmp] if c != "time_key"]
+                select_cols.extend([f"{alias}.{c}" for c in cols])
+
+            if label_col and label_col in [c.split(".")[-1] for c in select_cols]:
+                non_label = [c for c in select_cols if not c.endswith(f".{label_col}")]
+                label_select = [c for c in select_cols if c.endswith(f".{label_col}")]
+                select_cols = non_label + label_select
+
+            table_name = f"merged_{split}"
+            out_conn.execute(f"DROP TABLE IF EXISTS {table_name}")
+            out_conn.execute(
+                f"CREATE TABLE {table_name} AS SELECT {', '.join(select_cols)} {join_sql}"
+            )
+            row_count = out_conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+            print(f"[OK] Created {table_name} ({row_count:,} rows)")
+
+            for tmp in temp_tables:
+                out_conn.execute(f"DROP TABLE IF EXISTS {tmp}")
+
+    print(f"[OK] All preprocessed sources saved to {OUTPUT_DB}")
 
 
 if __name__ == "__main__":

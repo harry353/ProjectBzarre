@@ -84,11 +84,11 @@ def _add_kp_features(df: pd.DataFrame) -> pd.DataFrame:
     for lag in (1, 2, 3, 6, 12):
         working[f"kp_lag_{lag}"] = kp.shift(lag)
 
-    working["kp_mean_6h"] = kp.rolling(window=6, min_periods=1).mean()
-    working["kp_mean_12h"] = kp.rolling(window=12, min_periods=1).mean()
-    working["kp_max_6h"] = kp.rolling(window=6, min_periods=1).max()
-    working["kp_max_12h"] = kp.rolling(window=12, min_periods=1).max()
-    working["kp_max_24h"] = kp.rolling(window=24, min_periods=1).max()
+    working["kp_mean_6h"] = kp.rolling(window="6h", min_periods=1).mean()
+    working["kp_mean_12h"] = kp.rolling(window="12h", min_periods=1).mean()
+    working["kp_max_6h"] = kp.rolling(window="6h", min_periods=1).max()
+    working["kp_max_12h"] = kp.rolling(window="12h", min_periods=1).max()
+    working["kp_max_24h"] = kp.rolling(window="24h", min_periods=1).max()
 
     working["kp_delta_3h"] = kp - working["kp_lag_3"]
     working["kp_delta_6h"] = kp - working["kp_lag_6"]
@@ -118,10 +118,10 @@ def _add_kp_features(df: pd.DataFrame) -> pd.DataFrame:
     working["kp_dist_to_6"] = kp - 6.0
     working["kp_dist_to_7"] = kp - 7.0
 
-    working["ap_sum_24h"] = ap.rolling(window=24, min_periods=1).sum()
-    working["ap_max_24h"] = ap.rolling(window=24, min_periods=1).max()
-    working["ap_mean_12h"] = ap.rolling(window=12, min_periods=1).mean()
-    working["ap_energy_rolling"] = (ap.pow(2)).rolling(window=24, min_periods=1).sum()
+    working["ap_sum_24h"] = ap.rolling(window="24h", min_periods=1).sum()
+    working["ap_max_24h"] = ap.rolling(window="24h", min_periods=1).max()
+    working["ap_mean_12h"] = ap.rolling(window="12h", min_periods=1).mean()
+    working["ap_energy_rolling"] = (ap.pow(2)).rolling(window="24h", min_periods=1).sum()
 
     working["kp_jump_2plus"] = (
         (kp - working["kp_lag_3"]) >= 2.0

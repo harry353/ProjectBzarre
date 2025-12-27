@@ -1,0 +1,4 @@
+{
+  "positive_class": "storm_present_next_24h = 1",
+  "probability_threshold": 0.0011378000490367413
+}

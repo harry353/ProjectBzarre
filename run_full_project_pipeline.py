@@ -7,7 +7,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent
 
 PREPROCESS_SCRIPT = PROJECT_ROOT / "preprocessing_pipeline" / "run_full_preprocessing_pipeline.py"
-MODEL_SCRIPT = PROJECT_ROOT / "modeling_pipeline_bin" / "run_full_ml_pipeline.py"
+MODEL_SCRIPT = PROJECT_ROOT / "modeling_pipeline_daily" / "train_daily_model.py"
 
 
 def _run(script: Path) -> None:

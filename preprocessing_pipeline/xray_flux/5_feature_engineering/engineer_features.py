@@ -38,8 +38,47 @@ OUTPUT_TABLE = "engineered_features"
 # ---------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------
-FLUX_COLS = ["irradiance_xrsa2", "irradiance_xrsb2"]
+FLUX_COLS = ["irradiance_xrsa", "irradiance_xrsb"]
 EPS = 1e-12
+ROLLING_CHUNK = 20000
+
+
+def _chunked_rolling(
+    series: pd.Series,
+    window: int,
+    apply_fn,
+) -> pd.Series:
+    """Apply rolling operation in smaller chunks to avoid bottleneck issues."""
+    if series.empty:
+        return series.copy()
+
+    pieces: list[pd.Series] = []
+    n = len(series)
+    for start in range(0, n, ROLLING_CHUNK):
+        end = min(n, start + ROLLING_CHUNK)
+        slice_start = max(0, start - window + 1)
+        chunk = series.iloc[slice_start:end]
+        rolled = apply_fn(chunk.rolling(window))
+        # keep only the rows corresponding to the actual chunk range
+        take = end - start
+        pieces.append(rolled.iloc[-take:] if take else rolled.iloc[0:0])
+    return pd.concat(pieces)
+
+
+def _rolling_mean(series: pd.Series, window: int) -> pd.Series:
+    return _chunked_rolling(series, window, lambda roll: roll.mean())
+
+
+def _rolling_std(series: pd.Series, window: int) -> pd.Series:
+    return _chunked_rolling(series, window, lambda roll: roll.std())
+
+
+def _rolling_max(series: pd.Series, window: int) -> pd.Series:
+    return _chunked_rolling(series, window, lambda roll: roll.max())
+
+
+def _rolling_min(series: pd.Series, window: int) -> pd.Series:
+    return _chunked_rolling(series, window, lambda roll: roll.min())
 
 
 def _rolling_slope(series: pd.Series, window: int) -> pd.Series:
@@ -53,7 +92,11 @@ def _rolling_slope(series: pd.Series, window: int) -> pd.Series:
         mean_y = values.mean()
         return float(((values - mean_y) * (idx - mean_x)).sum() / denom)
 
-    return series.rolling(window).apply(_calc, raw=True)
+    return _chunked_rolling(
+        series,
+        window,
+        lambda roll: roll.apply(_calc, raw=True),
+    )
 
 
 # ---------------------------------------------------------------------
@@ -66,8 +109,8 @@ def _add_xrs_features(df: pd.DataFrame) -> pd.DataFrame:
         if col not in working.columns:
             raise RuntimeError(f"Required column '{col}' missing from dataset.")
 
-    a = working["irradiance_xrsa2"].astype(float)
-    b = working["irradiance_xrsb2"].astype(float)
+    a = working["irradiance_xrsa"].astype(float)
+    b = working["irradiance_xrsb"].astype(float)
 
     # --------------------------------------------------------------
     # Core log-space flux
@@ -85,20 +128,30 @@ def _add_xrs_features(df: pd.DataFrame) -> pd.DataFrame:
     # --------------------------------------------------------------
     working["dlog_xrsb"] = working["log_xrsb"].diff()
     working["d2log_xrsb"] = working["dlog_xrsb"].diff()
+    working["dlog_xrsa"] = working["log_xrsa"].diff()
+    working["d2log_xrsa"] = working["dlog_xrsa"].diff()
 
     # --------------------------------------------------------------
     # Contextual statistics
     # --------------------------------------------------------------
-    working["log_xrsb_mean_6h"] = working["log_xrsb"].rolling(6).mean()
-    working["log_xrsb_std_6h"] = working["log_xrsb"].rolling(6).std()
-    working["log_xrsb_max_24h"] = working["log_xrsb"].rolling(24).max()
+    working["log_xrsb_mean_6h"] = _rolling_mean(working["log_xrsb"], 6)
+    working["log_xrsb_std_6h"] = _rolling_std(working["log_xrsb"], 6)
+    working["log_xrsb_max_24h"] = _rolling_max(working["log_xrsb"], 24)
     working["log_xrsb_slope_6h"] = _rolling_slope(working["log_xrsb"], 6)
+
+    working["log_xrsa_mean_6h"] = _rolling_mean(working["log_xrsa"], 6)
+    working["log_xrsa_std_6h"] = _rolling_std(working["log_xrsa"], 6)
+    working["log_xrsa_max_24h"] = _rolling_max(working["log_xrsa"], 24)
+    working["log_xrsa_slope_6h"] = _rolling_slope(working["log_xrsa"], 6)
 
     # --------------------------------------------------------------
     # Event morphology
     # --------------------------------------------------------------
-    rolling_min_24h = working["log_xrsb"].rolling(24).min()
-    working["peak_to_bg_24h"] = working["log_xrsb"] - rolling_min_24h
+    rolling_min_24h = _rolling_min(working["log_xrsb"], 24)
+    working["peak_to_bg_24h_xrsb"] = working["log_xrsb"] - rolling_min_24h
+
+    rolling_min_24h_xrsa = _rolling_min(working["log_xrsa"], 24)
+    working["peak_to_bg_24h_xrsa"] = working["log_xrsa"] - rolling_min_24h_xrsa
 
     # --------------------------------------------------------------
     # Time since last rapid rise
@@ -114,21 +167,39 @@ def _add_xrs_features(df: pd.DataFrame) -> pd.DataFrame:
         elif last_event is not None:
             hrs_since[i] = i - last_event
 
-    working["hrs_since_rapid_rise"] = hrs_since
+    working["hrs_since_rapid_rise_xrsb"] = hrs_since
+
+    rapid_rise_a = working["dlog_xrsa"] > 0.3
+    hrs_since_a = np.full(len(working), np.nan)
+    last_event = None
+    for i, flag in enumerate(rapid_rise_a):
+        if flag:
+            last_event = i
+            hrs_since_a[i] = 0.0
+        elif last_event is not None:
+            hrs_since_a[i] = i - last_event
+    working["hrs_since_rapid_rise_xrsa"] = hrs_since_a
 
     # --------------------------------------------------------------
     # Regime flags
     # --------------------------------------------------------------
-    working["quiet_flag"] = (working["log_xrsb"] < -7).astype(int)
-    working["active_flag"] = (
+    working["quiet_flag_xrsb"] = (working["log_xrsb"] < -7).astype(int)
+    working["active_flag_xrsb"] = (
         (working["log_xrsb"] >= -7) & (working["log_xrsb"] < -5)
     ).astype(int)
-    working["flaring_flag"] = (working["log_xrsb"] >= -5).astype(int)
+    working["flaring_flag_xrsb"] = (working["log_xrsb"] >= -5).astype(int)
+
+    working["quiet_flag_xrsa"] = (working["log_xrsa"] < -7).astype(int)
+    working["active_flag_xrsa"] = (
+        (working["log_xrsa"] >= -7) & (working["log_xrsa"] < -5)
+    ).astype(int)
+    working["flaring_flag_xrsa"] = (working["log_xrsa"] >= -5).astype(int)
 
     # --------------------------------------------------------------
     # Short memory
     # --------------------------------------------------------------
     working["log_xrsb_lag_1h"] = working["log_xrsb"].shift(1)
+    working["log_xrsa_lag_1h"] = working["log_xrsa"].shift(1)
 
     # --------------------------------------------------------------
     # Final NaN handling and check
@@ -167,4 +238,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

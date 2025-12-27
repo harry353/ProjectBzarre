@@ -25,15 +25,14 @@ RUNNERS = [
     PIPELINE_DIR / "kp_index" / "run_pipeline.py",
     PIPELINE_DIR / "sunspot_number" / "run_pipeline.py",
     PIPELINE_DIR / "cme" / "run_pipeline.py",
-    PIPELINE_DIR / "flares" / "run_pipeline.py",
     PIPELINE_DIR / "imf_solar_wind" / "run_pipeline.py",
     PIPELINE_DIR / "xray_flux" / "run_pipeline.py",
-    PIPELINE_DIR / "features_targets" / "build_supervised_targets.py",
+    PIPELINE_DIR / "radio_flux" / "run_pipeline.py",
+    PIPELINE_DIR / "features_targets" / "daily_bin_class" / "build_supervised_targets.py",
 ]
 
 FINAL_SCRIPTS = [
     PIPELINE_DIR / "final" / "merge_final_datasets.py",
-    PIPELINE_DIR / "final" / "split_parquet_files.py",
 ]
 
 DEFAULT_WINDOWS = {
@@ -44,6 +43,9 @@ DEFAULT_WINDOWS = {
     "test_start": "2021-01-01",
     "test_end": "2025-11-30",
 }
+
+PIPELINE_ANCHOR_HOURS = 0
+PIPELINE_AGG_FREQUENCY = "8h"
 
 
 def _run(script: Path) -> None:
@@ -74,6 +76,8 @@ def main() -> None:
     args = parser.parse_args()
 
     _set_split_env(args)
+    os.environ["PREPROC_ANCHOR_HOURS"] = str(PIPELINE_ANCHOR_HOURS)
+    os.environ["PREPROC_AGG_FREQ"] = PIPELINE_AGG_FREQUENCY
 
     start = time.perf_counter()
     for runner in RUNNERS:

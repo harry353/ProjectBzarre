@@ -1,0 +1,62 @@
+{
+  "cme_count_8h": {
+    "method": "log_z",
+    "mean": 2.3537935445959564,
+    "std": 1.4363061950346403
+  },
+  "cme_strength_sum_8h": {
+    "method": "log_z",
+    "mean": 9.654681918743757,
+    "std": 5.2802818164893806
+  },
+  "cme_influence_exp": {
+    "method": "log_z",
+    "mean": 0.4936106367528119,
+    "std": 0.2032682611883805
+  },
+  "hours_since_last_cme": {
+    "method": "log_z",
+    "mean": 2.4142171070436196,
+    "std": 1.3698493189280658
+  },
+  "last_cme_v_med": {
+    "method": "z",
+    "mean": 492.0524768037317,
+    "std": 380.78251833490344
+  },
+  "effective_width": {
+    "method": "z",
+    "mean": 7.922964612554922,
+    "std": 19.748983033864498
+  },
+  "delta_last_cme_width": {
+    "method": "z",
+    "mean": -1.9553820412716119,
+    "std": 55.88828402136416
+  },
+  "last_cme_shock_proxy": {
+    "method": "z",
+    "mean": 155.53308320235257,
+    "std": 188.05019363239307
+  },
+  "last_cme_width": {
+    "method": "z",
+    "mean": 32.247122648684275,
+    "std": 39.97628817786341
+  },
+  "last_cme_strength": {
+    "method": "z",
+    "mean": 18239.02053440146,
+    "std": 47370.939216599734
+  },
+  "delta_last_cme_speed": {
+    "method": "z",
+    "mean": 4.932819550778279,
+    "std": 460.1641560370199
+  },
+  "last_cme_speed_ratio": {
+    "method": "robust",
+    "median": 1.010600706713781,
+    "iqr": 0.9826471447044591
+  }
+}

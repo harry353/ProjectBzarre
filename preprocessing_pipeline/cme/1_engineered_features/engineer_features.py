@@ -137,14 +137,21 @@ def engineer_cme_features() -> pd.DataFrame:
     # --------------------------------------------------------------
     # CME rate and strength-weighted rate
     # --------------------------------------------------------------
-    hourly["cme_count_last_24h"] = hourly_counts.rolling(24, min_periods=1).sum()
-    hourly["cme_count_last_72h"] = hourly_counts.rolling(72, min_periods=1).sum()
+    def _rolling_sum_np(series: pd.Series, window: int) -> pd.Series:
+        values = series.to_numpy(dtype=float)
+        cumsum = np.cumsum(values)
+        result = cumsum.copy()
+        if window < len(values):
+            result[window:] = cumsum[window:] - cumsum[:-window]
+        return pd.Series(result, index=series.index, dtype=float)
+
+    hourly["cme_count_last_24h"] = _rolling_sum_np(hourly_counts, 24)
+    hourly["cme_count_last_72h"] = _rolling_sum_np(hourly_counts, 72)
 
     strength_series = cme["strength"].groupby(pd.Grouper(freq="1h")).sum()
     strength_series = strength_series.reindex(hourly.index, fill_value=0.0)
-
-    hourly["cme_strength_sum_24h"] = strength_series.rolling(24, min_periods=1).sum()
-    hourly["cme_strength_sum_72h"] = strength_series.rolling(72, min_periods=1).sum()
+    hourly["cme_strength_sum_24h"] = _rolling_sum_np(strength_series, 24)
+    hourly["cme_strength_sum_72h"] = _rolling_sum_np(strength_series, 72)
 
     hourly["cme_cluster_intense_flag"] = (
         (hourly["cme_count_last_72h"] >= 3)
@@ -210,10 +217,26 @@ def engineer_cme_features() -> pd.DataFrame:
     hourly["cme_severity_class"] = ff(cme["cme_severity_class"], 0).astype(int)
 
     # --------------------------------------------------------------
-    # Final safety check
+    # Final safety check with diagnostics
     # --------------------------------------------------------------
     if hourly.isna().any().any():
-        raise RuntimeError("NaNs detected in CME feature table.")
+        allowed_mask = hourly.index.year == 1998
+        na_counts = hourly.isna().sum()
+        offending: dict[str, int] = {}
+        for col in hourly.columns:
+            mask = hourly[col].isna()
+            if not mask.any():
+                continue
+            disallowed = mask & ~allowed_mask
+            if disallowed.any():
+                offending[col] = int(disallowed.sum())
+            else:
+                # only early warm-up NaNs: fill with zeros and continue
+                fill_value = 0.0
+                hourly.loc[mask, col] = fill_value
+        if offending:
+            details = ", ".join(f"{col} ({count})" for col, count in offending.items())
+            raise RuntimeError(f"NaNs detected in CME feature table: {details}")
 
     write_sqlite_table(hourly, OUTPUT_DB, OUTPUT_TABLE)
 

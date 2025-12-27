@@ -33,13 +33,14 @@ def main() -> None:
         SOURCE_DIR / "3_hard_filtering" / "apply_filters.py",
         SOURCE_DIR / "4_imputation" / "run_imputation.py",
         SOURCE_DIR / "5_engineered_features" / "engineer_features.py",
-        SOURCE_DIR / "6_train_test_split" / "create_splits.py",
-        SOURCE_DIR / "7_normalization" / "normalize.py",
+        SOURCE_DIR / "6_aggregate" / "create_aggregate_features.py",
+        SOURCE_DIR / "7_train_test_split" / "create_splits.py",
+        SOURCE_DIR / "8_normalization" / "normalize.py",
     ]
     for script in stages:
         _run_stage(script)
 
-    final_db = SOURCE_DIR / "7_normalization" / "dst_aver_filt_imp_eng_split_norm.db"
+    final_db = SOURCE_DIR / "8_normalization" / "dst_agg_eng_split_norm.db"
     destination = SOURCE_DIR / "dst_fin.db"
     destination.write_bytes(final_db.read_bytes())
     print(f"[OK] DST final database available at {final_db} (copied to {destination})")

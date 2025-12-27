@@ -32,8 +32,8 @@ def _add_dst_features(df: pd.DataFrame) -> pd.DataFrame:
     for lag in range(1, 13):
         working[f"dst_lag_{lag}"] = working["dst"].shift(lag)
 
-    working["dst_mean_6h"] = working["dst"].rolling(window=6, min_periods=1).mean()
-    working["dst_std_6h"] = working["dst"].rolling(window=6, min_periods=1).std()
+    working["dst_mean_6h"] = working["dst"].rolling(window="6h", min_periods=1).mean()
+    working["dst_std_6h"] = working["dst"].rolling(window="6h", min_periods=1).std().fillna(0.0)
     working["dst_derivative"] = working["dst"] - working["dst"].shift(1)
 
     lag_columns = [col for col in working.columns if "lag_" in col]

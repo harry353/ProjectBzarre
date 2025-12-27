@@ -1,0 +1,22 @@
+{
+  "ssn_anomaly_cycle": {
+    "method": "z",
+    "mean": -100340.19967840324,
+    "std": 2710122.1077877837
+  },
+  "ssn_log": {
+    "method": "z",
+    "mean": 3.6756947290278585,
+    "std": 1.6100962621316939
+  },
+  "ssn_slope_27d": {
+    "method": "robust",
+    "median": 0.0,
+    "iqr": 1.706336939721793
+  },
+  "ssn_persistence": {
+    "method": "log_z",
+    "mean": 1.0284419485195926,
+    "std": 1.4455273672849258
+  }
+}

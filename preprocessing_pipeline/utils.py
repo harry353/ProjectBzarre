@@ -22,12 +22,14 @@ def read_timeseries_table(
     with sqlite3.connect(path) as conn:
         columns = ", ".join([time_col, *value_cols])
         df = pd.read_sql_query(
-            f"SELECT {columns} FROM {table}",
+            f"SELECT {columns} FROM {table} ORDER BY {time_col}",
             conn,
             parse_dates=[time_col],
         )
     df = df.dropna(subset=[time_col])
-    df = df.set_index(time_col).sort_index()
+    df[time_col] = pd.to_datetime(df[time_col], utc=True, errors="coerce")
+    df = df.dropna(subset=[time_col])
+    df = df.set_index(time_col)
     return df[value_cols]
 
 

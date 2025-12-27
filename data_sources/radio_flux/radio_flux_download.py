@@ -73,30 +73,45 @@ def _parse_flux_table(text: str) -> pd.DataFrame:
     records = []
     for line in text.splitlines():
         stripped = line.strip()
-        if not stripped or stripped.startswith("fluxdate") or stripped.startswith("-----"):
+        if (
+            not stripped
+            or stripped.startswith("Julian")
+            or stripped.startswith("Number")
+            or stripped.startswith("=")
+            or stripped.lower().startswith("fluxdate")
+            or stripped.startswith("-----")
+        ):
             continue
         parts = stripped.split()
-        if len(parts) < 7:
+        if len(parts) == 7:
+            date_token = parts[0]
+            time_token = parts[1]
+            obs, adj, ursi = parts[4], parts[5], parts[6]
+        elif len(parts) >= 9:
+            date_token = f"{parts[2]}{parts[3]}{parts[4]}"
+            time_token = parts[5]
+            obs, adj, ursi = parts[6], parts[7], parts[8]
+        else:
             continue
-        record = {
-            "fluxdate": parts[0],
-            "fluxtime": parts[1],
-            "fluxobsflux": parts[4],
-            "fluxadjflux": parts[5],
-            "fluxursi": parts[6],
-        }
-        records.append(record)
+
+        if len(time_token) <= 4:
+            time_token = time_token + "00"
+        time_token = time_token.zfill(6)
+
+        records.append(
+            {
+                "time_str": date_token + time_token,
+                "fluxobsflux": obs,
+                "fluxadjflux": adj,
+                "fluxursi": ursi,
+            }
+        )
 
     if not records:
         return pd.DataFrame(columns=RADIO_FLUX_COLUMNS)
 
     df = pd.DataFrame(records)
-    df["time_tag"] = pd.to_datetime(
-        df["fluxdate"].astype(str).str.zfill(8)
-        + df["fluxtime"].astype(str).str.zfill(6),
-        format="%Y%m%d%H%M%S",
-        errors="coerce",
-    )
+    df["time_tag"] = pd.to_datetime(df["time_str"], format="%Y%m%d%H%M%S", errors="coerce")
     df["observed_flux"] = pd.to_numeric(df["fluxobsflux"], errors="coerce")
     df["adjusted_flux"] = pd.to_numeric(df["fluxadjflux"], errors="coerce")
     df["ursi_flux"] = pd.to_numeric(df["fluxursi"], errors="coerce")

@@ -73,18 +73,17 @@ def _assign_cycles(index: pd.DatetimeIndex) -> pd.DataFrame:
 
 
 def _rolling_slope(series: pd.Series, window_hours: int) -> pd.Series:
-    x = np.arange(window_hours, dtype=float) / HOURS_IN_DAY
-    x_mean = x.mean()
-    denom = ((x - x_mean) ** 2).sum()
+    """
+    Approximate rolling slope using the change between current value and the
+    value one full window earlier.
+    """
 
-    def _slope(values: np.ndarray) -> float:
-        if np.isnan(values).any():
-            return np.nan
-        y = values
-        y_mean = y.mean()
-        return float(((x - x_mean) * (y - y_mean)).sum() / denom)
-
-    return series.rolling(window_hours, min_periods=window_hours).apply(_slope, raw=True)
+    if window_hours < 2:
+        raise ValueError("window_hours must be >= 2")
+    lagged = series.shift(window_hours - 1)
+    delta = series - lagged
+    slope_per_hour = delta / (window_hours - 1)
+    return slope_per_hour * HOURS_IN_DAY
 
 
 def _cycle_expanding_quantile(
@@ -93,9 +92,8 @@ def _cycle_expanding_quantile(
     q: float = 0.6,
 ) -> pd.Series:
     return (
-        values
-        .groupby(cycle_ids)
-        .expanding(min_periods=ROLLING_365D)
+        values.groupby(cycle_ids)
+        .expanding(min_periods=ROLLING_365D // 2)
         .quantile(q)
         .reset_index(level=0, drop=True)
     )
@@ -128,10 +126,15 @@ def _add_sunspot_features(df: pd.DataFrame) -> pd.DataFrame:
 
     working["ssn_raw"] = target
     working["ssn_log"] = np.log1p(target.clip(lower=0.0))
-    working["ssn_mean_81d"] = target.rolling(
-        ROLLING_81D, min_periods=ROLLING_81D // 2
-    ).mean()
-    working["ssn_slope_27d"] = _rolling_slope(target, ROLLING_27D)
+    working["ssn_mean_81d"] = (
+        target.rolling(ROLLING_81D, min_periods=1).mean().ffill().bfill()
+    )
+    if working["ssn_mean_81d"].isna().any():
+        working["ssn_mean_81d"] = working["ssn_mean_81d"].fillna(target.expanding().mean())
+    working["ssn_slope_27d"] = pd.to_numeric(
+        _rolling_slope(target, ROLLING_27D),
+        errors="coerce",
+    )
 
     start = cycle_meta["cycle_start"]
     end = cycle_meta["cycle_end"]
@@ -140,19 +143,22 @@ def _add_sunspot_features(df: pd.DataFrame) -> pd.DataFrame:
 
     working["ssn_lag_81d"] = target.shift(81 * HOURS_IN_DAY)
 
-    mu_365 = target.rolling(
-        ROLLING_365D, min_periods=ROLLING_365D
-    ).mean()
+    mu_365 = (
+        target.rolling(ROLLING_365D, min_periods=1)
+        .mean()
+        .ffill()
+        .fillna(target.mean())
+    )
 
     cycle_std = (
         target
         .groupby(cycle_ids)
-        .expanding()
+        .expanding(min_periods=1)
         .std()
         .reset_index(level=0, drop=True)
     )
 
-    safe_cycle_std = cycle_std.clip(lower=STD_FLOOR)
+    safe_cycle_std = cycle_std.fillna(STD_FLOOR).clip(lower=STD_FLOOR)
     working["ssn_anomaly_cycle"] = (target - mu_365) / safe_cycle_std
 
     cycle_threshold = _cycle_expanding_quantile(target, cycle_ids, q=0.6)
@@ -176,9 +182,16 @@ def _add_sunspot_features(df: pd.DataFrame) -> pd.DataFrame:
         [np.inf, -np.inf],
         np.nan,
     )
-
-    working = working.dropna(subset=feature_columns)
-    return working[feature_columns]
+    working["ssn_slope_27d"] = pd.to_numeric(
+        working["ssn_slope_27d"], errors="coerce"
+    ).fillna(
+        target.diff().rolling(ROLLING_27D, min_periods=2).mean() / HOURS_IN_DAY
+    )
+    working["ssn_anomaly_cycle"] = working["ssn_anomaly_cycle"].fillna(0.0)
+    working["ssn_mean_81d"] = working["ssn_mean_81d"].ffill().bfill()
+    working = working.dropna(how="all", subset=feature_columns)
+    result = working[feature_columns].apply(pd.to_numeric, errors="coerce")
+    return result
 
 
 def engineer_sunspot_features() -> pd.DataFrame:
