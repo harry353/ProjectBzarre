@@ -1,0 +1,39 @@
+{
+  "seeds": [
+    1337,
+    2027,
+    3037,
+    4047,
+    5057
+  ],
+  "models": [
+    {
+      "seed": 1337,
+      "val_logloss": 0.08995310767252361,
+      "best_iteration": 807
+    },
+    {
+      "seed": 2027,
+      "val_logloss": 0.09056898338226821,
+      "best_iteration": 807
+    },
+    {
+      "seed": 3037,
+      "val_logloss": 0.09065398967807901,
+      "best_iteration": 807
+    },
+    {
+      "seed": 4047,
+      "val_logloss": 0.08965157775828764,
+      "best_iteration": 807
+    },
+    {
+      "seed": 5057,
+      "val_logloss": 0.09069844189725014,
+      "best_iteration": 807
+    }
+  ],
+  "ensemble_logloss": 0.09026843445146904,
+  "chosen_strategy": "single",
+  "chosen_seed": 4047
+}

@@ -142,6 +142,75 @@ def _add_sw_imf_features(df: pd.DataFrame) -> pd.DataFrame:
             )
 
     # --------------------------------------------------------------
+    # Tier 1: Sustained southward IMF duration
+    # --------------------------------------------------------------
+    southward = (bz < -5.0).astype(int)
+
+    working["hours_bz_south_last_6h"] = (
+        southward.rolling(6).sum().fillna(0.0)
+    )
+    working["hours_bz_south_last_12h"] = (
+        southward.rolling(12).sum().fillna(0.0)
+    )
+
+    # --------------------------------------------------------------
+    # Tier 1: Peak forcing (max over window)
+    # --------------------------------------------------------------
+    working["newell_dphi_dt_max_6h"] = (
+        working["newell_dphi_dt"].rolling(6).max().fillna(0.0)
+    )
+    working["epsilon_max_6h"] = (
+        working["epsilon"].rolling(6).max().fillna(0.0)
+    )
+    working["vbs_max_6h"] = (
+        working["vbs"].rolling(6).max().fillna(0.0)
+    )
+
+    # --------------------------------------------------------------
+    # Tier 1: Shock / compression proxies
+    # --------------------------------------------------------------
+    working["delta_pdyn_1h"] = (
+        working["dynamic_pressure"].diff().fillna(0.0)
+    )
+    working["pdyn_max_3h"] = (
+        working["dynamic_pressure"].rolling(3).max().fillna(0.0)
+    )
+
+    # --------------------------------------------------------------
+    # Tier 1: IMF turning behavior
+    # --------------------------------------------------------------
+    working["bz_turning_rate_3h"] = (
+        bz.diff().abs().rolling(3).max().fillna(0.0)
+    )
+
+    bz_sign = np.sign(bz)
+    flip = (bz_sign != bz_sign.shift()).astype(int)
+    working["bz_flip_flag_2h"] = (
+        flip.rolling(2).max().fillna(0).astype(int)
+    )
+
+    # --------------------------------------------------------------
+    # Tier 2: Integrated forcing
+    # --------------------------------------------------------------
+    working["vbs_int_6h"] = (
+        working["vbs"].rolling(6).sum().fillna(0.0)
+    )
+    working["newell_dphi_dt_int_6h"] = (
+        working["newell_dphi_dt"].rolling(6).sum().fillna(0.0)
+    )
+
+    # --------------------------------------------------------------
+    # Tier 2: IMF variability
+    # --------------------------------------------------------------
+    working["bz_std_6h"] = (
+        bz.rolling(6).std().fillna(0.0)
+    )
+    working["bt_std_6h"] = (
+        bt.rolling(6).std().fillna(0.0)
+    )
+
+
+    # --------------------------------------------------------------
     # Final NaN check (hard fail)
     # --------------------------------------------------------------
     engineered_cols = [
@@ -165,6 +234,19 @@ def _add_sw_imf_features(df: pd.DataFrame) -> pd.DataFrame:
         "delta_speed",
         "southward_flag",
         "high_speed_flag",
+        "hours_bz_south_last_6h",
+        "hours_bz_south_last_12h",
+        "newell_dphi_dt_max_6h",
+        "epsilon_max_6h",
+        "vbs_max_6h",
+        "delta_pdyn_1h",
+        "pdyn_max_3h",
+        "bz_turning_rate_3h",
+        "bz_flip_flag_2h",
+        "vbs_int_6h",
+        "newell_dphi_dt_int_6h",
+        "bz_std_6h",
+        "bt_std_6h",
     ]
 
     lag_cols = [

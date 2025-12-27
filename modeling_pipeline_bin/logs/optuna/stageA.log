@@ -1,0 +1,449 @@
+2025-12-14 00:07:59,671 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-14 00:08:48,452 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-14 00:10:16,301 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-14 00:32:49,830 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-14 00:57:47,626 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-14 00:58:40,467 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-14 00:58:53,212 - INFO - Trial 0: lr=0.048867 val_mae=0.403115
+2025-12-14 00:59:02,574 - INFO - Trial 1: lr=0.085481 val_mae=0.423974
+2025-12-14 00:59:11,443 - INFO - Trial 2: lr=0.037265 val_mae=0.403508
+2025-12-14 00:59:22,728 - INFO - Trial 3: lr=0.015771 val_mae=0.395162
+2025-12-14 00:59:32,492 - INFO - Trial 4: lr=0.009628 val_mae=0.393720
+2025-12-14 00:59:41,525 - INFO - Trial 5: lr=0.012422 val_mae=0.395719
+2025-12-14 00:59:50,345 - INFO - Trial 6: lr=0.013155 val_mae=0.396314
+2025-12-14 00:59:59,241 - INFO - Trial 7: lr=0.097036 val_mae=0.418050
+2025-12-14 01:00:08,837 - INFO - Trial 8: lr=0.015198 val_mae=0.393752
+2025-12-14 01:00:18,122 - INFO - Trial 9: lr=0.123027 val_mae=0.430955
+2025-12-14 01:00:28,043 - INFO - Trial 10: lr=0.005394 val_mae=0.396433
+2025-12-14 01:00:38,859 - INFO - Trial 11: lr=0.005097 val_mae=0.396353
+2025-12-14 01:00:50,855 - INFO - Trial 12: lr=0.020965 val_mae=0.396774
+2025-12-14 01:01:03,680 - INFO - Trial 13: lr=0.008873 val_mae=0.394297
+2025-12-14 01:01:48,633 - INFO - Trial 14: lr=0.022505 val_mae=0.399095
+2025-12-14 01:02:04,493 - INFO - Trial 15: lr=0.008132 val_mae=0.393828
+2025-12-14 01:02:19,188 - INFO - Trial 16: lr=0.027372 val_mae=0.399235
+2025-12-14 01:02:50,323 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-14 01:03:03,509 - INFO - Trial 18: lr=0.009003 val_mae=0.393708
+2025-12-14 01:03:16,691 - INFO - Trial 19: lr=0.008168 val_mae=0.394090
+2025-12-14 01:03:29,070 - INFO - Trial 20: lr=0.043662 val_mae=0.402479
+2025-12-14 01:03:38,675 - INFO - Trial 21: lr=0.181938 val_mae=0.440554
+2025-12-14 01:03:48,444 - INFO - Trial 22: lr=0.010095 val_mae=0.394366
+2025-12-14 01:04:03,586 - INFO - Trial 23: lr=0.016700 val_mae=0.397245
+2025-12-14 01:04:17,228 - INFO - Trial 24: lr=0.006321 val_mae=0.394356
+2025-12-14 01:04:29,074 - INFO - Trial 25: lr=0.012236 val_mae=0.395270
+2025-12-14 01:04:41,921 - INFO - Trial 26: lr=0.018367 val_mae=0.396765
+2025-12-14 01:04:56,281 - INFO - Trial 27: lr=0.007464 val_mae=0.394130
+2025-12-14 01:05:07,817 - INFO - Trial 28: lr=0.029375 val_mae=0.401403
+2025-12-14 01:05:20,594 - INFO - Trial 29: lr=0.010114 val_mae=0.394272
+2025-12-14 01:05:33,840 - INFO - Trial 30: lr=0.006758 val_mae=0.394606
+2025-12-14 01:05:45,611 - INFO - Trial 31: lr=0.057650 val_mae=0.406221
+2025-12-14 01:05:58,012 - INFO - Trial 32: lr=0.010899 val_mae=0.395136
+2025-12-14 01:06:08,191 - INFO - Trial 33: lr=0.015164 val_mae=0.394569
+2025-12-14 01:06:22,975 - INFO - Trial 34: lr=0.008582 val_mae=0.394317
+2025-12-14 01:06:35,936 - INFO - Trial 35: lr=0.006307 val_mae=0.394296
+2025-12-14 01:06:45,711 - INFO - Trial 36: lr=0.013508 val_mae=0.396023
+2025-12-14 01:06:55,410 - INFO - Trial 37: lr=0.021846 val_mae=0.397656
+2025-12-14 01:07:06,227 - INFO - Trial 38: lr=0.009849 val_mae=0.393413
+2025-12-14 01:07:15,196 - INFO - Trial 39: lr=0.010728 val_mae=0.394655
+2025-12-14 01:07:24,861 - INFO - Trial 40: lr=0.013805 val_mae=0.395227
+2025-12-14 01:07:34,792 - INFO - Trial 41: lr=0.037542 val_mae=0.402283
+2025-12-14 01:07:47,086 - INFO - Trial 42: lr=0.007570 val_mae=0.393950
+2025-12-14 01:07:58,244 - INFO - Trial 43: lr=0.008952 val_mae=0.393744
+2025-12-14 01:08:09,855 - INFO - Trial 44: lr=0.005569 val_mae=0.395583
+2025-12-14 01:08:20,254 - INFO - Trial 45: lr=0.011975 val_mae=0.394944
+2025-12-14 01:08:32,355 - INFO - Trial 46: lr=0.009383 val_mae=0.393999
+2025-12-14 01:08:42,771 - INFO - Trial 47: lr=0.017720 val_mae=0.396414
+2025-12-14 01:08:52,928 - INFO - Trial 48: lr=0.006925 val_mae=0.394402
+2025-12-14 01:09:01,620 - INFO - Trial 49: lr=0.024731 val_mae=0.397159
+2025-12-14 01:09:11,959 - INFO - Trial 50: lr=0.062888 val_mae=0.413168
+2025-12-14 01:09:23,843 - INFO - Trial 51: lr=0.015120 val_mae=0.395040
+2025-12-14 01:09:35,001 - INFO - Trial 52: lr=0.008372 val_mae=0.393629
+2025-12-14 01:09:46,965 - INFO - Trial 53: lr=0.005743 val_mae=0.395181
+2025-12-14 01:09:57,215 - INFO - Trial 54: lr=0.012337 val_mae=0.395237
+2025-12-14 01:10:09,428 - INFO - Trial 55: lr=0.008905 val_mae=0.393778
+2025-12-14 01:10:21,325 - INFO - Trial 56: lr=0.011016 val_mae=0.394504
+2025-12-14 01:10:30,687 - INFO - Trial 57: lr=0.008233 val_mae=0.394345
+2025-12-14 01:10:43,395 - INFO - Trial 58: lr=0.009864 val_mae=0.393737
+2025-12-14 01:10:55,176 - INFO - Trial 59: lr=0.005086 val_mae=0.396426
+2025-12-14 01:11:06,904 - INFO - Trial 60: lr=0.009463 val_mae=0.393973
+2025-12-14 01:11:19,185 - INFO - Trial 61: lr=0.007767 val_mae=0.394291
+2025-12-14 01:11:30,421 - INFO - Trial 62: lr=0.006952 val_mae=0.394115
+2025-12-14 01:11:41,512 - INFO - Trial 63: lr=0.011503 val_mae=0.394261
+2025-12-14 01:11:54,979 - INFO - Trial 64: lr=0.019910 val_mae=0.399362
+2025-12-14 01:12:09,272 - INFO - Trial 65: lr=0.009716 val_mae=0.393989
+2025-12-14 01:12:19,699 - INFO - Trial 66: lr=0.014835 val_mae=0.395819
+2025-12-14 01:12:31,829 - INFO - Trial 67: lr=0.006164 val_mae=0.394851
+2025-12-14 01:12:31,839 - INFO - Best trial: lr=0.009849 val_mae=0.393413
+2025-12-14 01:12:31,840 - INFO - Best learning rate saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline/optuna_studies/stageA_learning_rate/best_lr.json
+2025-12-14 01:12:31,840 - INFO - === Stage A Optimization Complete ===
+2025-12-14 17:28:10,577 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-14 17:28:20,204 - INFO - Trial 68: lr=0.013161 val_mae=0.394798
+2025-12-14 17:28:33,909 - INFO - Trial 69: lr=0.008957 val_mae=0.393674
+2025-12-14 17:28:47,840 - INFO - Trial 70: lr=0.008491 val_mae=0.393965
+2025-12-14 17:29:03,230 - INFO - Trial 71: lr=0.007328 val_mae=0.394413
+2025-12-14 17:29:12,977 - INFO - Trial 72: lr=0.010397 val_mae=0.394618
+2025-12-14 17:29:21,461 - INFO - Trial 73: lr=0.009090 val_mae=0.393859
+2025-12-14 17:29:30,468 - INFO - Trial 74: lr=0.006413 val_mae=0.394667
+2025-12-14 17:29:38,387 - INFO - Trial 75: lr=0.010285 val_mae=0.394762
+2025-12-14 17:29:46,350 - INFO - Trial 76: lr=0.007960 val_mae=0.394270
+2025-12-14 17:29:58,387 - INFO - Trial 77: lr=0.016822 val_mae=0.394802
+2025-12-14 17:30:06,983 - INFO - Trial 78: lr=0.127082 val_mae=0.421367
+2025-12-14 17:30:17,324 - INFO - Trial 79: lr=0.013776 val_mae=0.396502
+2025-12-14 17:30:29,730 - INFO - Trial 80: lr=0.011312 val_mae=0.394756
+2025-12-14 17:30:38,643 - INFO - Trial 81: lr=0.008958 val_mae=0.393707
+2025-12-14 17:30:47,267 - INFO - Trial 82: lr=0.008921 val_mae=0.394031
+2025-12-14 17:30:57,052 - INFO - Trial 83: lr=0.007585 val_mae=0.393177
+2025-12-14 17:31:06,599 - INFO - Trial 84: lr=0.007155 val_mae=0.393443
+2025-12-14 17:31:15,772 - INFO - Trial 85: lr=0.007152 val_mae=0.393771
+2025-12-14 17:31:27,730 - INFO - Trial 86: lr=0.005865 val_mae=0.395161
+2025-12-14 17:31:40,283 - INFO - Trial 87: lr=0.006594 val_mae=0.394796
+2025-12-14 17:31:50,917 - INFO - Trial 88: lr=0.007900 val_mae=0.393623
+2025-12-14 17:32:02,721 - INFO - Trial 89: lr=0.007796 val_mae=0.393555
+2025-12-14 17:32:14,569 - INFO - Trial 90: lr=0.005329 val_mae=0.396225
+2025-12-14 17:32:24,625 - INFO - Trial 91: lr=0.007802 val_mae=0.393601
+2025-12-14 17:32:35,612 - INFO - Trial 92: lr=0.007793 val_mae=0.394273
+2025-12-14 17:32:46,275 - INFO - Trial 93: lr=0.006037 val_mae=0.394662
+2025-12-14 17:32:58,603 - INFO - Trial 94: lr=0.007265 val_mae=0.393716
+2025-12-14 17:33:09,383 - INFO - Trial 95: lr=0.007990 val_mae=0.394708
+2025-12-14 17:33:21,564 - INFO - Trial 96: lr=0.008371 val_mae=0.394627
+2025-12-14 17:33:34,605 - INFO - Trial 97: lr=0.006854 val_mae=0.393990
+2025-12-14 17:33:43,912 - INFO - Trial 98: lr=0.009347 val_mae=0.393881
+2025-12-14 17:33:54,534 - INFO - Trial 99: lr=0.005007 val_mae=0.396280
+2025-12-14 17:34:05,008 - INFO - Trial 100: lr=0.006540 val_mae=0.394968
+2025-12-14 17:34:14,239 - INFO - Trial 101: lr=0.005728 val_mae=0.395318
+2025-12-14 17:34:25,675 - INFO - Trial 102: lr=0.007421 val_mae=0.394028
+2025-12-14 17:34:37,411 - INFO - Trial 103: lr=0.007230 val_mae=0.393776
+2025-12-14 17:34:48,253 - INFO - Trial 104: lr=0.008517 val_mae=0.394331
+2025-12-14 17:34:58,934 - INFO - Trial 105: lr=0.010189 val_mae=0.395349
+2025-12-14 17:35:11,150 - INFO - Trial 106: lr=0.007669 val_mae=0.393988
+2025-12-14 17:35:19,799 - INFO - Trial 107: lr=0.034120 val_mae=0.399972
+2025-12-14 17:35:29,795 - INFO - Trial 108: lr=0.012027 val_mae=0.395014
+2025-12-14 17:35:40,660 - INFO - Trial 109: lr=0.008535 val_mae=0.393954
+2025-12-14 17:35:48,657 - INFO - Trial 110: lr=0.009581 val_mae=0.393318
+2025-12-14 17:35:57,247 - INFO - Trial 111: lr=0.009537 val_mae=0.393818
+2025-12-14 17:36:05,499 - INFO - Trial 112: lr=0.011033 val_mae=0.394850
+2025-12-14 17:36:14,754 - INFO - Trial 113: lr=0.006612 val_mae=0.394517
+2025-12-14 17:36:23,060 - INFO - Trial 114: lr=0.008040 val_mae=0.394305
+2025-12-14 17:36:31,612 - INFO - Trial 115: lr=0.007151 val_mae=0.393954
+2025-12-14 17:36:40,997 - INFO - Trial 116: lr=0.008970 val_mae=0.393804
+2025-12-14 17:36:49,006 - INFO - Trial 117: lr=0.009807 val_mae=0.393544
+2025-12-14 17:36:49,016 - INFO - Best trial: lr=0.007585 val_mae=0.393177
+2025-12-14 17:36:49,017 - INFO - Best learning rate saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline/optuna_studies/stageA_learning_rate/best_lr.json
+2025-12-14 17:36:49,017 - INFO - === Stage A Optimization Complete ===
+2025-12-15 23:53:07,956 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-15 23:55:00,055 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-15 23:55:43,642 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-16 00:15:57,574 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-16 00:16:41,109 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-16 00:20:26,422 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-16 00:39:35,486 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-16 00:40:06,863 - INFO - Trial 119: lr=0.010635 val_mae=0.256770
+2025-12-16 00:40:41,869 - INFO - Trial 120: lr=0.010047 val_mae=0.256474
+2025-12-16 00:41:11,273 - INFO - Trial 121: lr=0.012748 val_mae=0.256366
+2025-12-16 00:41:43,935 - INFO - Trial 122: lr=0.012506 val_mae=0.256620
+2025-12-16 00:42:15,419 - INFO - Trial 123: lr=0.011877 val_mae=0.256021
+2025-12-16 00:42:45,338 - INFO - Trial 124: lr=0.012894 val_mae=0.256554
+2025-12-16 00:43:16,859 - INFO - Trial 125: lr=0.014558 val_mae=0.257202
+2025-12-16 00:43:44,824 - INFO - Trial 126: lr=0.012825 val_mae=0.256534
+2025-12-16 00:44:16,691 - INFO - Trial 127: lr=0.012485 val_mae=0.256571
+2025-12-16 00:44:46,784 - INFO - Trial 128: lr=0.012871 val_mae=0.256990
+2025-12-16 00:45:19,333 - INFO - Trial 129: lr=0.012983 val_mae=0.256276
+2025-12-16 00:45:48,069 - INFO - Trial 130: lr=0.013055 val_mae=0.257246
+2025-12-16 00:46:17,986 - INFO - Trial 131: lr=0.014264 val_mae=0.256864
+2025-12-16 00:46:48,158 - INFO - Trial 132: lr=0.013093 val_mae=0.257117
+2025-12-16 00:47:17,117 - INFO - Trial 133: lr=0.014118 val_mae=0.256700
+2025-12-16 00:47:46,174 - INFO - Trial 134: lr=0.014400 val_mae=0.257610
+2025-12-16 00:48:15,665 - INFO - Trial 135: lr=0.016074 val_mae=0.256702
+2025-12-16 00:48:45,920 - INFO - Trial 136: lr=0.012664 val_mae=0.256427
+2025-12-16 00:49:13,290 - INFO - Trial 137: lr=0.016290 val_mae=0.256771
+2025-12-16 00:49:42,791 - INFO - Trial 138: lr=0.016463 val_mae=0.257609
+2025-12-16 00:50:09,678 - INFO - Trial 139: lr=0.018939 val_mae=0.257226
+2025-12-16 00:50:40,239 - INFO - Trial 140: lr=0.015756 val_mae=0.257111
+2025-12-16 00:51:13,561 - INFO - Trial 141: lr=0.011825 val_mae=0.256662
+2025-12-16 00:51:43,679 - INFO - Trial 142: lr=0.012095 val_mae=0.257297
+2025-12-16 00:52:11,991 - INFO - Trial 143: lr=0.014130 val_mae=0.256530
+2025-12-16 00:52:41,228 - INFO - Trial 144: lr=0.011489 val_mae=0.257071
+2025-12-16 00:53:12,505 - INFO - Trial 145: lr=0.017261 val_mae=0.258382
+2025-12-16 00:53:40,847 - INFO - Trial 146: lr=0.015797 val_mae=0.256984
+2025-12-16 00:54:10,768 - INFO - Trial 147: lr=0.012405 val_mae=0.256223
+2025-12-16 00:54:40,064 - INFO - Trial 148: lr=0.012640 val_mae=0.256097
+2025-12-16 00:55:10,677 - INFO - Trial 149: lr=0.012509 val_mae=0.257292
+2025-12-16 00:55:39,828 - INFO - Trial 150: lr=0.013796 val_mae=0.256780
+2025-12-16 00:56:08,418 - INFO - Trial 151: lr=0.011830 val_mae=0.257029
+2025-12-16 00:56:37,925 - INFO - Trial 152: lr=0.013600 val_mae=0.256528
+2025-12-16 00:57:06,787 - INFO - Trial 153: lr=0.013339 val_mae=0.256760
+2025-12-16 00:57:37,171 - INFO - Trial 154: lr=0.015278 val_mae=0.257133
+2025-12-16 00:58:05,143 - INFO - Trial 155: lr=0.012467 val_mae=0.256426
+2025-12-16 00:58:37,997 - INFO - Trial 156: lr=0.011120 val_mae=0.257149
+2025-12-16 00:59:06,608 - INFO - Trial 157: lr=0.012249 val_mae=0.256667
+2025-12-16 00:59:37,839 - INFO - Trial 158: lr=0.012299 val_mae=0.257178
+2025-12-16 01:00:07,682 - INFO - Trial 159: lr=0.011303 val_mae=0.257881
+2025-12-16 01:00:42,313 - INFO - Trial 160: lr=0.012660 val_mae=0.256761
+2025-12-16 01:01:11,836 - INFO - Trial 161: lr=0.010574 val_mae=0.256174
+2025-12-16 01:01:43,009 - INFO - Trial 162: lr=0.010746 val_mae=0.256640
+2025-12-16 01:02:12,376 - INFO - Trial 163: lr=0.010365 val_mae=0.256439
+2025-12-16 01:02:42,478 - INFO - Trial 164: lr=0.010635 val_mae=0.256323
+2025-12-16 01:03:22,187 - INFO - Trial 165: lr=0.013535 val_mae=0.255676
+2025-12-16 01:04:15,876 - INFO - Trial 166: lr=0.010844 val_mae=0.257046
+2025-12-16 01:05:00,438 - INFO - Trial 167: lr=0.013521 val_mae=0.257088
+2025-12-16 01:05:40,640 - INFO - Trial 168: lr=0.010253 val_mae=0.256530
+2025-12-16 01:05:40,651 - INFO - Best trial: lr=0.013535 val_mae=0.255676
+2025-12-16 01:05:40,652 - INFO - Best learning rate saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline/optuna_studies/stageA_learning_rate/best_lr.json
+2025-12-16 01:05:40,652 - INFO - === Stage A Optimization Complete ===
+2025-12-17 18:02:16,078 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-17 18:09:43,262 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-17 18:10:01,714 - INFO - Trial 169: lr=0.014672 val_logloss=0.165527
+2025-12-17 18:10:26,761 - INFO - Trial 170: lr=0.010236 val_logloss=0.164554
+2025-12-17 18:10:45,237 - INFO - Trial 171: lr=0.010155 val_logloss=0.164588
+2025-12-17 18:11:20,924 - INFO - Trial 172: lr=0.023374 val_logloss=0.167347
+2025-12-17 18:11:38,490 - INFO - Trial 173: lr=0.024131 val_logloss=0.167808
+2025-12-17 18:11:59,488 - INFO - Trial 174: lr=0.028530 val_logloss=0.166933
+2025-12-17 18:12:22,389 - INFO - Trial 175: lr=0.021159 val_logloss=0.165999
+2025-12-17 18:12:40,565 - INFO - Trial 176: lr=0.023635 val_logloss=0.167028
+2025-12-17 18:13:02,102 - INFO - Trial 177: lr=0.025632 val_logloss=0.167311
+2025-12-17 18:13:19,715 - INFO - Trial 178: lr=0.024660 val_logloss=0.167680
+2025-12-17 18:13:37,301 - INFO - Trial 179: lr=0.025364 val_logloss=0.167029
+2025-12-17 18:13:57,173 - INFO - Trial 180: lr=0.025114 val_logloss=0.166808
+2025-12-17 18:14:13,669 - INFO - Trial 181: lr=0.024599 val_logloss=0.167034
+2025-12-17 18:14:30,464 - INFO - Trial 182: lr=0.025028 val_logloss=0.167684
+2025-12-17 18:14:47,116 - INFO - Trial 183: lr=0.024376 val_logloss=0.167988
+2025-12-17 18:15:05,142 - INFO - Trial 184: lr=0.024405 val_logloss=0.166866
+2025-12-17 18:15:22,244 - INFO - Trial 185: lr=0.024401 val_logloss=0.167633
+2025-12-17 18:15:39,157 - INFO - Trial 186: lr=0.024426 val_logloss=0.167429
+2025-12-17 18:15:56,987 - INFO - Trial 187: lr=0.024668 val_logloss=0.167625
+2025-12-17 18:16:13,434 - INFO - Trial 188: lr=0.024401 val_logloss=0.167633
+2025-12-17 18:16:29,890 - INFO - Trial 189: lr=0.028279 val_logloss=0.168100
+2025-12-17 18:16:46,668 - INFO - Trial 190: lr=0.025769 val_logloss=0.167794
+2025-12-17 18:17:04,057 - INFO - Trial 191: lr=0.026187 val_logloss=0.167203
+2025-12-17 18:17:21,294 - INFO - Trial 192: lr=0.022461 val_logloss=0.166426
+2025-12-17 18:17:38,835 - INFO - Trial 193: lr=0.021504 val_logloss=0.166551
+2025-12-17 18:17:57,551 - INFO - Trial 194: lr=0.022019 val_logloss=0.166677
+2025-12-17 18:18:14,301 - INFO - Trial 195: lr=0.031503 val_logloss=0.169717
+2025-12-17 18:18:31,280 - INFO - Trial 196: lr=0.021363 val_logloss=0.166833
+2025-12-17 18:18:48,437 - INFO - Trial 197: lr=0.021060 val_logloss=0.167681
+2025-12-17 18:19:05,953 - INFO - Trial 198: lr=0.022461 val_logloss=0.167057
+2025-12-17 18:19:22,780 - INFO - Trial 199: lr=0.022751 val_logloss=0.167109
+2025-12-17 18:19:39,776 - INFO - Trial 200: lr=0.021967 val_logloss=0.166451
+2025-12-17 18:19:57,187 - INFO - Trial 201: lr=0.022261 val_logloss=0.167511
+2025-12-17 18:20:15,001 - INFO - Trial 202: lr=0.019710 val_logloss=0.166112
+2025-12-17 18:20:31,854 - INFO - Trial 203: lr=0.020096 val_logloss=0.166091
+2025-12-17 18:20:48,975 - INFO - Trial 204: lr=0.019873 val_logloss=0.166358
+2025-12-17 18:21:06,173 - INFO - Trial 205: lr=0.021152 val_logloss=0.167182
+2025-12-17 18:21:23,234 - INFO - Trial 206: lr=0.019672 val_logloss=0.166535
+2025-12-17 18:21:40,387 - INFO - Trial 207: lr=0.018600 val_logloss=0.166157
+2025-12-17 18:21:58,693 - INFO - Trial 208: lr=0.020071 val_logloss=0.166371
+2025-12-17 18:22:16,292 - INFO - Trial 209: lr=0.019254 val_logloss=0.166018
+2025-12-17 18:22:33,203 - INFO - Trial 210: lr=0.018996 val_logloss=0.166966
+2025-12-17 18:22:50,172 - INFO - Trial 211: lr=0.018749 val_logloss=0.166602
+2025-12-17 18:23:07,928 - INFO - Trial 212: lr=0.019224 val_logloss=0.166364
+2025-12-17 18:23:25,155 - INFO - Trial 213: lr=0.018894 val_logloss=0.166554
+2025-12-17 18:23:42,197 - INFO - Trial 214: lr=0.019854 val_logloss=0.166052
+2025-12-17 18:23:59,281 - INFO - Trial 215: lr=0.019962 val_logloss=0.166709
+2025-12-17 18:24:17,147 - INFO - Trial 216: lr=0.019523 val_logloss=0.166536
+2025-12-17 18:24:34,106 - INFO - Trial 217: lr=0.019762 val_logloss=0.165624
+2025-12-17 18:24:50,690 - INFO - Trial 218: lr=0.019732 val_logloss=0.166277
+2025-12-17 18:24:50,701 - INFO - Best trial: lr=0.010236 val_logloss=0.164554
+2025-12-17 18:24:50,702 - INFO - Best learning rate saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline/optuna_studies/stageA_learning_rate/best_lr.json
+2025-12-17 18:24:50,702 - INFO - === Stage A Optimization Complete ===
+2025-12-17 21:41:41,713 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-18 11:43:08,109 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-18 11:45:48,895 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-18 11:46:14,487 - INFO - Trial 219: lr=0.019572 val_logloss=0.082247
+2025-12-18 11:46:31,330 - INFO - Trial 220: lr=0.018508 val_logloss=0.082212
+2025-12-18 11:46:47,942 - INFO - Trial 221: lr=0.019676 val_logloss=0.082343
+2025-12-18 11:47:05,744 - INFO - Trial 222: lr=0.017625 val_logloss=0.082226
+2025-12-18 11:47:22,881 - INFO - Trial 223: lr=0.019927 val_logloss=0.082346
+2025-12-18 11:47:40,547 - INFO - Trial 224: lr=0.017814 val_logloss=0.082282
+2025-12-18 11:47:58,742 - INFO - Trial 225: lr=0.017661 val_logloss=0.082209
+2025-12-18 11:48:15,340 - INFO - Trial 226: lr=0.017651 val_logloss=0.082229
+2025-12-18 11:48:32,944 - INFO - Trial 227: lr=0.017597 val_logloss=0.082306
+2025-12-18 11:48:50,332 - INFO - Trial 228: lr=0.017583 val_logloss=0.082260
+2025-12-18 11:49:08,417 - INFO - Trial 229: lr=0.017662 val_logloss=0.082181
+2025-12-18 11:49:25,266 - INFO - Trial 230: lr=0.017499 val_logloss=0.082261
+2025-12-18 11:49:42,228 - INFO - Trial 231: lr=0.017626 val_logloss=0.082189
+2025-12-18 11:50:00,049 - INFO - Trial 232: lr=0.017881 val_logloss=0.082211
+2025-12-18 11:58:56,111 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-18 11:59:16,325 - INFO - Trial 0: lr=0.016612 val_logloss=0.082120
+2025-12-18 11:59:32,968 - INFO - Trial 1: lr=0.029768 val_logloss=0.082513
+2025-12-18 11:59:52,008 - INFO - Trial 2: lr=0.007854 val_logloss=0.082291
+2025-12-18 12:00:10,062 - INFO - Trial 3: lr=0.018030 val_logloss=0.082409
+2025-12-18 12:00:27,108 - INFO - Trial 4: lr=0.013783 val_logloss=0.082024
+2025-12-18 12:00:27,119 - INFO - Best trial: lr=0.013783 val_logloss=0.082024
+2025-12-18 12:00:27,120 - INFO - Best learning rate saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline/optuna_studies/stageA_learning_rate/best_lr.json
+2025-12-18 12:00:27,120 - INFO - === Stage A Optimization Complete ===
+2025-12-18 12:22:22,318 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-18 12:22:43,497 - INFO - Trial 5: lr=0.044895 val_logloss=0.082979
+2025-12-18 12:23:04,052 - INFO - Trial 6: lr=0.173440 val_logloss=0.095589
+2025-12-18 12:23:26,627 - INFO - Trial 7: lr=0.006014 val_logloss=0.083032
+2025-12-18 12:23:48,021 - INFO - Trial 8: lr=0.126162 val_logloss=0.090234
+2025-12-18 12:24:10,833 - INFO - Trial 9: lr=0.059070 val_logloss=0.084285
+2025-12-18 12:24:10,843 - INFO - Best trial: lr=0.013783 val_logloss=0.082024
+2025-12-18 12:24:10,844 - INFO - Best learning rate saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline/optuna_studies/stageA_learning_rate/best_lr.json
+2025-12-18 12:24:10,844 - INFO - === Stage A Optimization Complete ===
+2025-12-18 12:58:18,124 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-18 12:58:40,408 - INFO - Trial 10: lr=0.013122 val_logloss=0.082026
+2025-12-18 12:59:03,693 - INFO - Trial 11: lr=0.012117 val_logloss=0.081996
+2025-12-18 12:59:25,135 - INFO - Trial 12: lr=0.009673 val_logloss=0.082100
+2025-12-18 12:59:45,759 - INFO - Trial 13: lr=0.025066 val_logloss=0.082275
+2025-12-18 13:00:07,472 - INFO - Trial 14: lr=0.005280 val_logloss=0.083710
+2025-12-18 13:00:29,638 - INFO - Trial 15: lr=0.011345 val_logloss=0.082062
+2025-12-18 13:00:51,130 - INFO - Trial 16: lr=0.052293 val_logloss=0.083901
+2025-12-18 13:01:12,478 - INFO - Trial 17: lr=0.020138 val_logloss=0.082330
+2025-12-18 13:01:34,166 - INFO - Trial 18: lr=0.008229 val_logloss=0.082315
+2025-12-18 13:01:55,740 - INFO - Trial 19: lr=0.088751 val_logloss=0.086799
+2025-12-18 13:02:16,229 - INFO - Trial 20: lr=0.038496 val_logloss=0.082969
+2025-12-18 13:02:38,243 - INFO - Trial 21: lr=0.012840 val_logloss=0.082018
+2025-12-18 13:03:00,155 - INFO - Trial 22: lr=0.014538 val_logloss=0.082088
+2025-12-18 13:03:21,460 - INFO - Trial 23: lr=0.023863 val_logloss=0.082281
+2025-12-18 13:03:44,493 - INFO - Trial 24: lr=0.007188 val_logloss=0.082496
+2025-12-18 13:04:07,154 - INFO - Trial 25: lr=0.010970 val_logloss=0.082022
+2025-12-18 13:04:28,594 - INFO - Trial 26: lr=0.010321 val_logloss=0.082046
+2025-12-18 13:04:50,411 - INFO - Trial 27: lr=0.010203 val_logloss=0.082060
+2025-12-18 13:05:12,266 - INFO - Trial 28: lr=0.019536 val_logloss=0.082242
+2025-12-18 13:05:36,279 - INFO - Trial 29: lr=0.006393 val_logloss=0.082842
+2025-12-18 13:05:59,433 - INFO - Trial 30: lr=0.015640 val_logloss=0.082089
+2025-12-18 13:06:22,152 - INFO - Trial 31: lr=0.012871 val_logloss=0.082030
+2025-12-18 13:06:44,418 - INFO - Trial 32: lr=0.034085 val_logloss=0.082802
+2025-12-18 13:07:07,480 - INFO - Trial 33: lr=0.025986 val_logloss=0.082283
+2025-12-18 13:07:31,923 - INFO - Trial 34: lr=0.009164 val_logloss=0.082165
+2025-12-18 13:07:54,051 - INFO - Trial 35: lr=0.016233 val_logloss=0.082104
+2025-12-18 13:08:18,885 - INFO - Trial 36: lr=0.012319 val_logloss=0.081993
+2025-12-18 13:08:42,224 - INFO - Trial 37: lr=0.007475 val_logloss=0.082417
+2025-12-18 13:09:07,145 - INFO - Trial 38: lr=0.011997 val_logloss=0.082005
+2025-12-18 13:09:28,366 - INFO - Trial 39: lr=0.020234 val_logloss=0.082200
+2025-12-18 13:09:51,590 - INFO - Trial 40: lr=0.012480 val_logloss=0.081984
+2025-12-18 13:10:17,378 - INFO - Trial 41: lr=0.012446 val_logloss=0.081999
+2025-12-18 13:10:37,655 - INFO - Trial 42: lr=0.017319 val_logloss=0.082188
+2025-12-18 13:11:04,593 - INFO - Trial 43: lr=0.008011 val_logloss=0.082291
+2025-12-18 13:11:49,365 - INFO - Trial 44: lr=0.012018 val_logloss=0.082008
+2025-12-18 13:12:13,954 - INFO - Trial 45: lr=0.005128 val_logloss=0.083886
+2025-12-18 13:12:51,835 - INFO - Trial 46: lr=0.009295 val_logloss=0.082176
+2025-12-18 13:13:39,704 - INFO - Trial 47: lr=0.014892 val_logloss=0.082086
+2025-12-18 13:14:00,590 - INFO - Trial 48: lr=0.030559 val_logloss=0.082221
+2025-12-18 13:14:23,703 - INFO - Trial 49: lr=0.006456 val_logloss=0.082845
+2025-12-18 13:14:45,492 - INFO - Trial 50: lr=0.021392 val_logloss=0.082299
+2025-12-18 13:15:06,960 - INFO - Trial 51: lr=0.012185 val_logloss=0.082037
+2025-12-18 13:15:28,987 - INFO - Trial 52: lr=0.012047 val_logloss=0.082031
+2025-12-18 13:15:50,868 - INFO - Trial 53: lr=0.008888 val_logloss=0.082231
+2025-12-18 13:16:12,566 - INFO - Trial 54: lr=0.017617 val_logloss=0.082261
+2025-12-18 13:16:33,719 - INFO - Trial 55: lr=0.014631 val_logloss=0.082051
+2025-12-18 13:16:55,473 - INFO - Trial 56: lr=0.010907 val_logloss=0.082024
+2025-12-18 13:17:18,024 - INFO - Trial 57: lr=0.013989 val_logloss=0.082062
+2025-12-18 13:17:40,529 - INFO - Trial 58: lr=0.183940 val_logloss=0.097477
+2025-12-18 13:18:14,367 - INFO - Trial 59: lr=0.145778 val_logloss=0.091895
+2025-12-18 13:18:14,377 - INFO - Best trial: lr=0.012480 val_logloss=0.081984
+2025-12-18 13:18:14,378 - INFO - Best learning rate saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline/optuna_studies/stageA_learning_rate/best_lr.json
+2025-12-18 13:18:14,378 - INFO - === Stage A Optimization Complete ===
+2025-12-19 22:34:08,202 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-19 22:34:11,285 - INFO - Datasets loaded with horizon=4h (train=(157772, 206), val=(35036, 206))
+2025-12-19 22:38:27,104 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-19 22:38:29,685 - INFO - Datasets loaded with horizon=4h (train=(157772, 206), val=(35036, 206))
+2025-12-19 22:54:28,931 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-19 22:54:30,913 - INFO - Datasets loaded with horizon=4h (train=(157772, 206), val=(35036, 206))
+2025-12-19 22:57:44,818 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-19 22:57:51,105 - INFO - Datasets loaded with horizon=4h (train=(157772, 206), val=(35036, 206))
+2025-12-19 23:01:35,051 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-19 23:01:38,299 - INFO - Datasets loaded with horizon=4h (train=(157772, 206), val=(35036, 206), classes=6)
+2025-12-19 23:02:33,403 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-19 23:02:37,480 - INFO - Datasets loaded with horizon=4h (train=(157772, 206), val=(35036, 206), classes=6)
+2025-12-19 23:07:02,992 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-19 23:07:05,862 - INFO - Datasets loaded with horizon=4h (train=(157772, 206), val=(35036, 206), classes=6)
+2025-12-19 23:33:29,908 - INFO - Trial 1: lr=0.041403 val_logloss=0.679820
+2025-12-19 23:33:29,957 - INFO - Best trial: lr=0.041403 val_logloss=0.679820
+2025-12-19 23:33:29,961 - INFO - Best learning rate saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline_bin/optuna_studies/stageA_learning_rate/best_lr.json
+2025-12-19 23:33:29,962 - INFO - === Stage A Optimization Complete ===
+2025-12-19 23:34:18,242 - INFO - Trial 3: lr=0.061026 val_logloss=0.804635
+2025-12-19 23:34:18,261 - INFO - Best trial: lr=0.041403 val_logloss=0.679820
+2025-12-19 23:34:18,261 - INFO - Best learning rate saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline_bin/optuna_studies/stageA_learning_rate/best_lr.json
+2025-12-19 23:34:18,262 - INFO - === Stage A Optimization Complete ===
+2025-12-20 10:42:51,811 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-20 10:42:55,470 - INFO - Datasets loaded with horizon=4h (train=(157772, 206), val=(35036, 206), classes=6)
+2025-12-20 11:15:51,044 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-20 11:15:54,882 - INFO - Datasets loaded with horizon=4h (train=(157772, 206), val=(35036, 206))
+2025-12-20 11:16:38,085 - INFO - Trial 5: lr=0.015690 val_logloss=0.349590
+2025-12-20 11:16:38,103 - INFO - Best trial: lr=0.015690 val_logloss=0.349590
+2025-12-20 11:16:38,103 - INFO - Best learning rate saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline_bin/optuna_studies/stageA_learning_rate/best_lr.json
+2025-12-20 11:16:38,103 - INFO - === Stage A Optimization Complete ===
+2025-12-20 11:50:43,835 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-20 11:50:45,901 - INFO - Datasets loaded with horizon=4h (train=(157772, 206), val=(35036, 206))
+2025-12-20 11:51:02,035 - INFO - Trial 0: lr=0.022912 val_logloss=0.387471
+2025-12-20 11:51:02,048 - INFO - Best trial: lr=0.022912 val_logloss=0.387471
+2025-12-20 11:51:02,048 - INFO - Best learning rate saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline_bin/optuna_studies/stageA_learning_rate/best_lr.json
+2025-12-20 11:51:02,048 - INFO - === Stage A Optimization Complete ===
+2025-12-20 11:53:33,295 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-20 11:53:35,092 - INFO - Datasets loaded with horizon=4h (train=(157772, 206), val=(35036, 206))
+2025-12-20 11:53:50,719 - INFO - Trial 1: lr=0.054739 val_logloss=0.525834
+2025-12-20 11:53:50,733 - INFO - Best trial: lr=0.022912 val_logloss=0.387471
+2025-12-20 11:53:50,733 - INFO - Best learning rate saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline_bin/optuna_studies/stageA_learning_rate/best_lr.json
+2025-12-20 11:53:50,733 - INFO - === Stage A Optimization Complete ===
+2025-12-20 12:01:30,833 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-20 12:49:43,173 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-20 12:49:44,484 - INFO - Datasets loaded with horizon=4h (train=(157772, 206), val=(35036, 206))
+2025-12-20 12:49:59,825 - INFO - Trial 2: lr=0.006579 val_logloss=0.291422
+2025-12-20 12:50:16,380 - INFO - Trial 3: lr=0.021175 val_logloss=0.390828
+2025-12-20 12:50:31,871 - INFO - Trial 4: lr=0.011007 val_logloss=0.323061
+2025-12-20 12:50:47,463 - INFO - Trial 5: lr=0.052839 val_logloss=0.569708
+2025-12-20 12:51:03,833 - INFO - Trial 6: lr=0.010258 val_logloss=0.309226
+2025-12-20 12:51:19,564 - INFO - Trial 7: lr=0.041381 val_logloss=0.476366
+2025-12-20 12:51:35,828 - INFO - Trial 8: lr=0.009759 val_logloss=0.316907
+2025-12-20 12:51:52,400 - INFO - Trial 9: lr=0.040796 val_logloss=0.478141
+2025-12-20 12:52:09,179 - INFO - Trial 10: lr=0.195399 val_logloss=0.776498
+2025-12-20 12:52:28,220 - INFO - Trial 11: lr=0.005295 val_logloss=0.285632
+2025-12-20 12:52:46,717 - INFO - Trial 12: lr=0.005928 val_logloss=0.288685
+2025-12-20 12:53:05,173 - INFO - Trial 13: lr=0.005052 val_logloss=0.284166
+2025-12-20 12:53:24,056 - INFO - Trial 14: lr=0.005001 val_logloss=0.283636
+2025-12-20 12:53:40,245 - INFO - Trial 15: lr=0.016597 val_logloss=0.354853
+2025-12-20 12:53:57,500 - INFO - Trial 16: lr=0.087595 val_logloss=0.617510
+2025-12-20 12:54:15,602 - INFO - Trial 17: lr=0.008603 val_logloss=0.305417
+2025-12-20 12:54:32,951 - INFO - Trial 18: lr=0.013711 val_logloss=0.331947
+2025-12-20 12:54:50,826 - INFO - Trial 19: lr=0.007058 val_logloss=0.296784
+2025-12-20 12:55:07,521 - INFO - Trial 20: lr=0.128477 val_logloss=0.631838
+2025-12-20 12:55:26,331 - INFO - Trial 21: lr=0.005070 val_logloss=0.286103
+2025-12-20 12:55:45,000 - INFO - Trial 22: lr=0.005505 val_logloss=0.284988
+2025-12-20 12:56:02,099 - INFO - Trial 23: lr=0.007811 val_logloss=0.302594
+2025-12-20 12:56:19,238 - INFO - Trial 24: lr=0.014420 val_logloss=0.348218
+2025-12-20 12:56:38,324 - INFO - Trial 25: lr=0.005142 val_logloss=0.286935
+2025-12-20 12:56:58,497 - INFO - Trial 26: lr=0.007806 val_logloss=0.306348
+2025-12-20 12:57:16,647 - INFO - Trial 27: lr=0.012173 val_logloss=0.334085
+2025-12-20 12:57:33,000 - INFO - Trial 28: lr=0.023528 val_logloss=0.381335
+2025-12-20 12:57:48,875 - INFO - Trial 29: lr=0.021244 val_logloss=0.374913
+2025-12-20 12:58:07,534 - INFO - Trial 30: lr=0.006948 val_logloss=0.295855
+2025-12-20 12:58:26,632 - INFO - Trial 31: lr=0.005115 val_logloss=0.287543
+2025-12-20 12:58:44,961 - INFO - Trial 32: lr=0.006296 val_logloss=0.287105
+2025-12-20 12:59:01,489 - INFO - Trial 33: lr=0.009181 val_logloss=0.319471
+2025-12-20 12:59:20,682 - INFO - Trial 34: lr=0.006067 val_logloss=0.284624
+2025-12-20 12:59:38,499 - INFO - Trial 35: lr=0.006398 val_logloss=0.289289
+2025-12-20 12:59:56,612 - INFO - Trial 36: lr=0.008240 val_logloss=0.305491
+2025-12-20 13:00:12,808 - INFO - Trial 37: lr=0.017768 val_logloss=0.361233
+2025-12-20 13:00:29,667 - INFO - Trial 38: lr=0.010955 val_logloss=0.320666
+2025-12-20 13:00:45,752 - INFO - Trial 39: lr=0.027486 val_logloss=0.402373
+2025-12-20 13:01:04,454 - INFO - Trial 40: lr=0.006176 val_logloss=0.287941
+2025-12-20 13:01:23,280 - INFO - Trial 41: lr=0.005071 val_logloss=0.286433
+2025-12-20 13:01:41,237 - INFO - Trial 42: lr=0.006266 val_logloss=0.290383
+2025-12-20 13:01:59,014 - INFO - Trial 43: lr=0.007715 val_logloss=0.303991
+2025-12-20 13:02:16,443 - INFO - Trial 44: lr=0.009705 val_logloss=0.321479
+2025-12-20 13:02:35,144 - INFO - Trial 45: lr=0.005823 val_logloss=0.289277
+2025-12-20 13:02:51,371 - INFO - Trial 46: lr=0.062481 val_logloss=0.533783
+2025-12-20 13:03:08,249 - INFO - Trial 47: lr=0.012009 val_logloss=0.332119
+2025-12-20 13:03:26,877 - INFO - Trial 48: lr=0.005589 val_logloss=0.288884
+2025-12-20 13:03:44,433 - INFO - Trial 49: lr=0.007199 val_logloss=0.294065
+2025-12-20 13:04:02,258 - INFO - Trial 50: lr=0.008994 val_logloss=0.316286
+2025-12-20 13:04:21,087 - INFO - Trial 51: lr=0.005191 val_logloss=0.287335
+2025-12-20 13:04:21,097 - INFO - Best trial: lr=0.005001 val_logloss=0.283636
+2025-12-20 13:04:21,097 - INFO - Best learning rate saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline_bin/optuna_studies/stageA_learning_rate/best_lr.json
+2025-12-20 13:04:21,098 - INFO - === Stage A Optimization Complete ===
+2025-12-22 02:10:36,423 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-22 02:10:39,461 - INFO - Datasets loaded with horizon=4h (train=(157772, 206), val=(35036, 206))
+2025-12-22 02:10:46,901 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-22 02:11:34,409 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-22 02:11:37,612 - INFO - Datasets loaded with horizon=4h (train=(157772, 206), val=(35036, 206))
+2025-12-22 02:12:18,829 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-22 02:12:26,958 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-22 02:13:16,591 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-22 02:20:24,812 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-22 02:20:25,616 - INFO - Datasets loaded with horizon=4h (train=(157772, 206), val=(35036, 206))
+2025-12-22 02:21:29,364 - INFO - === Stage A Learning Rate Optimization Started ===
+2025-12-22 02:21:30,247 - INFO - Datasets loaded with horizon=4h (train=(157772, 206), val=(35036, 206))
+2025-12-22 02:21:50,159 - INFO - Trial 0: lr=0.007137 val_logloss=0.083499
+2025-12-22 02:21:50,174 - INFO - Best trial: lr=0.007137 val_logloss=0.083499
+2025-12-22 02:21:50,174 - INFO - Best learning rate saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline_bin/optuna_studies/stageA_learning_rate/best_lr.json
+2025-12-22 02:21:50,175 - INFO - === Stage A Optimization Complete ===

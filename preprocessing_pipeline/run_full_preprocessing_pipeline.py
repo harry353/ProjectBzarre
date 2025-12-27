@@ -28,6 +28,7 @@ RUNNERS = [
     PIPELINE_DIR / "flares" / "run_pipeline.py",
     PIPELINE_DIR / "imf_solar_wind" / "run_pipeline.py",
     PIPELINE_DIR / "xray_flux" / "run_pipeline.py",
+    PIPELINE_DIR / "features_targets" / "build_supervised_targets.py",
 ]
 
 FINAL_SCRIPTS = [

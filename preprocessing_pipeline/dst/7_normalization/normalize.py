@@ -75,6 +75,12 @@ def normalize_dst_splits() -> Dict[str, pd.DataFrame]:
     }
     PARAMS_PATH.write_text(json.dumps(payload, indent=2))
     print(f"[OK] Normalized splits written to {OUTPUT_DB}")
+
+    dst_dir = STAGE_DIR.parent
+    dst_fin = dst_dir / "dst_fin.db"
+    dst_fin.write_bytes(OUTPUT_DB.read_bytes())
+    print(f"[OK] Copied normalized DB to {dst_fin}")
+
     return {"train": norm_train, "val": norm_val, "test": norm_test}
 
 

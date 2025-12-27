@@ -1,0 +1,35 @@
+{
+  "horizon_hours": 5,
+  "metrics": {
+    "watch_raw": {
+      "precision": 0.5333115076117204,
+      "recall": 0.8847650945958179,
+      "positive_rate": 0.4256945089659017
+    },
+    "warning_raw": {
+      "precision": 0.5895863238940363,
+      "recall": 0.8179596270480674,
+      "positive_rate": 0.3559881074049986
+    },
+    "watch_confirmed": {
+      "precision": 0.545485461656181,
+      "recall": 0.871186747533267,
+      "positive_rate": 0.40980674533122735
+    },
+    "warning_confirmed": {
+      "precision": 0.603668098452308,
+      "recall": 0.8014845659455055,
+      "positive_rate": 0.3406810368856267
+    },
+    "watch_final": {
+      "precision": 0.5397682793173634,
+      "recall": 0.6241513533085906,
+      "positive_rate": 0.29671095419492705
+    },
+    "warning_final": {
+      "precision": 0.5983622167206246,
+      "recall": 0.5688422196071331,
+      "positive_rate": 0.24393756387624269
+    }
+  }
+}

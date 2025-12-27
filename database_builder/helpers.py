@@ -7,17 +7,12 @@ import re
 
 from space_weather_api import SpaceWeatherAPI
 
-from .constants import SUPERMAG_LOGON
-
-
 def build_source_kwargs(
     cls: Type[SpaceWeatherAPI],
     start_date: date,
     end_date: date,
 ) -> Dict[str, object]:
     kwargs: Dict[str, object] = {"days": (start_date, end_date)}
-    if cls.__name__ == "SuperMAGDataSource":
-        kwargs["logon"] = SUPERMAG_LOGON
     return kwargs
 
 

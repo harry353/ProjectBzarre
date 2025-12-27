@@ -1,18 +1,38 @@
 from __future__ import annotations
 
+import json
+import os
 import subprocess
 import sys
 from pathlib import Path
+import time
 
 
 PIPELINE_ROOT = Path(__file__).resolve().parent
-BASE_DIR = PIPELINE_ROOT.parent
+PIPELINE_HORIZON_HOURS = 4
+PIPELINE_N_JOBS = 12
+FEATURE_EXCLUDE_PATTERNS = []
+TARGET_COLUMN_TOKEN = "main_phase"  # options: "severity", "main_phase", "ssc", or direct column name
+
+_TARGET_ALIAS = {
+    "severity": "severity_label",
+    "storm": "severity_label",
+    "main": "main_phase_label",
+    "main_phase": "main_phase_label",
+    "ssc": "ssc_label",
+}
+
+
+def _resolve_target_column(token: str) -> str:
+    key = (token or "").lower()
+    return _TARGET_ALIAS.get(key, token)
+
 OPTUNA_TRIALS = {
     "stageA": 1,
     "stageB": 2,
     "stageC": 2,
     "stageD": 3,
-    "stageE": 20,
+    "stageE": 1,
 }
 
 # OPTUNA_TRIALS = {
@@ -20,6 +40,7 @@ OPTUNA_TRIALS = {
 #     "stageB": 60,
 #     "stageC": 60,
 #     "stageD": 80,
+#     "stageE": 20,
 # }
 
 STEPS = [
@@ -34,23 +55,32 @@ STEPS = [
 ]
 
 
-def run_step(script: Path, stage_key: str | None) -> None:
+def run_step(script: Path, stage_key: str | None, horizon: int, n_jobs: int, target_column: str) -> None:
     print(f"[RUN] {script}")
+    env = os.environ.copy()
+    env["PIPELINE_HORIZON"] = str(horizon)
+    env["PIPELINE_N_JOBS"] = str(n_jobs)
+    env["PIPELINE_FEATURE_EXCLUDES"] = json.dumps(FEATURE_EXCLUDE_PATTERNS)
+    env["PIPELINE_TARGET_COLUMN"] = target_column
     cmd = [sys.executable, str(script)]
     if stage_key is not None:
         trials = OPTUNA_TRIALS.get(stage_key)
         if trials is not None:
             cmd.extend(["--trials", str(trials)])
-    result = subprocess.run(cmd, check=False)
+    result = subprocess.run(cmd, check=False, env=env)
     if result.returncode != 0:
         raise RuntimeError(f"Step failed: {script}")
     print(f"[OK] {script}")
 
 
 def main() -> None:
+    start_time = time.time()
+    target_column = _resolve_target_column(TARGET_COLUMN_TOKEN)
+    print(f"[INFO] Using target column: {target_column}")
     for script, stage_key in STEPS:
-        run_step(script, stage_key)
-    print("[ALL DONE] Full modeling pipeline completed.")
+        run_step(script, stage_key, PIPELINE_HORIZON_HOURS, PIPELINE_N_JOBS, target_column)
+    elapsed = time.time() - start_time
+    print(f"[ALL DONE] Full modeling pipeline completed in {elapsed / 60:.2f} minutes.")
 
 
 if __name__ == "__main__":

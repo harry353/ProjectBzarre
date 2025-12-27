@@ -50,7 +50,7 @@ def kp_to_ap(kp: float) -> float:
 # Feature engineering (NaN-free)
 # ---------------------------------------------------------------------
 def _add_kp_features(df: pd.DataFrame) -> pd.DataFrame:
-    working = df.copy()
+    working = df.copy().sort_index()
 
     kp = working["kp_index"]
 
@@ -78,6 +78,67 @@ def _add_kp_features(df: pd.DataFrame) -> pd.DataFrame:
         labels=[0, 1, 2, 3, 4],
     ).astype(int)
 
+    # ------------------------------------------------------------------
+    # Tier-1 features
+    # ------------------------------------------------------------------
+    for lag in (1, 2, 3, 6, 12):
+        working[f"kp_lag_{lag}"] = kp.shift(lag)
+
+    working["kp_mean_6h"] = kp.rolling(window=6, min_periods=1).mean()
+    working["kp_mean_12h"] = kp.rolling(window=12, min_periods=1).mean()
+    working["kp_max_6h"] = kp.rolling(window=6, min_periods=1).max()
+    working["kp_max_12h"] = kp.rolling(window=12, min_periods=1).max()
+    working["kp_max_24h"] = kp.rolling(window=24, min_periods=1).max()
+
+    working["kp_delta_3h"] = kp - working["kp_lag_3"]
+    working["kp_delta_6h"] = kp - working["kp_lag_6"]
+    working["kp_accel"] = working["kp_delta_3h"] - working["kp_delta_6h"]
+
+    def _consecutive_hours(series: pd.Series, threshold: float) -> pd.Series:
+        mask = (series >= threshold).astype(int)
+        groups = (mask == 0).cumsum()
+        counts = mask.groupby(groups).cumsum()
+        return counts.clip(upper=48)
+
+    working["kp_hours_above_5"] = _consecutive_hours(kp, 5.0)
+    working["kp_hours_above_6"] = _consecutive_hours(kp, 6.0)
+    working["kp_hours_above_7"] = _consecutive_hours(kp, 7.0)
+
+    regime = working["kp_regime"]
+    regime_groups = (regime != regime.shift()).cumsum()
+    working["kp_regime_duration_hours"] = regime.groupby(regime_groups).cumcount() + 1
+    working["kp_time_since_last_regime_change"] = (
+        working["kp_regime_duration_hours"] - 1
+    )
+
+    # ------------------------------------------------------------------
+    # Tier-2 features
+    # ------------------------------------------------------------------
+    working["kp_dist_to_5"] = kp - 5.0
+    working["kp_dist_to_6"] = kp - 6.0
+    working["kp_dist_to_7"] = kp - 7.0
+
+    working["ap_sum_24h"] = ap.rolling(window=24, min_periods=1).sum()
+    working["ap_max_24h"] = ap.rolling(window=24, min_periods=1).max()
+    working["ap_mean_12h"] = ap.rolling(window=12, min_periods=1).mean()
+    working["ap_energy_rolling"] = (ap.pow(2)).rolling(window=24, min_periods=1).sum()
+
+    working["kp_jump_2plus"] = (
+        (kp - working["kp_lag_3"]) >= 2.0
+    ).astype("Int8")
+    working["kp_jump_3plus"] = (
+        (kp - working["kp_lag_3"]) >= 3.0
+    ).astype("Int8")
+    working["kp_entered_storm"] = (
+        (kp >= 5.0) & (working["kp_lag_1"] < 5.0)
+    ).astype("Int8")
+
+    # Fill NaNs introduced by lags/rolling
+    numeric_cols = [
+        col for col in working.columns if working[col].dtype.kind in "fcbiu"
+    ]
+    working[numeric_cols] = working[numeric_cols].fillna(0.0)
+
     return working[
         [
             "kp_index",
@@ -85,6 +146,34 @@ def _add_kp_features(df: pd.DataFrame) -> pd.DataFrame:
             "kp_regime",
             "ap_3h_change",
             "ap_level_bucket",
+            "kp_lag_1",
+            "kp_lag_2",
+            "kp_lag_3",
+            "kp_lag_6",
+            "kp_lag_12",
+            "kp_mean_6h",
+            "kp_mean_12h",
+            "kp_max_6h",
+            "kp_max_12h",
+            "kp_max_24h",
+            "kp_delta_3h",
+            "kp_delta_6h",
+            "kp_accel",
+            "kp_hours_above_5",
+            "kp_hours_above_6",
+            "kp_hours_above_7",
+            "kp_regime_duration_hours",
+            "kp_time_since_last_regime_change",
+            "kp_dist_to_5",
+            "kp_dist_to_6",
+            "kp_dist_to_7",
+            "ap_sum_24h",
+            "ap_max_24h",
+            "ap_mean_12h",
+            "ap_energy_rolling",
+            "kp_jump_2plus",
+            "kp_jump_3plus",
+            "kp_entered_storm",
         ]
     ]
 
@@ -110,4 +199,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

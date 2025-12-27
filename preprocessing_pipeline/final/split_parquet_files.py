@@ -18,12 +18,12 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 FINAL_DB = PROJECT_ROOT / "preprocessing_pipeline" / "final" / "all_sources_intersection.db"
-OUTPUT_DIR = PROJECT_ROOT / "modeling_pipeline" / "data"
+OUTPUT_DIR = PROJECT_ROOT / "modeling_pipeline_bin" / "data"
 
 SPLIT_CONFIG = {
-    "train": OUTPUT_DIR / "train" / "train_h6.parquet",
-    "validation": OUTPUT_DIR / "validation" / "validation_h6.parquet",
-    "test": OUTPUT_DIR / "test" / "test_h6.parquet",
+    "train": OUTPUT_DIR / "train" / "train_data.parquet",
+    "validation": OUTPUT_DIR / "validation" / "validation_data.parquet",
+    "test": OUTPUT_DIR / "test" / "test_data.parquet",
 }
 
 

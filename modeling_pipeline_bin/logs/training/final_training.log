@@ -1,0 +1,361 @@
+2025-12-14 17:01:41,760 - INFO - === Final training started ===
+2025-12-14 17:01:42,480 - INFO - Train+val shape: (97450, 119), Test shape: (45147, 119)
+2025-12-14 17:02:34,879 - INFO - === Final training started ===
+2025-12-14 17:02:35,624 - INFO - Train+val shape: (97450, 119), Test shape: (45147, 119)
+2025-12-14 17:03:06,059 - INFO - === Final training started ===
+2025-12-14 17:03:06,776 - INFO - Train+val shape: (97450, 119), Test shape: (45147, 119)
+2025-12-14 17:03:19,141 - INFO - Final metrics: {'mae': 0.4347296357154846, 'rmse': 0.7075950524334537, 'residual_mean': 0.10647054761648178, 'residual_std': 0.6995389461517334, 'max_residual': 6.158995151519775, 'min_residual': -16.53701400756836, 'worst_error': -16.53701400756836, 'worst_index': 33752}
+2025-12-14 17:03:19,141 - INFO - Predictions saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline/models/final_model/final_test_predictions.parquet
+2025-12-14 17:03:19,141 - INFO - === Final training complete ===
+2025-12-14 17:20:29,289 - INFO - === Final training started ===
+2025-12-14 17:20:30,163 - INFO - Train+val shape: (97450, 119), Test shape: (45147, 119)
+2025-12-14 17:20:37,598 - INFO - Final metrics: {'mae': 0.4347296357154846, 'rmse': 0.7075950524334537, 'residual_mean': 0.10647054761648178, 'residual_std': 0.6995389461517334, 'max_residual': 6.158995151519775, 'min_residual': -16.53701400756836, 'worst_error': -16.53701400756836, 'worst_index': 33752}
+2025-12-14 17:20:37,598 - INFO - Predictions saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline/models/final_model/final_test_predictions.parquet
+2025-12-14 17:20:37,598 - INFO - === Final training complete ===
+2025-12-14 18:13:25,974 - INFO - === Final training started ===
+2025-12-14 18:13:26,550 - INFO - Train+val shape: (97450, 114), Test shape: (45147, 114)
+2025-12-14 18:13:35,389 - INFO - Final metrics: {'mae': 0.43575820326805115, 'rmse': 0.7087153405086014, 'residual_mean': 0.1091952845454216, 'residual_std': 0.7002527117729187, 'max_residual': 6.243426322937012, 'min_residual': -16.62735939025879, 'worst_error': -16.62735939025879, 'worst_index': 33752}
+2025-12-14 18:13:35,389 - INFO - Predictions saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline/models/final_model/final_test_predictions.parquet
+2025-12-14 18:13:35,389 - INFO - === Final training complete ===
+2025-12-16 02:35:31,192 - INFO - === Final training started ===
+2025-12-16 02:35:32,537 - INFO - Train+val shape: (192804, 164), Test shape: (43051, 164)
+2025-12-16 02:35:51,590 - INFO - Final metrics: {'mae': 0.4207242429256439, 'rmse': 0.6526558637629292, 'residual_mean': 0.0619211308658123, 'residual_std': 0.6497117877006531, 'max_residual': 6.5986409187316895, 'min_residual': -18.059146881103516, 'worst_error': -18.059146881103516, 'worst_index': 29416}
+2025-12-16 02:35:51,590 - INFO - Predictions saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline/models/final_model/final_test_predictions.parquet
+2025-12-16 02:35:51,590 - INFO - === Final training complete ===
+2025-12-17 20:04:23,825 - INFO - === Final training started ===
+2025-12-17 20:04:26,515 - INFO - Train+val shape: (192804, 178), Test shape: (43051, 178)
+2025-12-17 20:04:52,785 - INFO - Final metrics: {'logloss': 0.2648752756945273, 'accuracy': 0.8841141901465703, 'precision': 0.7639991855019345, 'recall': 0.7374938574938575, 'f1': 0.750512576886533, 'positive_rate': 0.2281480104991754, 'roc_auc': 0.936325416657574}
+2025-12-17 20:04:52,785 - INFO - Predictions saved to /home/haris/Documents/ProjectBzarre/modeling_pipeline/models/final_model/final_test_predictions.parquet
+2025-12-17 20:04:52,785 - INFO - === Final training complete ===
+2025-12-17 20:29:57,707 - INFO - === Final training started ===
+2025-12-17 20:30:49,446 - INFO - Final metrics: {'logloss': 0.2648752756945273, 'accuracy': 0.8329655524842629, 'precision': 0.5982483866719347, 'recall': 0.8928746928746929, 'f1': 0.7164543984858641, 'positive_rate': 0.35274441940953755, 'roc_auc': 0.936325416657574}
+2025-12-17 20:30:49,446 - INFO - Saved decision threshold: 0.2000
+2025-12-17 20:30:49,446 - INFO - === Final training complete ===
+2025-12-18 12:42:59,422 - INFO - === Final training started ===
+2025-12-18 12:43:01,296 - INFO - === Horizon h1 ===
+2025-12-18 12:44:26,351 - INFO - Horizon h1 metrics: {'logloss': 0.11306572695686443, 'accuracy': 0.9069140906240565, 'precision': 0.7215954006467841, 'recall': 0.9868304668304668, 'f1': 0.8336239103362391, 'positive_rate': 0.3231762547320993, 'roc_auc': 0.9897112659712258}
+2025-12-18 12:44:26,351 - INFO - Horizon h1 threshold: 0.0500
+2025-12-18 12:44:27,208 - INFO - === Horizon h2 ===
+2025-12-18 12:45:53,591 - INFO - Horizon h2 metrics: {'logloss': 0.1635634755492877, 'accuracy': 0.8531249274217897, 'precision': 0.6193368453672141, 'recall': 0.9821130221130221, 'f1': 0.7596351197263398, 'positive_rate': 0.374735815314583, 'roc_auc': 0.9775641438143718}
+2025-12-18 12:45:53,591 - INFO - Horizon h2 threshold: 0.0550
+2025-12-18 12:45:59,825 - INFO - === Horizon h3 ===
+2025-12-18 12:47:47,003 - INFO - Horizon h3 metrics: {'logloss': 0.1947728801869786, 'accuracy': 0.8394221613210395, 'precision': 0.5987164739359447, 'recall': 0.9718918918918918, 'f1': 0.7409710774763975, 'positive_rate': 0.3836077757391365, 'roc_auc': 0.9673866018121233}
+2025-12-18 12:47:47,003 - INFO - Horizon h3 threshold: 0.0850
+2025-12-18 12:47:47,906 - INFO - === Horizon h4 ===
+2025-12-18 12:49:23,922 - INFO - Horizon h4 metrics: {'logloss': 0.22176998575922008, 'accuracy': 0.8304108507327496, 'precision': 0.5869499424974275, 'recall': 0.953022113022113, 'f1': 0.7264758765358106, 'positive_rate': 0.38370067584829415, 'roc_auc': 0.9570462544423983}
+2025-12-18 12:49:23,922 - INFO - Horizon h4 threshold: 0.1250
+2025-12-18 12:49:24,705 - INFO - === Horizon h5 ===
+2025-12-18 12:50:42,022 - INFO - Horizon h5 metrics: {'logloss': 0.2442725778483876, 'accuracy': 0.826950321666628, 'precision': 0.5839497041420119, 'recall': 0.9311056511056511, 'f1': 0.7177544603962271, 'positive_rate': 0.37680284274334025, 'roc_auc': 0.9466181119383478}
+2025-12-18 12:50:42,022 - INFO - Horizon h5 threshold: 0.1600
+2025-12-18 12:50:42,779 - INFO - === Horizon h6 ===
+2025-12-18 12:52:15,160 - INFO - Horizon h6 metrics: {'logloss': 0.26361657445625414, 'accuracy': 0.8273915971851267, 'precision': 0.5875966021587788, 'recall': 0.9041769041769042, 'f1': 0.7122948281201611, 'positive_rate': 0.3636342522702464, 'roc_auc': 0.9368109240890702}
+2025-12-18 12:52:15,160 - INFO - Horizon h6 threshold: 0.1950
+2025-12-18 12:52:15,938 - INFO - === Horizon h7 ===
+2025-12-18 12:54:06,897 - INFO - Horizon h7 metrics: {'logloss': 0.28036847659907993, 'accuracy': 0.8216085653900643, 'precision': 0.5802342040921374, 'recall': 0.8862899262899263, 'f1': 0.70132597114749, 'positive_rate': 0.3609633741319646, 'roc_auc': 0.927584291802405}
+2025-12-18 12:54:06,897 - INFO - Horizon h7 threshold: 0.2100
+2025-12-18 12:54:07,537 - INFO - === Horizon h8 ===
+2025-12-18 12:55:32,750 - INFO - Horizon h8 metrics: {'logloss': 0.2982892273978102, 'accuracy': 0.8169403349048935, 'precision': 0.5743563136390168, 'recall': 0.8703685503685503, 'f1': 0.6920371962178635, 'positive_rate': 0.3581066957753675, 'roc_auc': 0.917375575862286}
+2025-12-18 12:55:32,750 - INFO - Horizon h8 threshold: 0.2300
+2025-12-18 12:55:32,750 - INFO - === Final training complete for horizons (1, 2, 3, 4, 5, 6, 7, 8) ===
+2025-12-18 15:46:05,900 - INFO - === Final training started ===
+2025-12-18 15:46:08,192 - INFO - === Horizon h1 ===
+2025-12-18 15:47:24,545 - INFO - Horizon h1 metrics: {'logloss': 0.11282386775006328, 'accuracy': 0.9079592168520798, 'precision': 0.7240334679746105, 'recall': 0.9865356265356265, 'f1': 0.8351428927992013, 'positive_rate': 0.32199177834033954, 'roc_auc': 0.989754505986487}
+2025-12-18 15:47:24,545 - INFO - Horizon h1 threshold: 0.0500
+2025-12-18 15:47:26,417 - INFO - === Horizon h2 ===
+2025-12-18 15:49:38,133 - INFO - Horizon h2 metrics: {'logloss': 0.16305691841759562, 'accuracy': 0.8531249274217897, 'precision': 0.6192333890643383, 'recall': 0.9828009828009828, 'f1': 0.759762953958365, 'positive_rate': 0.3750609656966347, 'roc_auc': 0.9776616916389436}
+2025-12-18 15:49:38,133 - INFO - Horizon h2 threshold: 0.0550
+2025-12-18 15:49:54,628 - INFO - === Horizon h3 ===
+2025-12-18 15:52:09,776 - INFO - Horizon h3 metrics: {'logloss': 0.19490153489988613, 'accuracy': 0.8403976124671947, 'precision': 0.6003890341012704, 'recall': 0.9707125307125307, 'f1': 0.7419064072710884, 'positive_rate': 0.3820749239380356, 'roc_auc': 0.967328655050813}
+2025-12-18 15:52:09,776 - INFO - Horizon h3 threshold: 0.0850
+2025-12-18 15:52:11,600 - INFO - === Horizon h4 ===
+2025-12-18 15:53:44,400 - INFO - Horizon h4 metrics: {'logloss': 0.2221752410927565, 'accuracy': 0.8300160252688297, 'precision': 0.5861590442862314, 'recall': 0.9547911547911548, 'f1': 0.7263822946652211, 'positive_rate': 0.3849316022946327, 'roc_auc': 0.9568470117329674}
+2025-12-18 15:53:44,400 - INFO - Horizon h4 threshold: 0.1200
+2025-12-18 15:53:45,957 - INFO - === Horizon h5 ===
+2025-12-18 15:55:17,495 - INFO - Horizon h5 metrics: {'logloss': 0.24468798886673518, 'accuracy': 0.8262303458206564, 'precision': 0.582825859629698, 'recall': 0.9312039312039312, 'f1': 0.7169340193704601, 'positive_rate': 0.3775692686438907, 'roc_auc': 0.946431385131586}
+2025-12-18 15:55:17,495 - INFO - Horizon h5 threshold: 0.1600
+2025-12-18 15:55:18,643 - INFO - === Horizon h6 ===
+2025-12-18 15:56:50,388 - INFO - Horizon h6 metrics: {'logloss': 0.26391175640900844, 'accuracy': 0.8255800450565529, 'precision': 0.584522676815731, 'recall': 0.9056511056511056, 'f1': 0.7104857363145721, 'positive_rate': 0.3661425552175024, 'roc_auc': 0.9365421138829082}
+2025-12-18 15:56:50,388 - INFO - Horizon h6 threshold: 0.1900
+2025-12-18 15:56:51,136 - INFO - === Horizon h7 ===
+2025-12-18 15:58:23,889 - INFO - Horizon h7 metrics: {'logloss': 0.27983002223953507, 'accuracy': 0.81942541282486, 'precision': 0.5764720876879939, 'recall': 0.889041769041769, 'f1': 0.6994239764951482, 'positive_rate': 0.36444712822537567, 'roc_auc': 0.9278047764271229}
+2025-12-18 15:58:23,889 - INFO - Horizon h7 threshold: 0.2050
+2025-12-18 15:58:24,622 - INFO - === Horizon h8 ===
+2025-12-18 15:59:54,422 - INFO - Horizon h8 metrics: {'logloss': 0.29812191016021206, 'accuracy': 0.8112734282462782, 'precision': 0.5651676102029133, 'recall': 0.8732186732186732, 'f1': 0.6862063639172072, 'positive_rate': 0.36512065401676846, 'roc_auc': 0.9173608466996946}
+2025-12-18 15:59:54,422 - INFO - Horizon h8 threshold: 0.2200
+2025-12-18 15:59:54,422 - INFO - === Final training complete for horizons (1, 2, 3, 4, 5, 6, 7, 8) ===
+2025-12-19 08:52:03,462 - INFO - === Final training started ===
+2025-12-19 08:52:05,747 - INFO - === Horizon h1 ===
+2025-12-19 08:52:51,417 - INFO - === Final training started ===
+2025-12-19 08:52:53,555 - INFO - === Horizon h1 ===
+2025-12-19 08:53:56,114 - INFO - Horizon h1 metrics: {'logloss': 0.11282386775006328, 'accuracy': 0.9079592168520798, 'precision': 0.7240334679746105, 'recall': 0.9865356265356265, 'f1': 0.8351428927992013, 'positive_rate': 0.32199177834033954, 'roc_auc': 0.989754505986487}
+2025-12-19 08:53:56,114 - INFO - Horizon h1 threshold: 0.0500
+2025-12-19 08:53:57,919 - INFO - === Horizon h2 ===
+2025-12-19 08:55:12,526 - INFO - Horizon h2 metrics: {'logloss': 0.16305691841759562, 'accuracy': 0.8531249274217897, 'precision': 0.6192333890643383, 'recall': 0.9828009828009828, 'f1': 0.759762953958365, 'positive_rate': 0.3750609656966347, 'roc_auc': 0.9776616916389436}
+2025-12-19 08:55:12,526 - INFO - Horizon h2 threshold: 0.0550
+2025-12-19 08:55:38,791 - INFO - === Horizon h3 ===
+2025-12-19 08:56:57,937 - INFO - Horizon h3 metrics: {'logloss': 0.19490153489988613, 'accuracy': 0.8403976124671947, 'precision': 0.6003890341012704, 'recall': 0.9707125307125307, 'f1': 0.7419064072710884, 'positive_rate': 0.3820749239380356, 'roc_auc': 0.967328655050813}
+2025-12-19 08:56:57,937 - INFO - Horizon h3 threshold: 0.0850
+2025-12-19 08:56:59,199 - INFO - === Horizon h4 ===
+2025-12-19 08:58:25,403 - INFO - Horizon h4 metrics: {'logloss': 0.2221752410927565, 'accuracy': 0.8300160252688297, 'precision': 0.5861590442862314, 'recall': 0.9547911547911548, 'f1': 0.7263822946652211, 'positive_rate': 0.3849316022946327, 'roc_auc': 0.9568470117329674}
+2025-12-19 08:58:25,403 - INFO - Horizon h4 threshold: 0.1200
+2025-12-19 08:58:26,821 - INFO - === Horizon h5 ===
+2025-12-19 08:59:37,413 - INFO - Horizon h5 metrics: {'logloss': 0.24468798886673518, 'accuracy': 0.8262303458206564, 'precision': 0.582825859629698, 'recall': 0.9312039312039312, 'f1': 0.7169340193704601, 'positive_rate': 0.3775692686438907, 'roc_auc': 0.946431385131586}
+2025-12-19 08:59:37,413 - INFO - Horizon h5 threshold: 0.1600
+2025-12-19 08:59:38,829 - INFO - === Horizon h6 ===
+2025-12-19 09:00:56,621 - INFO - Horizon h6 metrics: {'logloss': 0.26391175640900844, 'accuracy': 0.8255800450565529, 'precision': 0.584522676815731, 'recall': 0.9056511056511056, 'f1': 0.7104857363145721, 'positive_rate': 0.3661425552175024, 'roc_auc': 0.9365421138829082}
+2025-12-19 09:00:56,621 - INFO - Horizon h6 threshold: 0.1900
+2025-12-19 09:00:57,003 - INFO - === Horizon h7 ===
+2025-12-19 09:02:07,159 - INFO - Horizon h7 metrics: {'logloss': 0.27983002223953507, 'accuracy': 0.81942541282486, 'precision': 0.5764720876879939, 'recall': 0.889041769041769, 'f1': 0.6994239764951482, 'positive_rate': 0.36444712822537567, 'roc_auc': 0.9278047764271229}
+2025-12-19 09:02:07,159 - INFO - Horizon h7 threshold: 0.2050
+2025-12-19 09:02:12,174 - INFO - === Horizon h8 ===
+2025-12-19 09:05:02,394 - INFO - === Final training started ===
+2025-12-19 09:05:03,075 - INFO - === Horizon h1 ===
+2025-12-19 09:06:01,892 - INFO - Horizon h1 metrics: {'logloss': 0.11282386775006328, 'accuracy': 0.9079592168520798, 'precision': 0.7240334679746105, 'recall': 0.9865356265356265, 'f1': 0.8351428927992013, 'positive_rate': 0.32199177834033954, 'roc_auc': 0.989754505986487}
+2025-12-19 09:06:01,892 - INFO - Horizon h1 threshold: 0.0500
+2025-12-19 09:06:02,616 - INFO - === Horizon h2 ===
+2025-12-19 09:07:27,845 - INFO - Horizon h2 metrics: {'logloss': 0.16305691841759562, 'accuracy': 0.8531249274217897, 'precision': 0.6192333890643383, 'recall': 0.9828009828009828, 'f1': 0.759762953958365, 'positive_rate': 0.3750609656966347, 'roc_auc': 0.9776616916389436}
+2025-12-19 09:07:27,845 - INFO - Horizon h2 threshold: 0.0550
+2025-12-19 09:07:28,242 - INFO - === Horizon h3 ===
+2025-12-19 09:08:35,624 - INFO - Horizon h3 metrics: {'logloss': 0.19490153489988613, 'accuracy': 0.8403976124671947, 'precision': 0.6003890341012704, 'recall': 0.9707125307125307, 'f1': 0.7419064072710884, 'positive_rate': 0.3820749239380356, 'roc_auc': 0.967328655050813}
+2025-12-19 09:08:35,625 - INFO - Horizon h3 threshold: 0.0850
+2025-12-19 09:08:36,257 - INFO - === Horizon h4 ===
+2025-12-19 09:09:43,093 - INFO - Horizon h4 metrics: {'logloss': 0.2221752410927565, 'accuracy': 0.8300160252688297, 'precision': 0.5861590442862314, 'recall': 0.9547911547911548, 'f1': 0.7263822946652211, 'positive_rate': 0.3849316022946327, 'roc_auc': 0.9568470117329674}
+2025-12-19 09:09:43,093 - INFO - Horizon h4 threshold: 0.1200
+2025-12-19 09:09:43,633 - INFO - === Horizon h5 ===
+2025-12-19 09:10:50,641 - INFO - Horizon h5 metrics: {'logloss': 0.24468798886673518, 'accuracy': 0.8262303458206564, 'precision': 0.582825859629698, 'recall': 0.9312039312039312, 'f1': 0.7169340193704601, 'positive_rate': 0.3775692686438907, 'roc_auc': 0.946431385131586}
+2025-12-19 09:10:50,641 - INFO - Horizon h5 threshold: 0.1600
+2025-12-19 09:10:51,084 - INFO - === Horizon h6 ===
+2025-12-19 09:12:00,805 - INFO - Horizon h6 metrics: {'logloss': 0.26391175640900844, 'accuracy': 0.8255800450565529, 'precision': 0.584522676815731, 'recall': 0.9056511056511056, 'f1': 0.7104857363145721, 'positive_rate': 0.3661425552175024, 'roc_auc': 0.9365421138829082}
+2025-12-19 09:12:00,805 - INFO - Horizon h6 threshold: 0.1900
+2025-12-19 09:12:01,590 - INFO - === Horizon h7 ===
+2025-12-19 09:13:14,502 - INFO - Horizon h7 metrics: {'logloss': 0.27983002223953507, 'accuracy': 0.81942541282486, 'precision': 0.5764720876879939, 'recall': 0.889041769041769, 'f1': 0.6994239764951482, 'positive_rate': 0.36444712822537567, 'roc_auc': 0.9278047764271229}
+2025-12-19 09:13:14,502 - INFO - Horizon h7 threshold: 0.2050
+2025-12-19 09:13:15,224 - INFO - === Horizon h8 ===
+2025-12-19 09:14:23,332 - INFO - Horizon h8 metrics: {'logloss': 0.29812191016021206, 'accuracy': 0.8112734282462782, 'precision': 0.5651676102029133, 'recall': 0.8732186732186732, 'f1': 0.6862063639172072, 'positive_rate': 0.36512065401676846, 'roc_auc': 0.9173608466996946}
+2025-12-19 09:14:23,332 - INFO - Horizon h8 threshold: 0.2200
+2025-12-19 09:14:23,332 - INFO - === Final training complete for horizons (1, 2, 3, 4, 5, 6, 7, 8) ===
+2025-12-20 00:27:52,944 - INFO - === Final training started ===
+2025-12-20 00:31:58,736 - INFO - === Final training started ===
+2025-12-20 00:32:03,775 - INFO - === Horizon h1 ===
+2025-12-20 00:32:10,499 - INFO - === Final training started ===
+2025-12-20 00:32:45,522 - INFO - === Horizon h1 ===
+2025-12-20 00:34:33,727 - INFO - Horizon h1 metrics: {'logloss': 0.31604438775667126, 'accuracy': 0.7887634708286883, 'precision': 0.5557234816680661, 'recall': 0.8955439292801732, 'f1': 0.6858485026423957, 'positive_rate': 0.4149247491638796, 'roc_auc': 0.9113134079955325}
+2025-12-20 00:34:33,727 - INFO - Horizon h1 threshold: 0.2150
+2025-12-20 00:34:41,009 - INFO - === Horizon h2 ===
+2025-12-20 00:39:36,034 - INFO - Horizon h1 metrics: {'logloss': 0.31604438775667126, 'accuracy': 0.7887634708286883, 'precision': 0.5557234816680661, 'recall': 0.8955439292801732, 'f1': 0.6858485026423957, 'positive_rate': 0.4149247491638796, 'roc_auc': 0.9113134079955325}
+2025-12-20 00:39:36,034 - INFO - Horizon h1 threshold: 0.2150
+2025-12-20 00:39:42,837 - INFO - === Horizon h2 ===
+2025-12-20 00:41:30,018 - INFO - Horizon h2 metrics: {'logloss': 0.3147367298686646, 'accuracy': 0.7917315062129834, 'precision': 0.560250213249929, 'recall': 0.888688435865055, 'f1': 0.6872449513445642, 'positive_rate': 0.40843107653001975, 'roc_auc': 0.9115869747013341}
+2025-12-20 00:41:30,019 - INFO - Horizon h2 threshold: 0.1850
+2025-12-20 00:41:34,189 - INFO - === Horizon h3 ===
+2025-12-20 00:46:59,341 - INFO - Horizon h2 metrics: {'logloss': 0.3147367298686646, 'accuracy': 0.7917315062129834, 'precision': 0.560250213249929, 'recall': 0.888688435865055, 'f1': 0.6872449513445642, 'positive_rate': 0.40843107653001975, 'roc_auc': 0.9115869747013341}
+2025-12-20 00:46:59,341 - INFO - Horizon h2 threshold: 0.1850
+2025-12-20 00:47:02,871 - INFO - === Horizon h3 ===
+2025-12-20 00:48:56,541 - INFO - Horizon h3 metrics: {'logloss': 0.3208205860698485, 'accuracy': 0.7783016676731547, 'precision': 0.5417547282284724, 'recall': 0.9017679956702147, 'f1': 0.6768678695961271, 'positive_rate': 0.4286012914014958, 'roc_auc': 0.9085213212490861}
+2025-12-20 00:48:56,542 - INFO - Horizon h3 threshold: 0.1900
+2025-12-20 00:49:04,407 - INFO - === Horizon h4 ===
+2025-12-20 00:54:35,823 - INFO - Horizon h3 metrics: {'logloss': 0.3208205860698485, 'accuracy': 0.7783016676731547, 'precision': 0.5417547282284724, 'recall': 0.9017679956702147, 'f1': 0.6768678695961271, 'positive_rate': 0.4286012914014958, 'roc_auc': 0.9085213212490861}
+2025-12-20 00:54:35,826 - INFO - Horizon h3 threshold: 0.1900
+2025-12-20 00:54:44,473 - INFO - === Horizon h4 ===
+2025-12-20 00:56:10,317 - INFO - Horizon h4 metrics: {'logloss': 0.3252518365487915, 'accuracy': 0.7761596172159896, 'precision': 0.5393087732624383, 'recall': 0.896626375608876, 'f1': 0.6735101805739065, 'positive_rate': 0.4281002485308805, 'roc_auc': 0.9056559620970754}
+2025-12-20 00:56:10,317 - INFO - Horizon h4 threshold: 0.1900
+2025-12-20 00:56:21,307 - INFO - === Horizon h5 ===
+2025-12-20 00:59:34,446 - INFO - Horizon h5 metrics: {'logloss': 0.326537248060333, 'accuracy': 0.7716482393384744, 'precision': 0.5336840410113264, 'recall': 0.8968067833303265, 'f1': 0.6691569914184755, 'positive_rate': 0.432709281798755, 'roc_auc': 0.9042994039456658}
+2025-12-20 00:59:34,446 - INFO - Horizon h5 threshold: 0.1750
+2025-12-20 00:59:36,759 - INFO - === Horizon h6 ===
+2025-12-20 01:00:49,566 - INFO - Horizon h6 metrics: {'logloss': 0.33522470000906646, 'accuracy': 0.7511323778774012, 'precision': 0.5094148613079571, 'recall': 0.9078116543388057, 'f1': 0.652616561831269, 'positive_rate': 0.4588975865833546, 'roc_auc': 0.8995105752703597}
+2025-12-20 01:00:49,567 - INFO - Horizon h6 threshold: 0.1650
+2025-12-20 01:00:52,903 - INFO - === Horizon h7 ===
+2025-12-20 01:01:39,071 - INFO - Horizon h7 metrics: {'logloss': 0.33241512707804344, 'accuracy': 0.7593031358885017, 'precision': 0.5188169248362615, 'recall': 0.9003247338986109, 'f1': 0.6582904629996043, 'positive_rate': 0.44687572590011615, 'roc_auc': 0.9000969877757796}
+2025-12-20 01:01:39,071 - INFO - Horizon h7 threshold: 0.1700
+2025-12-20 01:01:41,536 - INFO - === Horizon h8 ===
+2025-12-20 01:02:04,726 - INFO - Horizon h8 metrics: {'logloss': 0.33603519386871383, 'accuracy': 0.7486585054240517, 'precision': 0.5067158149868713, 'recall': 0.9051957423777738, 'f1': 0.6497248300420848, 'positive_rate': 0.46003391484122746, 'roc_auc': 0.897716663236175}
+2025-12-20 01:02:04,726 - INFO - Horizon h8 threshold: 0.1600
+2025-12-20 01:02:04,726 - INFO - === Final training complete for horizons (1, 2, 3, 4, 5, 6, 7, 8) ===
+2025-12-20 11:17:01,332 - INFO - === Final training started ===
+2025-12-20 11:17:06,824 - INFO - === Horizon h1 ===
+2025-12-20 11:18:47,234 - INFO - === Final training started ===
+2025-12-20 11:19:16,685 - INFO - === Horizon h1 ===
+2025-12-20 12:07:49,718 - INFO - === Final training started ===
+2025-12-20 12:07:51,672 - INFO - === Horizon h1 ===
+2025-12-20 12:08:21,880 - INFO - Horizon h1 metrics: {'logloss': 0.33557183706940263, 'accuracy': 0.7652127461910071, 'precision': 0.5252624502249573, 'recall': 0.9162006133862529, 'f1': 0.6677185024488052, 'positive_rate': 0.4491127833519138, 'roc_auc': 0.9056735632601622}
+2025-12-20 12:08:21,881 - INFO - Horizon h1 threshold: 0.1950
+2025-12-20 12:08:30,312 - INFO - === Horizon h2 ===
+2025-12-20 12:09:01,569 - INFO - Horizon h2 metrics: {'logloss': 0.338284439685773, 'accuracy': 0.7661827894553478, 'precision': 0.5265572061506385, 'recall': 0.9112394010463648, 'f1': 0.6674374814178586, 'positive_rate': 0.44559284635930785, 'roc_auc': 0.9049554094289443}
+2025-12-20 12:09:01,569 - INFO - Horizon h2 threshold: 0.2050
+2025-12-20 12:09:27,447 - INFO - === Horizon h3 ===
+2025-12-20 12:09:59,448 - INFO - Horizon h3 metrics: {'logloss': 0.3442230421541589, 'accuracy': 0.7495238537650393, 'precision': 0.5075064625173991, 'recall': 0.9208912141439654, 'f1': 0.6543811294147811, 'positive_rate': 0.4672272030473359, 'roc_auc': 0.9012356241547339}
+2025-12-20 12:09:59,448 - INFO - Horizon h3 threshold: 0.1850
+2025-12-20 12:10:02,826 - INFO - === Horizon h4 ===
+2025-12-20 12:10:35,940 - INFO - Horizon h4 metrics: {'logloss': 0.3480479155390329, 'accuracy': 0.7346061830766729, 'precision': 0.49183555854384786, 'recall': 0.923777737687173, 'f1': 0.6419079854581923, 'positive_rate': 0.4836364480988549, 'roc_auc': 0.8986252488041561}
+2025-12-20 12:10:35,940 - INFO - Horizon h4 threshold: 0.1650
+2025-12-20 12:10:38,673 - INFO - === Horizon h5 ===
+2025-12-20 12:11:12,707 - INFO - Horizon h5 metrics: {'logloss': 0.3547925780408376, 'accuracy': 0.7225680572331135, 'precision': 0.4799438990182328, 'recall': 0.926032834205304, 'f1': 0.632220716837049, 'positive_rate': 0.4968410294527548, 'roc_auc': 0.895935858649382}
+2025-12-20 12:11:12,707 - INFO - Horizon h5 threshold: 0.1600
+2025-12-20 12:11:15,355 - INFO - === Horizon h6 ===
+2025-12-20 12:11:51,191 - INFO - Horizon h6 metrics: {'logloss': 0.35442656254562865, 'accuracy': 0.7375670716127384, 'precision': 0.4948023928606453, 'recall': 0.9102471585783871, 'f1': 0.6411054637865311, 'positive_rate': 0.47371721911221576, 'roc_auc': 0.8939443240268289}
+2025-12-20 12:11:51,191 - INFO - Horizon h6 threshold: 0.1800
+2025-12-20 12:11:54,300 - INFO - === Horizon h7 ===
+2025-12-20 12:12:29,691 - INFO - Horizon h7 metrics: {'logloss': 0.3593739818607875, 'accuracy': 0.7, 'precision': 0.45932120457275033, 'recall': 0.9314450658488184, 'f1': 0.6152471177048887, 'positive_rate': 0.5222067363530778, 'roc_auc': 0.8927707969341208}
+2025-12-20 12:12:29,691 - INFO - Horizon h7 threshold: 0.1450
+2025-12-20 12:12:32,626 - INFO - === Horizon h8 ===
+2025-12-20 12:13:05,890 - INFO - Horizon h8 metrics: {'logloss': 0.36307800648289484, 'accuracy': 0.6922576598759553, 'precision': 0.4525669153137341, 'recall': 0.9303626195201155, 'f1': 0.6089266737513284, 'positive_rate': 0.5293967339543311, 'roc_auc': 0.8885590650212221}
+2025-12-20 12:13:05,891 - INFO - Horizon h8 threshold: 0.1400
+2025-12-20 12:13:05,891 - INFO - === Final training complete for horizons (1, 2, 3, 4, 5, 6, 7, 8) ===
+2025-12-20 14:53:04,222 - INFO - === Final training started ===
+2025-12-20 14:53:06,046 - INFO - === Horizon h1 ===
+2025-12-20 14:53:30,022 - INFO - Horizon h1 metrics: {'logloss': 0.3184161126176013, 'accuracy': 0.8056716833890747, 'precision': 0.5843100775193798, 'recall': 0.8499007757532022, 'f1': 0.6925140568152586, 'positive_rate': 0.37451226309921964, 'roc_auc': 0.9123411112743202}
+2025-12-20 14:53:30,022 - INFO - Horizon h1 threshold: 0.2700
+2025-12-20 14:53:32,302 - INFO - === Horizon h2 ===
+2025-12-20 14:53:56,028 - INFO - Horizon h2 metrics: {'logloss': 0.3210053768987756, 'accuracy': 0.8050400650330972, 'precision': 0.58363365229278, 'recall': 0.8472848637921703, 'f1': 0.6911699779249448, 'positive_rate': 0.37380095227035187, 'roc_auc': 0.9109395971484124}
+2025-12-20 14:53:56,028 - INFO - Horizon h2 threshold: 0.2700
+2025-12-20 14:54:09,514 - INFO - === Horizon h3 ===
+2025-12-20 14:54:32,902 - INFO - Horizon h3 metrics: {'logloss': 0.3239207825735167, 'accuracy': 0.8069633483532308, 'precision': 0.587744261051034, 'recall': 0.8383546815803716, 'f1': 0.6910294062976319, 'positive_rate': 0.3672829469967947, 'roc_auc': 0.9091185352545401}
+2025-12-20 14:54:32,902 - INFO - Horizon h3 threshold: 0.2750
+2025-12-20 14:54:36,089 - INFO - === Horizon h4 ===
+2025-12-20 14:54:59,746 - INFO - Horizon h4 metrics: {'logloss': 0.3269513116921295, 'accuracy': 0.8050077811070077, 'precision': 0.5844579750172619, 'recall': 0.8398881472127007, 'f1': 0.6892697190657734, 'positive_rate': 0.3700322857872854, 'roc_auc': 0.9070527096371218}
+2025-12-20 14:54:59,746 - INFO - Horizon h4 threshold: 0.2700
+2025-12-20 14:55:03,292 - INFO - === Horizon h5 ===
+2025-12-20 14:55:26,830 - INFO - Horizon h5 metrics: {'logloss': 0.3298760036275603, 'accuracy': 0.8059788163151538, 'precision': 0.5870326730781479, 'recall': 0.8314089843045283, 'f1': 0.6881696345242095, 'positive_rate': 0.364698504134535, 'roc_auc': 0.9049427293808892}
+2025-12-20 14:55:26,830 - INFO - Horizon h5 threshold: 0.2750
+2025-12-20 14:55:28,741 - INFO - === Horizon h6 ===
+2025-12-20 14:55:52,232 - INFO - Horizon h6 metrics: {'logloss': 0.3328208788593815, 'accuracy': 0.8030707765208706, 'precision': 0.5822816759212519, 'recall': 0.8324012267725058, 'f1': 0.6852305635999109, 'positive_rate': 0.36812153027804234, 'roc_auc': 0.9027299020986866}
+2025-12-20 14:55:52,232 - INFO - Horizon h6 threshold: 0.2700
+2025-12-20 14:55:54,206 - INFO - === Horizon h7 ===
+2025-12-20 14:56:17,861 - INFO - Horizon h7 metrics: {'logloss': 0.3357932602663051, 'accuracy': 0.8019047619047619, 'precision': 0.5806431273644388, 'recall': 0.8306873534187263, 'f1': 0.6835151785051584, 'positive_rate': 0.3684088269454123, 'roc_auc': 0.9004129143527494}
+2025-12-20 14:56:17,861 - INFO - Horizon h7 threshold: 0.2700
+2025-12-20 14:56:19,695 - INFO - === Horizon h8 ===
+2025-12-20 14:56:43,252 - INFO - Horizon h8 metrics: {'logloss': 0.338538453193603, 'accuracy': 0.7993681618620642, 'precision': 0.5766606147874538, 'recall': 0.8308677611401768, 'f1': 0.6808086034221515, 'positive_rate': 0.37104230063416105, 'roc_auc': 0.8982244906809166}
+2025-12-20 14:56:43,252 - INFO - Horizon h8 threshold: 0.2650
+2025-12-20 14:56:43,252 - INFO - === Final training complete for horizons (1, 2, 3, 4, 5, 6, 7, 8) ===
+2025-12-20 15:43:15,035 - INFO - === Final training started ===
+2025-12-20 15:43:17,101 - INFO - === Horizon h1 ===
+2025-12-20 15:43:40,979 - INFO - Horizon h1 metrics: {'logloss': 0.3184161126176013, 'accuracy': 0.8056716833890747, 'precision': 0.5843100775193798, 'recall': 0.8499007757532022, 'f1': 0.6925140568152586, 'positive_rate': 0.37451226309921964, 'roc_auc': 0.9123411112743202}
+2025-12-20 15:43:40,979 - INFO - Horizon h1 thresholds watch=0.2700 warning=0.2700
+2025-12-20 15:43:44,996 - INFO - === Horizon h2 ===
+2025-12-20 15:44:08,002 - INFO - Horizon h2 metrics: {'logloss': 0.3210053768987756, 'accuracy': 0.8050400650330972, 'precision': 0.58363365229278, 'recall': 0.8472848637921703, 'f1': 0.6911699779249448, 'positive_rate': 0.37380095227035187, 'roc_auc': 0.9109395971484124}
+2025-12-20 15:44:08,002 - INFO - Horizon h2 thresholds watch=0.2700 warning=0.2700
+2025-12-20 15:44:33,033 - INFO - === Horizon h3 ===
+2025-12-20 15:44:55,270 - INFO - Horizon h3 metrics: {'logloss': 0.3239207825735167, 'accuracy': 0.8069633483532308, 'precision': 0.587744261051034, 'recall': 0.8383546815803716, 'f1': 0.6910294062976319, 'positive_rate': 0.3672829469967947, 'roc_auc': 0.9091185352545401}
+2025-12-20 15:44:55,270 - INFO - Horizon h3 thresholds watch=0.2750 warning=0.2750
+2025-12-20 15:45:07,144 - INFO - === Horizon h4 ===
+2025-12-20 15:45:29,454 - INFO - Horizon h4 metrics: {'logloss': 0.3269513116921295, 'accuracy': 0.8050077811070077, 'precision': 0.5844579750172619, 'recall': 0.8398881472127007, 'f1': 0.6892697190657734, 'positive_rate': 0.3700322857872854, 'roc_auc': 0.9070527096371218}
+2025-12-20 15:45:29,454 - INFO - Horizon h4 thresholds watch=0.2700 warning=0.2700
+2025-12-20 15:45:32,123 - INFO - === Horizon h5 ===
+2025-12-20 15:45:55,671 - INFO - Horizon h5 metrics: {'logloss': 0.3298760036275603, 'accuracy': 0.8059788163151538, 'precision': 0.5870326730781479, 'recall': 0.8314089843045283, 'f1': 0.6881696345242095, 'positive_rate': 0.364698504134535, 'roc_auc': 0.9049427293808892}
+2025-12-20 15:45:55,671 - INFO - Horizon h5 thresholds watch=0.2750 warning=0.2750
+2025-12-20 15:45:58,462 - INFO - === Horizon h6 ===
+2025-12-20 15:46:22,102 - INFO - Horizon h6 metrics: {'logloss': 0.3328208788593815, 'accuracy': 0.8030707765208706, 'precision': 0.5822816759212519, 'recall': 0.8324012267725058, 'f1': 0.6852305635999109, 'positive_rate': 0.36812153027804234, 'roc_auc': 0.9027299020986866}
+2025-12-20 15:46:22,102 - INFO - Horizon h6 thresholds watch=0.2700 warning=0.2700
+2025-12-20 15:46:25,269 - INFO - === Horizon h7 ===
+2025-12-20 15:46:49,127 - INFO - Horizon h7 metrics: {'logloss': 0.3357932602663051, 'accuracy': 0.8019047619047619, 'precision': 0.5806431273644388, 'recall': 0.8306873534187263, 'f1': 0.6835151785051584, 'positive_rate': 0.3684088269454123, 'roc_auc': 0.9004129143527494}
+2025-12-20 15:46:49,127 - INFO - Horizon h7 thresholds watch=0.2700 warning=0.2700
+2025-12-20 15:46:52,198 - INFO - === Horizon h8 ===
+2025-12-20 15:47:15,258 - INFO - Horizon h8 metrics: {'logloss': 0.338538453193603, 'accuracy': 0.7993681618620642, 'precision': 0.5766606147874538, 'recall': 0.8308677611401768, 'f1': 0.6808086034221515, 'positive_rate': 0.37104230063416105, 'roc_auc': 0.8982244906809166}
+2025-12-20 15:47:15,258 - INFO - Horizon h8 thresholds watch=0.2650 warning=0.2650
+2025-12-20 15:47:15,258 - INFO - === Final training complete for horizons (1, 2, 3, 4, 5, 6, 7, 8) ===
+2025-12-20 16:29:58,930 - INFO - === Final training started ===
+2025-12-20 16:30:00,995 - INFO - === Horizon h1 ===
+2025-12-20 16:30:24,987 - INFO - Horizon h1 metrics: {'logloss': 0.3184161126176013, 'accuracy': 0.8056716833890747, 'precision': 0.5843100775193798, 'recall': 0.8499007757532022, 'f1': 0.6925140568152586, 'positive_rate': 0.37451226309921964, 'roc_auc': 0.9123411112743202}
+2025-12-20 16:30:24,987 - INFO - Horizon h1 thresholds watch=0.2700 warning=0.3650
+2025-12-20 16:30:28,016 - INFO - === Horizon h2 ===
+2025-12-20 16:30:55,012 - INFO - Horizon h2 metrics: {'logloss': 0.3210053768987756, 'accuracy': 0.8050400650330972, 'precision': 0.58363365229278, 'recall': 0.8472848637921703, 'f1': 0.6911699779249448, 'positive_rate': 0.37380095227035187, 'roc_auc': 0.9109395971484124}
+2025-12-20 16:30:55,012 - INFO - Horizon h2 thresholds watch=0.2700 warning=0.3650
+2025-12-20 16:30:56,988 - INFO - === Horizon h3 ===
+2025-12-20 16:31:21,044 - INFO - Horizon h3 metrics: {'logloss': 0.3239207825735167, 'accuracy': 0.8069633483532308, 'precision': 0.587744261051034, 'recall': 0.8383546815803716, 'f1': 0.6910294062976319, 'positive_rate': 0.3672829469967947, 'roc_auc': 0.9091185352545401}
+2025-12-20 16:31:21,044 - INFO - Horizon h3 thresholds watch=0.2750 warning=0.3700
+2025-12-20 16:31:23,108 - INFO - === Horizon h4 ===
+2025-12-20 16:31:46,909 - INFO - Horizon h4 metrics: {'logloss': 0.3269513116921295, 'accuracy': 0.8050077811070077, 'precision': 0.5844579750172619, 'recall': 0.8398881472127007, 'f1': 0.6892697190657734, 'positive_rate': 0.3700322857872854, 'roc_auc': 0.9070527096371218}
+2025-12-20 16:31:46,909 - INFO - Horizon h4 thresholds watch=0.2700 warning=0.3700
+2025-12-20 16:31:48,963 - INFO - === Horizon h5 ===
+2025-12-20 16:32:14,067 - INFO - Horizon h5 metrics: {'logloss': 0.3298760036275603, 'accuracy': 0.8059788163151538, 'precision': 0.5870326730781479, 'recall': 0.8314089843045283, 'f1': 0.6881696345242095, 'positive_rate': 0.364698504134535, 'roc_auc': 0.9049427293808892}
+2025-12-20 16:32:14,067 - INFO - Horizon h5 thresholds watch=0.2750 warning=0.3750
+2025-12-20 16:32:15,834 - INFO - === Horizon h6 ===
+2025-12-20 16:32:39,987 - INFO - Horizon h6 metrics: {'logloss': 0.3328208788593815, 'accuracy': 0.8030707765208706, 'precision': 0.5822816759212519, 'recall': 0.8324012267725058, 'f1': 0.6852305635999109, 'positive_rate': 0.36812153027804234, 'roc_auc': 0.9027299020986866}
+2025-12-20 16:32:39,987 - INFO - Horizon h6 thresholds watch=0.2700 warning=0.3750
+2025-12-20 16:32:41,747 - INFO - === Horizon h7 ===
+2025-12-20 16:33:06,780 - INFO - Horizon h7 metrics: {'logloss': 0.3357932602663051, 'accuracy': 0.8019047619047619, 'precision': 0.5806431273644388, 'recall': 0.8306873534187263, 'f1': 0.6835151785051584, 'positive_rate': 0.3684088269454123, 'roc_auc': 0.9004129143527494}
+2025-12-20 16:33:06,780 - INFO - Horizon h7 thresholds watch=0.2700 warning=0.3750
+2025-12-20 16:33:08,583 - INFO - === Horizon h8 ===
+2025-12-20 16:33:32,885 - INFO - Horizon h8 metrics: {'logloss': 0.338538453193603, 'accuracy': 0.7993681618620642, 'precision': 0.5766606147874538, 'recall': 0.8308677611401768, 'f1': 0.6808086034221515, 'positive_rate': 0.37104230063416105, 'roc_auc': 0.8982244906809166}
+2025-12-20 16:33:32,885 - INFO - Horizon h8 thresholds watch=0.2650 warning=0.3700
+2025-12-20 16:33:32,885 - INFO - === Final training complete for horizons (1, 2, 3, 4, 5, 6, 7, 8) ===
+2025-12-20 23:48:56,919 - INFO - === Final training started ===
+2025-12-20 23:49:00,618 - INFO - === Horizon h1 ===
+2025-12-20 23:49:27,381 - INFO - Horizon h1 metrics: {'logloss': 0.3184161126176013, 'accuracy': 0.8056716833890747, 'precision': 0.5843100775193798, 'recall': 0.8499007757532022, 'f1': 0.6925140568152586, 'positive_rate': 0.37451226309921964, 'roc_auc': 0.9123411112743202}
+2025-12-20 23:49:27,381 - INFO - Horizon h1 thresholds watch=0.2700 warning=0.3650
+2025-12-20 23:49:31,480 - INFO - === Horizon h2 ===
+2025-12-20 23:49:58,135 - INFO - Horizon h2 metrics: {'logloss': 0.3210053768987756, 'accuracy': 0.8050400650330972, 'precision': 0.58363365229278, 'recall': 0.8472848637921703, 'f1': 0.6911699779249448, 'positive_rate': 0.37380095227035187, 'roc_auc': 0.9109395971484124}
+2025-12-20 23:49:58,135 - INFO - Horizon h2 thresholds watch=0.2700 warning=0.3650
+2025-12-20 23:50:02,971 - INFO - === Horizon h3 ===
+2025-12-20 23:50:29,079 - INFO - Horizon h3 metrics: {'logloss': 0.3239207825735167, 'accuracy': 0.8069633483532308, 'precision': 0.587744261051034, 'recall': 0.8383546815803716, 'f1': 0.6910294062976319, 'positive_rate': 0.3672829469967947, 'roc_auc': 0.9091185352545401}
+2025-12-20 23:50:29,079 - INFO - Horizon h3 thresholds watch=0.2750 warning=0.3700
+2025-12-20 23:51:04,886 - INFO - === Horizon h4 ===
+2025-12-20 23:51:31,065 - INFO - Horizon h4 metrics: {'logloss': 0.3269513116921295, 'accuracy': 0.8050077811070077, 'precision': 0.5844579750172619, 'recall': 0.8398881472127007, 'f1': 0.6892697190657734, 'positive_rate': 0.3700322857872854, 'roc_auc': 0.9070527096371218}
+2025-12-20 23:51:31,065 - INFO - Horizon h4 thresholds watch=0.2700 warning=0.3700
+2025-12-20 23:51:33,509 - INFO - === Horizon h5 ===
+2025-12-20 23:51:58,533 - INFO - Horizon h5 metrics: {'logloss': 0.3298760036275603, 'accuracy': 0.8059788163151538, 'precision': 0.5870326730781479, 'recall': 0.8314089843045283, 'f1': 0.6881696345242095, 'positive_rate': 0.364698504134535, 'roc_auc': 0.9049427293808892}
+2025-12-20 23:51:58,533 - INFO - Horizon h5 thresholds watch=0.2750 warning=0.3750
+2025-12-20 23:52:00,262 - INFO - === Horizon h6 ===
+2025-12-20 23:52:27,078 - INFO - Horizon h6 metrics: {'logloss': 0.3328208788593815, 'accuracy': 0.8030707765208706, 'precision': 0.5822816759212519, 'recall': 0.8324012267725058, 'f1': 0.6852305635999109, 'positive_rate': 0.36812153027804234, 'roc_auc': 0.9027299020986866}
+2025-12-20 23:52:27,078 - INFO - Horizon h6 thresholds watch=0.2700 warning=0.3750
+2025-12-20 23:52:28,876 - INFO - === Horizon h7 ===
+2025-12-20 23:52:54,921 - INFO - Horizon h7 metrics: {'logloss': 0.3357932602663051, 'accuracy': 0.8019047619047619, 'precision': 0.5806431273644388, 'recall': 0.8306873534187263, 'f1': 0.6835151785051584, 'positive_rate': 0.3684088269454123, 'roc_auc': 0.9004129143527494}
+2025-12-20 23:52:54,921 - INFO - Horizon h7 thresholds watch=0.2700 warning=0.3750
+2025-12-20 23:52:56,946 - INFO - === Horizon h8 ===
+2025-12-20 23:53:21,774 - INFO - Horizon h8 metrics: {'logloss': 0.338538453193603, 'accuracy': 0.7993681618620642, 'precision': 0.5766606147874538, 'recall': 0.8308677611401768, 'f1': 0.6808086034221515, 'positive_rate': 0.37104230063416105, 'roc_auc': 0.8982244906809166}
+2025-12-20 23:53:21,774 - INFO - Horizon h8 thresholds watch=0.2650 warning=0.3700
+2025-12-20 23:53:21,775 - INFO - === Final training complete for horizons (1, 2, 3, 4, 5, 6, 7, 8) ===
+2025-12-22 02:29:43,042 - INFO - === Final training started ===
+2025-12-22 02:29:44,258 - INFO - === Horizon h1 ===
+2025-12-22 02:30:19,472 - INFO - Horizon h1 metrics: {'logloss': 0.2659799755436311, 'accuracy': 0.9434457450761798, 'precision': 0.39132089836315187, 'recall': 0.5515021459227468, 'f1': 0.4578044978846582, 'positive_rate': 0.06101356373095503, 'roc_auc': 0.8933885098006448}
+2025-12-22 02:30:19,473 - INFO - Horizon h1 thresholds watch=0.6700 warning=0.8200
+2025-12-22 02:30:20,358 - INFO - === Horizon h2 ===
+2025-12-22 02:30:57,165 - INFO - Horizon h2 metrics: {'logloss': 0.27305840850319585, 'accuracy': 0.9478341656021368, 'precision': 0.4115740740740741, 'recall': 0.476931330472103, 'f1': 0.4418489065606362, 'positive_rate': 0.05016838926953896, 'roc_auc': 0.8840711550181335}
+2025-12-22 02:30:57,165 - INFO - Horizon h2 thresholds watch=0.7000 warning=0.8800
+2025-12-22 02:30:58,453 - INFO - === Horizon h3 ===
+2025-12-22 02:31:32,792 - INFO - Horizon h3 metrics: {'logloss': 0.28893789573869816, 'accuracy': 0.9549403075207878, 'precision': 0.46785109983079526, 'recall': 0.2966738197424893, 'f1': 0.36309914642153646, 'positive_rate': 0.027453895108468435, 'roc_auc': 0.8710490587427467}
+2025-12-22 02:31:32,793 - INFO - Horizon h3 thresholds watch=0.7800 warning=0.8850
+2025-12-22 02:31:33,793 - INFO - === Horizon h4 ===
+2025-12-22 02:32:08,715 - INFO - Horizon h4 metrics: {'logloss': 0.30289910254788277, 'accuracy': 0.9560309386105498, 'precision': 0.47587354409317806, 'recall': 0.15343347639484978, 'f1': 0.23204868154158215, 'positive_rate': 0.013959538243560263, 'roc_auc': 0.85566978250683}
+2025-12-22 02:32:08,715 - INFO - Horizon h4 thresholds watch=0.8250 warning=0.9200
+2025-12-22 02:32:09,739 - INFO - === Horizon h5 ===
+2025-12-22 02:32:45,439 - INFO - Horizon h5 metrics: {'logloss': 0.31608769546082277, 'accuracy': 0.9567732044968875, 'precision': 0.5483870967741935, 'recall': 0.009120171673819743, 'f1': 0.017941952506596307, 'positive_rate': 0.000720059462975007, 'roc_auc': 0.8398639797165806}
+2025-12-22 02:32:45,440 - INFO - Horizon h5 thresholds watch=0.9000 warning=0.9000
+2025-12-22 02:32:46,963 - INFO - === Horizon h6 ===
+2025-12-22 02:33:22,002 - INFO - Horizon h6 metrics: {'logloss': 0.326980028619403, 'accuracy': 0.8581682190889874, 'precision': 0.168282765092274, 'recall': 0.5772532188841202, 'f1': 0.2605957859045774, 'positive_rate': 0.14852152098673665, 'roc_auc': 0.8214473625527285}
+2025-12-22 02:33:22,002 - INFO - Horizon h6 thresholds watch=0.5000 warning=0.5000
+2025-12-22 02:33:22,844 - INFO - === Horizon h7 ===
+2025-12-22 02:33:59,445 - INFO - Horizon h7 metrics: {'logloss': 0.33796444877605025, 'accuracy': 0.8538211382113822, 'precision': 0.15851966075558982, 'recall': 0.5515021459227468, 'f1': 0.24625703677087077, 'positive_rate': 0.15063879210220674, 'roc_auc': 0.807029690648662}
+2025-12-22 02:33:59,446 - INFO - Horizon h7 thresholds watch=0.5000 warning=0.5000
+2025-12-22 02:34:00,900 - INFO - === Horizon h8 ===
+2025-12-22 02:34:36,700 - INFO - Horizon h8 metrics: {'logloss': 0.34721247564575275, 'accuracy': 0.8508676159724965, 'precision': 0.14813098548038306, 'recall': 0.5144849785407726, 'f1': 0.23003118253777885, 'positive_rate': 0.15038676856605263, 'roc_auc': 0.7920769937386054}
+2025-12-22 02:34:36,701 - INFO - Horizon h8 thresholds watch=0.5000 warning=0.5000
+2025-12-22 02:34:36,701 - INFO - === Final training complete for horizons (1, 2, 3, 4, 5, 6, 7, 8) ===
+2025-12-22 02:37:49,427 - INFO - === Final training started ===
+2025-12-22 02:37:49,427 - INFO - Using target column: severity_label
+2025-12-22 02:37:50,453 - INFO - === Horizon h1 ===
+2025-12-22 02:38:26,079 - INFO - Horizon h1 metrics: {'logloss': 0.49763164749811445, 'accuracy': 0.7787068004459309, 'precision': 0.5414325459603949, 'recall': 0.8984339639721192, 'f1': 0.6756756756756757, 'positive_rate': 0.42574786324786323, 'roc_auc': 0.9142793493263215}
+2025-12-22 02:38:26,080 - INFO - Horizon h1 thresholds watch=0.6400 warning=0.7350
+2025-12-22 02:38:27,346 - INFO - === Horizon h2 ===
+2025-12-22 02:39:02,748 - INFO - Horizon h2 metrics: {'logloss': 0.5005716921382376, 'accuracy': 0.7821391243757984, 'precision': 0.546375118232905, 'recall': 0.8889291210283334, 'f1': 0.6767746381805652, 'positive_rate': 0.41744280571362213, 'roc_auc': 0.9129743057582214}
+2025-12-22 02:39:02,748 - INFO - Horizon h2 thresholds watch=0.6500 warning=0.7450
+2025-12-22 02:39:04,034 - INFO - === Horizon h3 ===
+2025-12-22 02:39:39,281 - INFO - Horizon h3 metrics: {'logloss': 0.5110843069178235, 'accuracy': 0.7763274027964882, 'precision': 0.538688363457653, 'recall': 0.8930026251470987, 'f1': 0.6720027247956403, 'positive_rate': 0.42534956101639804, 'roc_auc': 0.9112501002562836}
+2025-12-22 02:39:39,281 - INFO - Horizon h3 thresholds watch=0.6350 warning=0.7350
+2025-12-22 02:39:40,393 - INFO - === Horizon h4 ===
+2025-12-22 02:40:18,745 - INFO - Horizon h4 metrics: {'logloss': 0.5210567095000544, 'accuracy': 0.7712122267902353, 'precision': 0.5323846112223365, 'recall': 0.89064904498959, 'f1': 0.666418314819832, 'positive_rate': 0.42926160778575245, 'roc_auc': 0.9083726386257768}
+2025-12-22 02:40:18,746 - INFO - Horizon h4 thresholds watch=0.6250 warning=0.7300
+2025-12-22 02:40:20,197 - INFO - === Horizon h5 ===
+2025-12-22 02:40:57,884 - INFO - Horizon h5 metrics: {'logloss': 0.5260926854268915, 'accuracy': 0.7717643779615349, 'precision': 0.5333115076117204, 'recall': 0.8847650945958179, 'f1': 0.6654864846462858, 'positive_rate': 0.4256945089659017, 'roc_auc': 0.9060553629719219}
+2025-12-22 02:40:57,884 - INFO - Horizon h5 thresholds watch=0.6300 warning=0.7350
+2025-12-22 02:40:58,998 - INFO - === Horizon h6 ===
+2025-12-22 02:41:32,811 - INFO - Horizon h6 metrics: {'logloss': 0.5348209692711111, 'accuracy': 0.7728740331235047, 'precision': 0.5351659923516044, 'recall': 0.8740834615732778, 'f1': 0.6638707459608113, 'positive_rate': 0.4191075700912871, 'roc_auc': 0.9035388960896047}
+2025-12-22 02:41:32,811 - INFO - Horizon h6 thresholds watch=0.6400 warning=0.7400
+2025-12-22 02:41:33,766 - INFO - === Horizon h7 ===
+2025-12-22 02:42:08,270 - INFO - Horizon h7 metrics: {'logloss': 0.5448569454093988, 'accuracy': 0.7663879210220673, 'precision': 0.526803118908382, 'recall': 0.8806915904770526, 'f1': 0.6592580044045401, 'positive_rate': 0.42898954703832753, 'roc_auc': 0.9012028894582252}
+2025-12-22 02:42:08,270 - INFO - Horizon h7 thresholds watch=0.6250 warning=0.7350
+2025-12-22 02:42:09,284 - INFO - === Horizon h8 ===
+2025-12-22 02:42:43,024 - INFO - Horizon h8 metrics: {'logloss': 0.5546010351431298, 'accuracy': 0.7655462380078515, 'precision': 0.5259464751958225, 'recall': 0.8752602516520323, 'f1': 0.6570622812680507, 'positive_rate': 0.4270482473460475, 'roc_auc': 0.8990280304457524}
+2025-12-22 02:42:43,024 - INFO - Horizon h8 thresholds watch=0.6300 warning=0.7350
+2025-12-22 02:42:43,024 - INFO - === Final training complete for horizons (1, 2, 3, 4, 5, 6, 7, 8) ===

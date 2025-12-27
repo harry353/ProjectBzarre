@@ -61,7 +61,7 @@ def _month_range(start: date, end: date) -> Iterator[date]:
 
 
 def _base_for_month(month_date: date) -> str:
-    if month_date < date(2020, 1, 1):
+    if month_date < date(2020, 12, 31):
         return DST_FINAL_BASE
     if month_date <= date(2025, 6, 30):
         return DST_PROVISIONAL_BASE

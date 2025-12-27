@@ -84,6 +84,33 @@ SOURCES = [
             "test": "xray_flux_test",
         },
     },
+    {
+        "name": "storm_labels",
+        "db": FINAL_DIR / "features_targets" / "storm_labels.db",
+        "tables": {
+            "train": "severity_train",
+            "validation": "severity_validation",
+            "test": "severity_test",
+        },
+    },
+    {
+        "name": "ssc_labels",
+        "db": FINAL_DIR / "features_targets" / "storm_labels.db",
+        "tables": {
+            "train": "ssc_train",
+            "validation": "ssc_validation",
+            "test": "ssc_test",
+        },
+    },
+    {
+        "name": "main_phase_labels",
+        "db": FINAL_DIR / "features_targets" / "storm_labels.db",
+        "tables": {
+            "train": "main_phase_train",
+            "validation": "main_phase_validation",
+            "test": "main_phase_test",
+        },
+    },
 ]
 
 OUTPUT_DB = FINAL_DIR / "final" / "all_sources_intersection.db"

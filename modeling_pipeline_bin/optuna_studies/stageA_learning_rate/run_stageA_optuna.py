@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Tuple
 import sys
@@ -29,6 +30,7 @@ STUDY_DB = Path(__file__).resolve().parent / "study.db"
 STUDY_NAME = "stageA_learning_rate"
 HORIZON_HOURS = DEFAULT_HORIZON_HOURS
 DEFAULT_TRIALS = 50
+DEFAULT_N_JOBS = 12
 
 
 def _setup_logger() -> logging.Logger:
@@ -56,7 +58,7 @@ def _prepare_datasets(horizon_hours: int) -> Tuple[np.ndarray, np.ndarray, np.nd
     return X_train, y_train, X_val, y_val
 
 
-def objective_factory(X_train, y_train, X_val, y_val, logger: logging.Logger):
+def objective_factory(X_train, y_train, X_val, y_val, n_jobs: int, logger: logging.Logger):
     def objective(trial: Trial) -> float:
         learning_rate = trial.suggest_float("learning_rate", 0.005, 0.20, log=True)
         model = XGBClassifier(
@@ -73,6 +75,7 @@ def objective_factory(X_train, y_train, X_val, y_val, logger: logging.Logger):
             random_state=1337,
             learning_rate=learning_rate,
             eval_metric="logloss",
+            n_jobs=n_jobs,
         )
         model.fit(X_train, y_train)
         val_prob = model.predict_proba(X_val)[:, 1]
@@ -84,7 +87,9 @@ def objective_factory(X_train, y_train, X_val, y_val, logger: logging.Logger):
     return objective
 
 
-def main(trials: int = DEFAULT_TRIALS, horizon_hours: int = HORIZON_HOURS) -> None:
+def main(trials: int = DEFAULT_TRIALS) -> None:
+    horizon_hours = int(os.environ.get("PIPELINE_HORIZON", HORIZON_HOURS))
+    n_jobs = int(os.environ.get("PIPELINE_N_JOBS", DEFAULT_N_JOBS))
     logger = _setup_logger()
     logger.info("=== Stage A Learning Rate Optimization Started ===")
     print(f"[INFO] Loading datasets (horizon={horizon_hours}h)...")
@@ -104,7 +109,7 @@ def main(trials: int = DEFAULT_TRIALS, horizon_hours: int = HORIZON_HOURS) -> No
         load_if_exists=True,
     )
 
-    objective = objective_factory(X_train, y_train, X_val, y_val, logger)
+    objective = objective_factory(X_train, y_train, X_val, y_val, n_jobs, logger)
     print("[INFO] Starting Optuna optimization...")
     study.optimize(objective, n_trials=trials, timeout=None)
 
@@ -133,11 +138,5 @@ def main(trials: int = DEFAULT_TRIALS, horizon_hours: int = HORIZON_HOURS) -> No
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Stage A learning rate optimization")
     parser.add_argument("--trials", type=int, default=DEFAULT_TRIALS, help="Number of Optuna trials")
-    parser.add_argument(
-        "--horizon",
-        type=int,
-        default=HORIZON_HOURS,
-        help="Future horizon (hours) for severity label shifting.",
-    )
     args = parser.parse_args()
-    main(trials=args.trials, horizon_hours=args.horizon)
+    main(trials=args.trials)

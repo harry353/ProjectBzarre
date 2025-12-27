@@ -1,0 +1,6 @@
+{
+  "label": "severity_label_binary",
+  "horizon_hours": 8,
+  "watch_threshold": 0.63,
+  "warning_threshold": 0.735
+}

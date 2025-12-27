@@ -42,6 +42,48 @@ OUTPUT_DB = STAGE_DIR / "kp_index_aver_filt_imp_eng_split_norm.db"
 PARAMS_PATH = STAGE_DIR / "kp_index_normalization.json"
 
 # ---------------------------------------------------------------------
+# Column groups
+# ---------------------------------------------------------------------
+CONTINUOUS_COLS = [
+    "ap",
+    "ap_3h_change",
+    "kp_lag_1",
+    "kp_lag_2",
+    "kp_lag_3",
+    "kp_lag_6",
+    "kp_lag_12",
+    "kp_mean_6h",
+    "kp_mean_12h",
+    "kp_max_6h",
+    "kp_max_12h",
+    "kp_max_24h",
+    "kp_delta_3h",
+    "kp_delta_6h",
+    "kp_accel",
+    "kp_dist_to_5",
+    "kp_dist_to_6",
+    "kp_dist_to_7",
+    "ap_sum_24h",
+    "ap_max_24h",
+    "ap_mean_12h",
+    "ap_energy_rolling",
+]
+
+PASSTHROUGH_COLS = [
+    "kp_index",
+    "kp_regime",
+    "ap_level_bucket",
+    "kp_hours_above_5",
+    "kp_hours_above_6",
+    "kp_hours_above_7",
+    "kp_regime_duration_hours",
+    "kp_time_since_last_regime_change",
+    "kp_jump_2plus",
+    "kp_jump_3plus",
+    "kp_entered_storm",
+]
+
+# ---------------------------------------------------------------------
 # I/O helpers
 # ---------------------------------------------------------------------
 def _load_split(table: str) -> pd.DataFrame:
@@ -57,16 +99,24 @@ def _load_split(table: str) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------
-# Fit normalization params on TRAIN ONLY
+# Fit normalization params (TRAIN ONLY)
 # ---------------------------------------------------------------------
 def fit_kp_normalization_params(train: pd.DataFrame) -> dict:
-    params = {}
+    params: dict[str, dict[str, float]] = {}
 
-    for col in ["ap", "ap_3h_change"]:
-        mean = float(train[col].mean())
-        std = float(train[col].std())
+    for col in CONTINUOUS_COLS:
+        if col not in train.columns:
+            raise RuntimeError(f"Expected column '{col}' missing from training data")
+
+        series = train[col].astype(float)
+        mean = float(series.mean())
+        std = float(series.std())
+
         if not np.isfinite(std) or std == 0.0:
             std = 1.0
+        if not np.isfinite(mean):
+            mean = 0.0
+
         params[col] = {"mean": mean, "std": std}
 
     return params
@@ -78,21 +128,27 @@ def fit_kp_normalization_params(train: pd.DataFrame) -> dict:
 def apply_kp_normalization(df: pd.DataFrame, params: dict) -> pd.DataFrame:
     out = df.copy()
 
-    # Continuous features
-    for col in ["ap", "ap_3h_change"]:
-        p = params[col]
-        out[col] = (df[col] - p["mean"]) / p["std"]
+    for col, p in params.items():
+        out[col] = (out[col] - p["mean"]) / p["std"]
 
-    # Ordinal / categorical features: untouched
-    out["kp_index"] = df["kp_index"]
-    out["kp_regime"] = df["kp_regime"]
-    out["ap_level_bucket"] = df["ap_level_bucket"]
+    # Ensure passthrough columns are untouched
+    for col in PASSTHROUGH_COLS:
+        if col in df.columns:
+            out[col] = df[col]
+
+    # Safety check
+    norm_cols = list(params.keys())
+    if out[norm_cols].isna().any().any():
+        raise RuntimeError("NaNs introduced during KP normalization")
+
+    if (~np.isfinite(out[norm_cols])).any().any():
+        raise RuntimeError("Infs introduced during KP normalization")
 
     return out
 
 
 # ---------------------------------------------------------------------
-# Pipeline entry point
+# Pipeline entry
 # ---------------------------------------------------------------------
 def normalize_kp_splits() -> Dict[str, pd.DataFrame]:
     train = _load_split(TRAIN_TABLE)
