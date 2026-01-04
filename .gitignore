@@ -4,3 +4,4 @@ __pycache__/
 *.cache
 data_source_status.csv
 *.db
+archived_sources/
