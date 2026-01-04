@@ -1,20 +1,25 @@
 from __future__ import annotations
+
 import sys
 from pathlib import Path
+import sqlite3
 
+import numpy as np
+import pandas as pd
+
+# ---------------------------------------------------------------------
+# Project root resolution
+# ---------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve()
 for parent in PROJECT_ROOT.parents:
     if (parent / "space_weather_api.py").exists():
         PROJECT_ROOT = parent
         break
 else:
-    PROJECT_ROOT = PROJECT_ROOT.parent
+    raise RuntimeError("Project root not found (space_weather_api.py missing)")
 
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-
-import numpy as np
-import pandas as pd
 
 from preprocessing_pipeline.utils import write_sqlite_table
 
@@ -33,20 +38,18 @@ OUTPUT_TABLE = "engineered_features"
 # Time grid
 # ---------------------------------------------------------------------
 START = pd.Timestamp("1998-01-01T00:00:00Z")
-END = pd.Timestamp("2025-11-30T23:00:00Z")
+END   = pd.Timestamp("2025-11-30T23:00:00Z")
 HOURLY_INDEX = pd.date_range(START, END, freq="1h", tz="UTC")
 
 # ---------------------------------------------------------------------
-# Helpers
+# Constants
 # ---------------------------------------------------------------------
-HALO_MAP = {"N": 0, "P": 1, "H": 2}
-AU_KM = 1.496e8
 DECAY_TAU_HOURS = 36.0
 
-
+# ---------------------------------------------------------------------
+# Load CME catalog
+# ---------------------------------------------------------------------
 def _load_cme_catalog() -> pd.DataFrame:
-    import sqlite3
-
     with sqlite3.connect(CATALOG_DB) as conn:
         df = pd.read_sql_query(
             f"SELECT * FROM {CATALOG_TABLE}",
@@ -56,52 +59,33 @@ def _load_cme_catalog() -> pd.DataFrame:
     df["time_tag"] = pd.to_datetime(df["time_tag"], utc=True)
     return df.sort_values("time_tag")
 
-
 # ---------------------------------------------------------------------
-# Feature engineering
+# Feature engineering (HOURLY, REDUCED)
 # ---------------------------------------------------------------------
 def engineer_cme_features() -> pd.DataFrame:
     cme = _load_cme_catalog()
     cme = cme.set_index("time_tag").sort_index()
-    cme = cme[~cme.index.duplicated(keep="last")]
+    cme = cme.dropna(subset=["median_velocity"])
+    cme = cme.loc[~cme.index.duplicated(keep="last")]
 
     # --------------------------------------------------------------
-    # Precompute CME-to-CME interaction quantities
+    # CME interaction + strength proxies
     # --------------------------------------------------------------
-    cme["prev_cme_v_med"] = cme["median_velocity"].shift(1).fillna(0.0)
-    cme["delta_last_cme_speed"] = (
-        cme["median_velocity"] - cme["prev_cme_v_med"]
-    ).fillna(0.0)
-
-    cme["delta_last_cme_width"] = (
-        cme["angular_width"] - cme["angular_width"].shift(1)
-    ).fillna(0.0)
-
+    cme["prev_cme_v_med"] = cme["median_velocity"].shift(1)
     cme["last_cme_speed_ratio"] = (
-        cme["median_velocity"]
-        / np.maximum(cme["prev_cme_v_med"], 1.0)
-    ).fillna(0.0)
-
+        cme["median_velocity"] / cme["prev_cme_v_med"].clip(lower=1.0)
+    )
     cme["cme_overtaking_flag"] = (cme["last_cme_speed_ratio"] > 1.5).astype(int)
 
-    # Strength and shock proxies
     cme["strength"] = cme["median_velocity"] * cme["angular_width"]
     cme["shock_proxy"] = (
         cme["median_velocity"]
-        * (cme["velocity_variation"] / np.maximum(cme["median_velocity"], 1.0))
+        * (cme["velocity_variation"] / cme["median_velocity"].clip(lower=1.0))
     )
 
-    # Geometry
     pa = np.deg2rad(cme["position_angle"])
-    cme["pa_sin"] = np.sin(pa)
-    cme["pa_cos"] = np.cos(pa)
-
-    # Severity class
-    cme["cme_severity_class"] = pd.cut(
-        cme["median_velocity"],
-        bins=[-np.inf, 500, 800, 1500, np.inf],
-        labels=[0, 1, 2, 3],
-    ).astype(int)
+    earth_alignment = np.cos(pa).clip(-1.0, 1.0)
+    cme["effective_width"] = cme["angular_width"] * earth_alignment.clip(0.0, 1.0)
 
     # --------------------------------------------------------------
     # Hourly backbone
@@ -110,120 +94,96 @@ def engineer_cme_features() -> pd.DataFrame:
     hourly.index.name = "time_tag"
 
     # --------------------------------------------------------------
-    # Event flags
+    # Time since last CME (monotonic-safe)
     # --------------------------------------------------------------
-    hourly_counts = (
-        pd.Series(1, index=cme.index)
-        .groupby(pd.Grouper(freq="1h"))
-        .sum()
-        .reindex(hourly.index, fill_value=0)
+    event_index = (
+        cme.index
+        .dropna()
+        .drop_duplicates()
+        .sort_values()
     )
-    hourly["cme_active_flag"] = (hourly_counts > 0).astype(int)
 
-    # --------------------------------------------------------------
-    # Time since / until CME
-    # --------------------------------------------------------------
-    last_event = cme.index.to_series().reindex(hourly.index, method="ffill")
-    next_event = cme.index.to_series().reindex(hourly.index, method="bfill")
+    if not event_index.is_monotonic_increasing:
+        raise RuntimeError("CME event index not monotonic")
+
+    event_series = pd.Series(event_index, index=event_index)
+
+    last_event = event_series.reindex(
+        hourly.index,
+        method="ffill",
+    )
 
     hourly["hours_since_last_cme"] = (
-        (hourly.index - last_event).dt.total_seconds() / 3600
-    ).fillna(1e6)
-
-    hourly["hours_until_next_cme"] = (
-        (next_event - hourly.index).dt.total_seconds() / 3600
+        (hourly.index - last_event).dt.total_seconds() / 3600.0
     ).fillna(1e6)
 
     # --------------------------------------------------------------
-    # CME rate and strength-weighted rate
+    # CME rate / strength
     # --------------------------------------------------------------
-    hourly["cme_count_last_24h"] = hourly_counts.rolling(24, min_periods=1).sum()
-    hourly["cme_count_last_72h"] = hourly_counts.rolling(72, min_periods=1).sum()
+    strength_series = (
+        cme["strength"]
+        .groupby(pd.Grouper(freq="1h"))
+        .sum()
+        .reindex(hourly.index, fill_value=0.0)
+    )
 
-    strength_series = cme["strength"].groupby(pd.Grouper(freq="1h")).sum()
-    strength_series = strength_series.reindex(hourly.index, fill_value=0.0)
-
-    hourly["cme_strength_sum_24h"] = strength_series.rolling(24, min_periods=1).sum()
-    hourly["cme_strength_sum_72h"] = strength_series.rolling(72, min_periods=1).sum()
-
-    hourly["cme_cluster_intense_flag"] = (
-        (hourly["cme_count_last_72h"] >= 3)
-        & (hourly["cme_strength_sum_72h"] > 2e5)
-    ).astype(int)
+    hourly["cme_strength_sum_24h"] = (
+        strength_series.rolling(24, min_periods=1).sum()
+    )
 
     # --------------------------------------------------------------
-    # Carry-forward CME properties
+    # Carry-forward CME properties (FIXED)
     # --------------------------------------------------------------
-    def ff(col, fill=0.0):
-        return col.reindex(hourly.index, method="ffill").fillna(fill)
+    def ff(series: pd.Series, fill=0.0) -> pd.Series:
+        s = (
+            series
+            .dropna()
+            .loc[~series.index.duplicated(keep="last")]
+            .sort_index()
+        )
+
+        # ALIGN first, THEN forward-fill
+        aligned = s.reindex(hourly.index)
+        return aligned.ffill().fillna(fill)
+
 
     hourly["last_cme_v_med"] = ff(cme["median_velocity"])
-    hourly["last_cme_width"] = ff(cme["angular_width"])
-    hourly["last_cme_strength"] = ff(cme["strength"])
-    hourly["last_cme_halo_ord"] = ff(cme["halo_class"].map(HALO_MAP), 0).astype(int)
-
-    hourly["last_cme_pa_sin"] = ff(cme["pa_sin"])
-    hourly["last_cme_pa_cos"] = ff(cme["pa_cos"])
-
-    hourly["last_cme_fast_flag"] = (hourly["last_cme_v_med"] >= 800).astype(int)
+    hourly["effective_width"] = ff(cme["effective_width"])
+    hourly["cme_overtaking_flag"] = ff(cme["cme_overtaking_flag"], 0).astype(int)
     hourly["last_cme_shock_proxy"] = ff(cme["shock_proxy"])
 
-    hourly["prev_cme_v_med"] = ff(cme["prev_cme_v_med"])
-    hourly["last_cme_speed_ratio"] = ff(cme["last_cme_speed_ratio"])
-    hourly["cme_overtaking_flag"] = ff(cme["cme_overtaking_flag"], 0).astype(int)
-    hourly["delta_last_cme_speed"] = ff(cme["delta_last_cme_speed"])
-    hourly["delta_last_cme_width"] = ff(cme["delta_last_cme_width"])
-
     # --------------------------------------------------------------
-    # Earth-facing geometry
-    # --------------------------------------------------------------
-    earth_alignment = hourly["last_cme_pa_cos"].clip(-1, 1)
-    hourly["earth_alignment_score"] = earth_alignment
-    hourly["earth_facing_flag"] = (earth_alignment > 0.7).astype(int)
-    hourly["effective_width"] = hourly["last_cme_width"] * earth_alignment.clip(0, 1)
-
-    # --------------------------------------------------------------
-    # Transit-time heuristics
-    # --------------------------------------------------------------
-    hourly["cme_arrival_est_hours"] = (
-        AU_KM / np.maximum(hourly["last_cme_v_med"], 1.0)
-    )
-
-    hourly["hours_until_est_arrival"] = (
-        hourly["cme_arrival_est_hours"] - hourly["hours_since_last_cme"]
-    )
-
-    hourly["arrival_window_flag"] = (
-        hourly["hours_until_est_arrival"].abs() <= 12
-    ).astype(int)
-
-    # --------------------------------------------------------------
-    # CME influence decay
+    # Influence decay
     # --------------------------------------------------------------
     hourly["cme_influence_exp"] = np.exp(
         -hourly["hours_since_last_cme"] / DECAY_TAU_HOURS
     )
 
     # --------------------------------------------------------------
-    # Severity class carry-forward
+    # Final column selection (ONLY 7)
     # --------------------------------------------------------------
-    hourly["cme_severity_class"] = ff(cme["cme_severity_class"], 0).astype(int)
-
-    # --------------------------------------------------------------
-    # Final safety check
-    # --------------------------------------------------------------
-    if hourly.isna().any().any():
-        raise RuntimeError("NaNs detected in CME feature table.")
+    hourly = hourly[
+        [
+            "hours_since_last_cme",
+            "last_cme_v_med",
+            "effective_width",
+            "cme_strength_sum_24h",
+            "cme_overtaking_flag",
+            "cme_influence_exp",
+            "last_cme_shock_proxy",
+        ]
+    ]
 
     write_sqlite_table(hourly, OUTPUT_DB, OUTPUT_TABLE)
 
     print(f"[OK] CME engineered features written to {OUTPUT_DB}")
+    print(f"Rows written: {len(hourly):,}")
+
     return hourly
 
-
+# ---------------------------------------------------------------------
 def main() -> None:
     engineer_cme_features()
-
 
 if __name__ == "__main__":
     main()

@@ -27,6 +27,8 @@ def read_timeseries_table(
             parse_dates=[time_col],
         )
     df = df.dropna(subset=[time_col])
+    df[time_col] = pd.to_datetime(df[time_col], utc=True, errors="coerce")
+    df = df.dropna(subset=[time_col])
     df = df.set_index(time_col).sort_index()
     return df[value_cols]
 
