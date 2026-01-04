@@ -26,8 +26,9 @@ def _run_stage(script: Path) -> None:
 def main() -> None:
     stages = [
         SOURCE_DIR / "1_engineered_features" / "engineer_features.py",
-        SOURCE_DIR / "2_train_test_split" / "create_splits.py",
-        SOURCE_DIR / "3_normalization" / "normalize.py",
+        SOURCE_DIR / "2_aggregate" / "create_aggregate_features.py",
+        SOURCE_DIR / "3_train_test_split" / "create_splits.py",
+        SOURCE_DIR / "4_normalization" / "normalize.py",
     ]
 
     for script in stages:

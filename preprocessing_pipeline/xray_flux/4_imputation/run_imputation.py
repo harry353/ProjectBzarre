@@ -39,10 +39,8 @@ OUTPUT_TABLE = "imputed_data"
 # Configuration
 # ---------------------------------------------------------------------
 FLUX_COLS = [
-    "irradiance_xrsa1",
-    "irradiance_xrsa2",
-    "irradiance_xrsb1",
-    "irradiance_xrsb2",
+    "irradiance_xrsa",
+    "irradiance_xrsb",
     "xrs_ratio",
 ]
 

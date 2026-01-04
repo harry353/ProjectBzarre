@@ -44,8 +44,8 @@ def run_case(description, days):
 
 
 def main():
-    run_case("GOES realtime sample", (date(2024, 2, 6), date(2024, 2, 7)))
-    run_case("GOES archive sample", (date(2005, 1, 1), date(2005, 1, 3)))
+    run_case("GOES realtime sample", (date(2025, 12, 1), date(2025, 12, 26)))
+    # run_case("GOES archive sample", (date(2005, 1, 1), date(2005, 1, 3)))
 
 
 if __name__ == "__main__":

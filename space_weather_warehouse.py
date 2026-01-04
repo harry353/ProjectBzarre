@@ -16,7 +16,8 @@ class SpaceWeatherWarehouse:
 
     def ensure_table(self, ddl: str):
         """Create the table(s) described by the provided DDL if missing."""
-        with sqlite3.connect(self.db_path) as conn:
+        with sqlite3.connect(self.db_path, timeout=30) as conn:
+            conn.execute("PRAGMA busy_timeout=30000")
             conn.executescript(ddl)
 
     def insert_rows(self, sql: str, rows: Iterable[Sequence]):
@@ -25,7 +26,8 @@ class SpaceWeatherWarehouse:
         if not rows:
             return 0
 
-        with sqlite3.connect(self.db_path) as conn:
+        with sqlite3.connect(self.db_path, timeout=30) as conn:
+            conn.execute("PRAGMA busy_timeout=30000")
             conn.executemany(sql, rows)
             conn.commit()
             return len(rows)

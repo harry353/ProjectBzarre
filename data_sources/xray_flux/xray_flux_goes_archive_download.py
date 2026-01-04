@@ -11,6 +11,7 @@ import pandas as pd
 
 from common.http import http_get
 from space_weather_api import format_date
+from database_builder.logging_utils import stamp
 
 
 ARCHIVE_WINDOWS = [
@@ -104,9 +105,22 @@ def download_xrs_goes_archive(day, dest_folder="."):
 
     downloaded_here = False
     if not os.path.exists(dest_path):
-        response = http_get(url, log_name="XRay Flux Archive", stream=True, timeout=60)
+        response = http_get(
+            url,
+            log_name="XRay Flux Archive",
+            stream=True,
+            timeout=60,
+            raise_for_status=False,
+        )
         if response is None:
             print(f"Failed to download archive file for {format_date(day)}")
+            return pd.DataFrame()
+        if response.status_code == 404:
+            response.close()
+            return pd.DataFrame()
+        if response.status_code >= 400:
+            print(f"[WARN] [XRay Flux Archive] Request failed for {response.url}: HTTP {response.status_code}")
+            response.close()
             return pd.DataFrame()
 
         try:
@@ -146,7 +160,31 @@ def download_xrs_goes_archive_parallel(
             return single_day, pd.DataFrame()
 
     with ThreadPoolExecutor(max_workers=_cpu_half()) as executor:
-        return list(executor.map(_job, days))
+        results = list(executor.map(_job, days))
+
+    missing_days = [day for day, df in results if df is None or df.empty]
+    _emit_missing_ranges("X Ray Flux GOES (archive)", missing_days)
+    return results
+
+
+def _emit_missing_ranges(label: str, days: list[date]) -> None:
+    if not days:
+        return
+    days = sorted(set(days))
+    ranges = []
+    start = prev = days[0]
+    for day in days[1:]:
+        if (day - prev).days == 1:
+            prev = day
+            continue
+        ranges.append((start, prev))
+        start = prev = day
+    ranges.append((start, prev))
+    for start, end in ranges:
+        if start == end:
+            print(stamp(f"[WARN] No {label} data for {format_date(start)}"))
+        else:
+            print(stamp(f"[WARN] No {label} data for {format_date(start)} -> {format_date(end)}"))
 
 
 def _resample_archive_file(nc_path: str) -> pd.DataFrame:
@@ -182,6 +220,8 @@ def _resample_archive_file(nc_path: str) -> pd.DataFrame:
     )
 
     df = df.dropna(subset=["time_tag"])
+    if "time_tag" not in df.columns:
+        return pd.DataFrame()
     df = df.set_index("time_tag")
     return df.sort_index()
 

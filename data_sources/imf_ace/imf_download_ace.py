@@ -11,6 +11,7 @@ import pandas as pd
 import requests
 
 from common.http import http_get
+from database_builder.logging_utils import stamp
 
 BASE_URL = "https://cdaweb.gsfc.nasa.gov/pub/data/ace/mag/level_2_cdaweb/mfi_h1"
 OUTPUT_COLUMNS = ["time_tag", "bx_gse", "by_gse", "bz_gse", "bt"]
@@ -30,13 +31,18 @@ def download_imf_ace(
 
     session = session or requests.Session()
     frames = []
+    missing_days = []
 
     current = start_date
     while current <= end_date:
-        df = _fetch_day(current, session)
+        df, missing = _fetch_day(current, session)
+        if missing:
+            missing_days.append(current)
         if df is not None and not df.empty:
             frames.append(df)
         current += timedelta(days=1)
+
+    _emit_missing_ranges("ACE/MAG", missing_days)
 
     if not frames:
         return pd.DataFrame(columns=OUTPUT_COLUMNS)
@@ -51,8 +57,7 @@ def download_imf_ace(
 def _fetch_day(day, session: requests.Session):
     filename = _resolve_filename(day, session)
     if filename is None:
-        print(f"[INFO] No ACE/MAG data found for {day:%Y-%m-%d}")
-        return None
+        return None, True
 
     url = f"{BASE_URL}/{day.year}/{filename}"
     response = http_get(
@@ -63,14 +68,37 @@ def _fetch_day(day, session: requests.Session):
         allowed_statuses={404},
     )
     if response is None or response.status_code == 404:
-        print(f"[INFO] No ACE/MAG data found for {day:%Y-%m-%d}")
-        return None
+        return None, True
 
     try:
-        return _parse_cdf(BytesIO(response.content))
+        return _parse_cdf(BytesIO(response.content)), False
     except Exception as exc:
         print(f"[WARN] Failed to parse {filename}: {exc}")
-        return None
+        return None, False
+
+
+def _emit_missing_ranges(label: str, days: list[date]) -> None:
+    if not days:
+        return
+    days = sorted(set(days))
+    ranges = []
+    start = prev = days[0]
+    for day in days[1:]:
+        if (day - prev).days == 1:
+            prev = day
+            continue
+        ranges.append((start, prev))
+        start = prev = day
+    ranges.append((start, prev))
+    for start, end in ranges:
+        if start == end:
+            print(stamp(f"[WARN] No {label} data found for {start:%Y-%m-%d}"))
+        else:
+            print(
+                stamp(
+                    f"[WARN] No {label} data found for {start:%Y-%m-%d} -> {end:%Y-%m-%d}"
+                )
+            )
 
 
 def _parse_cdf(handle: BytesIO) -> pd.DataFrame:

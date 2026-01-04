@@ -34,17 +34,12 @@ def main() -> None:
         SOURCE_DIR / "3_hard_filtering" / "apply_filters.py",
         SOURCE_DIR / "4_imputation" / "run_imputation.py",
         SOURCE_DIR / "5_engineered_features" / "engineer_features.py",
-        SOURCE_DIR / "6_train_test_split" / "create_splits.py",
-        SOURCE_DIR / "7_normalization" / "normalize.py",
+        SOURCE_DIR / "6_aggregate" / "create_aggregate_features.py",
+        SOURCE_DIR / "7_train_test_split" / "create_splits.py",
+        SOURCE_DIR / "8_normalization" / "normalize.py",
     ]
     for script in stages:
         _run_stage(script)
-
-    final_stage_dir = SOURCE_DIR / "7_normalization"
-    final_db = final_stage_dir / "kp_index_aver_filt_imp_eng_split_norm.db"
-    destination = SOURCE_DIR / "kp_index_fin.db"
-    shutil.copy2(final_db, destination)
-    print(f"[OK] KP index final database available at {final_db} (copied to {destination})")
 
 
 if __name__ == "__main__":

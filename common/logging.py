@@ -13,7 +13,7 @@ COLOR_MAP = {
     "WARN": "\033[33m",
     "WARNING": "\033[33m",
     "ERROR": "\033[31m",
-    "SKIP": "\033[36m",
+    "SKIP": "\033[96m",
 }
 
 _LABEL_PATTERN = re.compile(r"\[(OK|INFO|WARN|WARNING|ERROR|SKIP)\]")
