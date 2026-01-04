@@ -1,5 +1,6 @@
 from datetime import datetime, date, timedelta
 import time
+from database_builder.logging_utils import stamp
 
 from common.logging import enable_colored_logging
 
@@ -20,6 +21,7 @@ def format_date(value):
 class SpaceWeatherAPI:
     DEFAULT_DOWNLOAD_RETRIES = 3
     RETRY_SLEEP_SECONDS = 5
+    RUN_IN_THREADPOOL = True
     """
     Base class for all space weather data sources.
 
@@ -132,8 +134,10 @@ class SpaceWeatherAPI:
                     break
                 cls_name = self.__class__.__name__
                 print(
-                    f"[WARN] {cls_name} download attempt {attempt} failed: {exc}. "
-                    f"Retrying in {delay} seconds..."
+                    stamp(
+                        f"[WARN] {cls_name} download attempt {attempt} failed: {exc}. "
+                        f"Retrying in {delay} seconds..."
+                    )
                 )
                 if delay:
                     time.sleep(delay)
@@ -150,6 +154,12 @@ class SpaceWeatherAPI:
 
     def plot(self, df):
         raise NotImplementedError("Subclasses must implement plot().")
+
+    def tracker_payload(self, data):
+        """
+        Optionally transform downloaded data before tracker timestamp extraction.
+        """
+        return data
 
     # ------------------------------------------------------------
     # Helpers

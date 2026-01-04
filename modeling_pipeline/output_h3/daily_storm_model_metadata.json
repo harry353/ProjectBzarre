@@ -1,0 +1,24 @@
+{
+  "saved_at_utc": "2026-01-03T02:00:42.616923+00:00",
+  "hyperparameters": {
+    "n_estimators": 304,
+    "max_depth": 3,
+    "learning_rate": 0.02363412542884896,
+    "subsample": 0.8467963325838611,
+    "colsample_bytree": 0.8980196448548544,
+    "min_child_weight": 8.930926253027216,
+    "gamma": 4.091552668358736,
+    "reg_alpha": 0.015088718447007933,
+    "reg_lambda": 2.586059955215272
+  },
+  "scale_pos_weight": 2.863863447127394,
+  "feature_count": 50,
+  "pruning_target": 50,
+  "metrics": {
+    "validation_average_precision": 0.6627513519651385,
+    "test_average_precision": 0.7466021988955455,
+    "test_roc_auc": 0.885709036709027,
+    "test_precision": 0.5252174901916188,
+    "test_recall": 0.843869906815275
+  }
+}

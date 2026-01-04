@@ -16,6 +16,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 import pandas as pd
+from pandas.errors import DatabaseError
 
 from preprocessing_pipeline.utils import (
     read_timeseries_table,
@@ -62,11 +63,21 @@ def _build_hourly_dataset(
     # --------------------------------------------------------------
     # Load minute-cadence data
     # --------------------------------------------------------------
-    df = read_timeseries_table(
-        table,
-        time_col=time_col,
-        value_cols=value_cols,
-    )
+    try:
+        df = read_timeseries_table(
+            table,
+            time_col=time_col,
+            value_cols=value_cols,
+        )
+    except DatabaseError as exc:
+        fallback_cols = ["irradiance_xrsa", "irradiance_xrsb", "xrs_ratio"]
+        print("[WARN] Falling back to combined XRS columns:", fallback_cols)
+        df = read_timeseries_table(
+            table,
+            time_col=time_col,
+            value_cols=fallback_cols,
+        )
+        value_cols = fallback_cols
 
     if df.empty:
         raise RuntimeError(f"No records found in table '{table}'.")
