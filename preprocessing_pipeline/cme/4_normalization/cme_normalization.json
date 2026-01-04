@@ -1,0 +1,52 @@
+{
+  "hours_since_last_cme": {
+    "method": "log_z",
+    "mean": 2.4253331136197174,
+    "std": 1.359651254773356
+  },
+  "last_cme_v_med": {
+    "method": "log_z",
+    "mean": 6.18459574986571,
+    "std": 0.6282881102394693
+  },
+  "cme_strength_sum_24h": {
+    "method": "log_z",
+    "mean": 7.611199556044778,
+    "std": 4.758007431750705
+  },
+  "last_cme_shock_proxy": {
+    "method": "log_z",
+    "mean": 4.637184459769215,
+    "std": 1.0072066770428347
+  },
+  "min_hours_since_last_cme_8h": {
+    "method": "log_z",
+    "mean": 1.7344419256318861,
+    "std": 1.6553930411056927
+  },
+  "max_last_cme_v_med_8h": {
+    "method": "log_z",
+    "mean": 6.199570169328395,
+    "std": 0.6226855582461129
+  },
+  "max_last_cme_shock_proxy_8h": {
+    "method": "log_z",
+    "mean": 4.666491860787847,
+    "std": 0.9911494929152141
+  },
+  "effective_width": {
+    "method": "z",
+    "mean": 8.666124524666486,
+    "std": 16.103798254531238
+  },
+  "cme_influence_exp": {
+    "method": "z",
+    "mean": 0.66863478195423,
+    "std": 0.3024882649610223
+  },
+  "mean_cme_influence_exp_8h": {
+    "method": "z",
+    "mean": 0.6686280668830467,
+    "std": 0.28916949989463
+  }
+}

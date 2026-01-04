@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from datetime import date
+from datetime import date, timedelta
 from typing import Dict, List, Tuple, Type
 from concurrent.futures import ThreadPoolExecutor
 import threading
@@ -40,9 +40,12 @@ def process_sources(
     last_request = {cls.__name__: 0.0 for cls in classes}
     throttle_locks = {cls.__name__: threading.Lock() for cls in classes}
 
-    with ThreadPoolExecutor(max_workers=len(classes) or 1) as executor:
+    sequential_classes = [cls for cls in classes if not getattr(cls, "RUN_IN_THREADPOOL", True)]
+    parallel_classes = [cls for cls in classes if getattr(cls, "RUN_IN_THREADPOOL", True)]
+
+    with ThreadPoolExecutor(max_workers=len(parallel_classes) or 1) as executor:
         futures = []
-        for cls in classes:
+        for cls in parallel_classes:
             name = cls.__name__
             futures.append(
                 executor.submit(
@@ -57,6 +60,20 @@ def process_sources(
                     last_request,
                     throttle_locks[name],
                 )
+            )
+
+        for cls in sequential_classes:
+            name = cls.__name__
+            _run_source_over_weeks(
+                cls,
+                warehouse,
+                week_ranges,
+                tracker,
+                class_names,
+                TRACKER_LOCK,
+                session_map[name],
+                last_request,
+                throttle_locks[name],
             )
         for future in futures:
             future.result()
@@ -82,7 +99,7 @@ def process_source_week(
         return
 
     window_label = f"{week_start.isoformat()} -> {week_end.isoformat()}"
-    print(stamp(f"Processing {label} for {window_label}..."))
+    print(stamp(f"[INFO] Processing {label} for {window_label}..."))
 
     try:
         source = cls(**build_source_kwargs(cls, week_start, week_end))
@@ -95,6 +112,8 @@ def process_source_week(
         print(stamp(f"[INFO] No data for {label} during {window_label}. Continuing."))
         return
 
+    tracker_payload = source.tracker_payload(df)
+    source_breakdown = _format_source_breakdown(df)
     try:
         inserted = source.ingest(df, warehouse=warehouse)
     except Exception as exc:
@@ -102,9 +121,10 @@ def process_source_week(
         return
 
     if inserted:
-        print(stamp(f"[OK] {label} inserted {inserted} rows for {window_label}."))
+        suffix = f" {source_breakdown}" if source_breakdown else ""
+        print(stamp(f"[OK] {label} inserted {inserted} rows for {window_label}.{suffix}"))
         with lock:
-            record_latest_timestamp(class_name, df, tracker, class_names)
+            record_latest_timestamp(class_name, tracker_payload, tracker, class_names)
     else:
         print(stamp(f"[INFO] {label} returned data but nothing was stored for {window_label}."))
 
@@ -125,7 +145,9 @@ def _run_source_over_weeks(
     boundary = tracker.get(class_name)
     boundary_date = boundary.date() if boundary else None
     if boundary_date is not None:
-        pending = [window for window in week_ranges if window[1] > boundary_date]
+        end_date = max(window[1] for window in week_ranges)
+        resume_start = boundary_date + timedelta(days=1)
+        pending = list(iter_date_windows(resume_start, end_date))
         if not pending:
             print(stamp(f"[SKIP] {label} already processed through {boundary_date.isoformat()}"))
             return
@@ -186,3 +208,35 @@ def _respect_throttle(
 
 
 __all__ = ["process_sources"]
+
+
+def _format_source_breakdown(df: pd.DataFrame) -> str:
+    if "source_type" not in df.columns:
+        return ""
+
+    source_col = df["source_type"].fillna("archive")
+    counts = source_col.value_counts()
+    parts = []
+    if "time_tag" in df.columns:
+        times = pd.to_datetime(df["time_tag"], errors="coerce", utc=True)
+        working = df.copy()
+        working["_source_type"] = source_col
+        working["_time_tag"] = times
+        ranges = (
+            working.dropna(subset=["_time_tag"])
+            .groupby("_source_type")["_time_tag"]
+            .agg(["min", "max"])
+        )
+        for source, count in counts.items():
+            if source in ranges.index:
+                start = ranges.loc[source, "min"]
+                end = ranges.loc[source, "max"]
+                parts.append(f"{count} {source} rows ({start} -> {end})")
+            else:
+                parts.append(f"{count} {source} rows")
+    else:
+        for source, count in counts.items():
+            parts.append(f"{count} {source} rows")
+    if not parts:
+        return ""
+    return "Source breakdown: " + "; ".join(parts)

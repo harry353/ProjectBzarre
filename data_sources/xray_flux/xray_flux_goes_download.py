@@ -10,6 +10,7 @@ import pandas as pd
 
 from common.http import http_get
 from space_weather_api import format_date
+from database_builder.logging_utils import stamp
 
 
 GOES_OPERATIONAL_WINDOWS = {
@@ -94,16 +95,21 @@ def download_xrs_goes(day, dest_folder=".", product="sci"):
     downloaded_here = False
     if not os.path.exists(dest_path):
         try:
-            _download_file(url, dest_path)
+            result = _download_file(url, dest_path)
+            if result is None:
+                return pd.DataFrame()
             downloaded_here = True
         except Exception:
-            print(f"No data available for: {day_str}")
             return pd.DataFrame()
 
     try:
-        return _resample_to_1min(dest_path)
+        df = _resample_to_1min(dest_path)
+        if df.empty:
+            return df
+        if df.index.name != "time_tag" and "time_tag" not in df.columns:
+            return pd.DataFrame()
+        return df
     except Exception:
-        print(f"No data available for: {day_str}")
         return pd.DataFrame()
     finally:
         if downloaded_here and os.path.exists(dest_path):
@@ -114,7 +120,7 @@ def download_xrs_goes(day, dest_folder=".", product="sci"):
 
 
 def download_xrs_goes_parallel(
-    days: Sequence, dest_folder=".", product="sci"
+    days: Sequence, dest_folder=".", product="sci", *, emit_missing: bool = True
 ) -> List[Tuple[date, pd.DataFrame]]:
     """
     Download multiple days in parallel using half the available CPU cores.
@@ -133,13 +139,49 @@ def download_xrs_goes_parallel(
     workers = _cpu_half()
     with ThreadPoolExecutor(max_workers=workers) as executor:
         results = list(executor.map(_job, days))
+
+    if emit_missing:
+        missing_days = [day for day, df in results if df is None or df.empty]
+        _emit_missing_ranges("X Ray Flux GOES", missing_days)
     return results
 
 
+def _emit_missing_ranges(label: str, days: list[date]) -> None:
+    if not days:
+        return
+    days = sorted(set(days))
+    ranges = []
+    start = prev = days[0]
+    for day in days[1:]:
+        if (day - prev).days == 1:
+            prev = day
+            continue
+        ranges.append((start, prev))
+        start = prev = day
+    ranges.append((start, prev))
+    for start, end in ranges:
+        if start == end:
+            print(stamp(f"[WARN] No {label} data for {format_date(start)}"))
+        else:
+            print(stamp(f"[WARN] No {label} data for {format_date(start)} -> {format_date(end)}"))
+
+
 def _download_file(url, dest_path):
-    response = http_get(url, log_name="XRay Flux", stream=True, timeout=30)
+    response = http_get(
+        url,
+        log_name="XRay Flux",
+        stream=True,
+        timeout=30,
+        raise_for_status=False,
+    )
     if response is None:
         raise RuntimeError(f"Failed to download {url}")
+
+    if response.status_code == 404:
+        return None
+    if response.status_code >= 400:
+        print(f"[WARN] [XRay Flux] Request failed for {response.url}: HTTP {response.status_code}")
+        return None
 
     try:
         with open(dest_path, "wb") as f:
@@ -148,6 +190,7 @@ def _download_file(url, dest_path):
                     f.write(chunk)
     finally:
         response.close()
+    return dest_path
 
 
 def _read_variable(ds: h5py.File, name: str) -> np.ndarray:
@@ -199,7 +242,8 @@ def _resample_to_1min(nc_path):
     df = pd.DataFrame(rows)
     if df.empty:
         return df
-
+    if "time_tag" not in df.columns:
+        return pd.DataFrame()
     df = df.set_index("time_tag").sort_index()
     return df
 

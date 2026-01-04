@@ -3,6 +3,12 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
+
+# ---------------------------------------------------------------------
+# Project root
+# ---------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve()
 for parent in PROJECT_ROOT.parents:
     if (parent / "space_weather_api.py").exists():
@@ -14,96 +20,84 @@ else:
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-import numpy as np
-import pandas as pd
-
 from preprocessing_pipeline.utils import load_hourly_output, write_sqlite_table
 
 # ---------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------
 STAGE_DIR = Path(__file__).resolve().parent
-IMPUTED_DB = STAGE_DIR.parents[1] / "kp_index" / "4_imputation" / "kp_index_aver_filt_imp.db"
+IMPUTED_DB = (
+    STAGE_DIR.parents[1]
+    / "kp_index"
+    / "4_imputation"
+    / "kp_index_aver_filt_imp.db"
+)
 IMPUTED_TABLE = "imputed_data"
+
 OUTPUT_DB = STAGE_DIR / "kp_index_aver_filt_imp_eng.db"
 OUTPUT_TABLE = "engineered_features"
 
 # ---------------------------------------------------------------------
-# Kp ordinal-bin → Ap mapping (robust)
-# ---------------------------------------------------------------------
-KP_INDEX_TO_AP = [
-    0, 2, 3, 4, 5, 6, 7, 9,
-    12, 15, 18, 22, 27, 32,
-    39, 48, 56, 67, 80, 94,
-    111, 132, 154, 179, 207,
-    236, 300, 400,
-]
-
-
-def kp_to_ap(kp: float) -> float:
-    bin_index = int(np.round(kp * 3))
-    bin_index = max(0, min(bin_index, len(KP_INDEX_TO_AP) - 1))
-    return KP_INDEX_TO_AP[bin_index]
-
-
-# ---------------------------------------------------------------------
-# Feature engineering (NaN-free)
+# Feature engineering (HOURLY, NO AGGREGATES)
 # ---------------------------------------------------------------------
 def _add_kp_features(df: pd.DataFrame) -> pd.DataFrame:
-    working = df.copy()
+    working = df.copy().sort_index()
 
-    kp = working["kp_index"]
+    if "kp_index" not in working.columns:
+        raise RuntimeError("kp_index column missing from imputed dataset.")
 
-    # Raw Kp
-    working["kp_index"] = kp
+    kp = working["kp_index"].astype(float)
 
-    # Linear Ap
-    ap = kp.map(kp_to_ap)
-    working["ap"] = ap
+    # --------------------------------------------------------------
+    # Core KP features (6 total)
+    # --------------------------------------------------------------
+    working["kp"] = kp
 
-    # Regime (ordinal state)
-    working["kp_regime"] = pd.cut(
-        kp,
-        bins=[-np.inf, 2, 4, 6, np.inf],
-        labels=[0, 1, 2, 3],
+    working["kp_delta_1h"] = kp.diff(1)
+    working["kp_delta_3h"] = kp.diff(3)
+    working["kp_delta_6h"] = kp.diff(6)
+
+    working["kp_ge5_flag"] = (kp >= 5.0).astype(int)
+
+    working["kp_entered_storm"] = (
+        (kp >= 5.0) & (kp.shift(1) < 5.0)
     ).astype(int)
 
-    # Activity change (always defined, fill first diff with 0)
-    working["ap_3h_change"] = ap.diff().fillna(0.0)
-
-    # Nonlinear magnitude bucket (tree-friendly)
-    working["ap_level_bucket"] = pd.cut(
-        ap,
-        bins=[-np.inf, 10, 30, 80, 200, np.inf],
-        labels=[0, 1, 2, 3, 4],
-    ).astype(int)
+    # --------------------------------------------------------------
+    # Cleanup
+    # --------------------------------------------------------------
+    working = working.dropna()
 
     return working[
         [
-            "kp_index",
-            "ap",
-            "kp_regime",
-            "ap_3h_change",
-            "ap_level_bucket",
+            "kp",
+            "kp_delta_1h",
+            "kp_delta_3h",
+            "kp_delta_6h",
+            "kp_ge5_flag",
+            "kp_entered_storm",
         ]
     ]
 
 
 # ---------------------------------------------------------------------
-# Pipeline entry point
+# Pipeline entry
 # ---------------------------------------------------------------------
 def engineer_kp_features() -> pd.DataFrame:
     df = load_hourly_output(IMPUTED_DB, IMPUTED_TABLE)
     if df.empty:
-        raise RuntimeError("Imputed KP dataset not found.")
+        raise RuntimeError("Imputed KP dataset not found; run imputation first.")
 
     features = _add_kp_features(df)
     write_sqlite_table(features, OUTPUT_DB, OUTPUT_TABLE)
 
     print(f"[OK] KP engineered features saved to {OUTPUT_DB}")
+    print(f"Rows written: {len(features):,}")
+
     return features
 
 
+# ---------------------------------------------------------------------
 def main() -> None:
     engineer_kp_features()
 

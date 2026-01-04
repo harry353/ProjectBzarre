@@ -41,7 +41,11 @@ ESSENTIAL_COLUMNS = ["bx_gse", "by_gse", "bz_gse", "bt", "speed", "density"]
 def _add_sw_imf_features(df: pd.DataFrame) -> pd.DataFrame:
     working = df.copy()
 
-    for col in ESSENTIAL_COLUMNS:
+    # ------------------------------------------------------------------
+    # Required base columns (remain as-is)
+    # ------------------------------------------------------------------
+    required = ["bx_gse", "by_gse", "bz_gse", "bt", "speed", "density"]
+    for col in required:
         if col not in working.columns:
             raise RuntimeError(f"Required column '{col}' missing from imputed dataset.")
 
@@ -49,132 +53,55 @@ def _add_sw_imf_features(df: pd.DataFrame) -> pd.DataFrame:
     by = working["by_gse"].astype(float)
     bz = working["bz_gse"].astype(float)
     bt = working["bt"].astype(float)
-    v = working["speed"].astype(float)
-    n = working["density"].astype(float)
+    v  = working["speed"].astype(float)
+    n  = working["density"].astype(float)
 
-    # --------------------------------------------------------------
-    # Geometry
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # 1. Clock angle (IMF orientation)
+    # ------------------------------------------------------------------
     clock = np.arctan2(by, bz)
-    sin_h = np.sin(clock / 2.0)
-
     working["clock_angle"] = clock.fillna(0.0)
-    working["sin_half_clock"] = sin_h.fillna(0.0)
-    working["sin_half_clock_sq"] = (sin_h ** 2).fillna(0.0)
-    working["sin_half_clock_4"] = (sin_h ** 4).fillna(0.0)
-    working["sin_half_clock_8_3"] = (np.abs(sin_h) ** (8.0 / 3.0)).fillna(0.0)
 
-    # --------------------------------------------------------------
-    # Southward IMF
-    # --------------------------------------------------------------
-    bz_s = np.minimum(bz, 0.0)
-    working["bz_south"] = bz_s.fillna(0.0)
-
-    # --------------------------------------------------------------
-    # Electric field proxies
-    # --------------------------------------------------------------
-    working["ey"] = (-v * bz).fillna(0.0)
-    working["vbs"] = (v * np.abs(bz_s)).fillna(0.0)
-    working["vbs_squared"] = (v * bz_s ** 2).fillna(0.0)
-
-    # --------------------------------------------------------------
-    # Dynamic pressure (nPa)
-    # --------------------------------------------------------------
-    mp = 1.6726219e-27
-    pdyn = n * mp * (v * 1e3) ** 2 * 1e9
-    working["dynamic_pressure"] = pdyn.fillna(0.0)
-    working["pd_sqrt"] = np.sqrt(np.maximum(pdyn, 0.0)).fillna(0.0)
-
-    # --------------------------------------------------------------
-    # Coupling functions
-    # --------------------------------------------------------------
-    working["epsilon"] = (
-        v * bt ** 2 * working["sin_half_clock_4"]
-    ).fillna(0.0)
-
+    # ------------------------------------------------------------------
+    # 2. Newell coupling function
+    # ------------------------------------------------------------------
+    sin_half = np.sin(clock / 2.0)
     working["newell_dphi_dt"] = (
         (v ** (4.0 / 3.0))
         * (bt ** (2.0 / 3.0))
-        * working["sin_half_clock_8_3"]
+        * (np.abs(sin_half) ** (8.0 / 3.0))
     ).fillna(0.0)
 
-    working["kan_lee_efield"] = (
-        v * bt * working["sin_half_clock_sq"]
+    # ------------------------------------------------------------------
+    # 3. Dayside reconnection electric field proxy
+    # ------------------------------------------------------------------
+    working["ey"] = (-v * bz).fillna(0.0)
+
+    # ------------------------------------------------------------------
+    # 4. Dynamic pressure (nPa)
+    # ------------------------------------------------------------------
+    mp = 1.6726219e-27
+    working["dynamic_pressure"] = (
+        n * mp * (v * 1e3) ** 2 * 1e9
     ).fillna(0.0)
 
-    working["boyle_index"] = (
-        1e-4 * v ** 2 + 11.7 * bt * (working["sin_half_clock"] ** 3)
-    ).fillna(0.0)
-
-    # --------------------------------------------------------------
-    # Impulsiveness
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # 5. IMF impulsiveness (turning / shocks)
+    # ------------------------------------------------------------------
     working["delta_bz"] = bz.diff().fillna(0.0)
-    working["delta_bt"] = bt.diff().fillna(0.0)
-    working["delta_speed"] = v.diff().fillna(0.0)
 
-    # --------------------------------------------------------------
-    # Regime flags
-    # --------------------------------------------------------------
-    working["southward_flag"] = (bz < 0).astype(int)
-    working["high_speed_flag"] = (v >= 500).astype(int)
-
-    # --------------------------------------------------------------
-    # Short-term lags (1–3 hours), NaN-safe
-    # --------------------------------------------------------------
-    LAG_HOURS = [1, 2, 3]
-    lag_sources = [
-        "bx_gse",
-        "by_gse",
-        "bz_gse",
-        "bt",
-        "speed",
-        "density",
-        "vbs",
-        "epsilon",
-        "newell_dphi_dt",
-    ]
-
-    for col in lag_sources:
-        for lag in LAG_HOURS:
-            working[f"{col}_lag_{lag}h"] = (
-                working[col].shift(lag).fillna(0.0)
-            )
-
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Final NaN check (hard fail)
-    # --------------------------------------------------------------
-    engineered_cols = [
+    # ------------------------------------------------------------------
+    final_cols = required + [
         "clock_angle",
-        "sin_half_clock",
-        "sin_half_clock_sq",
-        "sin_half_clock_4",
-        "sin_half_clock_8_3",
-        "bz_south",
-        "ey",
-        "vbs",
-        "vbs_squared",
-        "dynamic_pressure",
-        "pd_sqrt",
-        "epsilon",
         "newell_dphi_dt",
-        "kan_lee_efield",
-        "boyle_index",
+        "ey",
+        "dynamic_pressure",
         "delta_bz",
-        "delta_bt",
-        "delta_speed",
-        "southward_flag",
-        "high_speed_flag",
     ]
 
-    lag_cols = [
-        f"{col}_lag_{lag}h"
-        for col in lag_sources
-        for lag in LAG_HOURS
-    ]
-
-    to_check = ESSENTIAL_COLUMNS + engineered_cols + lag_cols
-    missing = working[to_check].isna().any()
+    missing = working[final_cols].isna().any()
     if missing.any():
         missing_cols = ", ".join(missing[missing].index.tolist())
         raise RuntimeError(

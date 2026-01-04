@@ -31,8 +31,9 @@ def main() -> None:
         SOURCE_DIR / "4_hard_filtering" / "apply_filters.py",
         SOURCE_DIR / "5_imputation" / "run_imputation.py",
         SOURCE_DIR / "6_engineered_features" / "engineer_features.py",
-        SOURCE_DIR / "7_train_test_split" / "create_splits.py",
-        SOURCE_DIR / "8_normalization" / "normalize.py",
+        SOURCE_DIR / "7_aggregate" / "create_aggregate_features.py",
+        SOURCE_DIR / "8_train_test_split" / "create_splits.py",
+        SOURCE_DIR / "9_normalization" / "normalize.py",
     ]
 
     for script in stages:
