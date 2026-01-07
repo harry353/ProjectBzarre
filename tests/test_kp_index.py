@@ -1,6 +1,7 @@
 import os
 import sys
 from pathlib import Path
+from datetime import date
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -37,7 +38,8 @@ def run_case(description, days):
     print("Plot complete.")
 
 def main():
-    run_case("Integer days = 7", 365 * 25)
+    # run_case("Integer days = 7", (date(2025, 6, 1), date(2026, 1, 5)))
+    run_case("Integer days = 7", 365)
 
 
 if __name__ == "__main__":

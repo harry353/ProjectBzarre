@@ -39,7 +39,7 @@ def run_case(description, days):
 
 
 def main():
-    run_case("ACE sample (pre-2015)", (date(2025, 12, 1), date(2025, 12, 5)))
+    run_case("ACE sample (pre-2015)", (date(2015, 12, 1), date(2015, 12, 1)))
 
 
 if __name__ == "__main__":

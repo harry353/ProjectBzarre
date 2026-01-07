@@ -44,11 +44,11 @@ def run_case(description, days):
     print(f"Inserted rows: {inserted}")
 
     print("Plotting...")
-    # ds.plot(df)
+    ds.plot(df)
     print("Plot complete.")
 
 def main():
-    run_case("Integer days = 7", (date(2025, 12, 25), date(2025, 12, 25)))
+    run_case("Integer days = 7", (date(1974, 1, 1), date(1974, 12, 31)))
 
 
 if __name__ == "__main__":

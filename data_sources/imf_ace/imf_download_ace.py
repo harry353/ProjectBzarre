@@ -14,7 +14,7 @@ from common.http import http_get
 from database_builder.logging_utils import stamp
 
 BASE_URL = "https://cdaweb.gsfc.nasa.gov/pub/data/ace/mag/level_2_cdaweb/mfi_h1"
-OUTPUT_COLUMNS = ["time_tag", "bx_gse", "by_gse", "bz_gse", "bt"]
+OUTPUT_COLUMNS = ["time_tag", "bx_gsm", "by_gsm", "bz_gsm", "bt"]
 FILL_VALUE = -1e20
 
 
@@ -43,7 +43,6 @@ def download_imf_ace(
         current += timedelta(days=1)
 
     _emit_missing_ranges("ACE/MAG", missing_days)
-
     if not frames:
         return pd.DataFrame(columns=OUTPUT_COLUMNS)
 
@@ -112,18 +111,18 @@ def _parse_cdf(handle: BytesIO) -> pd.DataFrame:
         epoch = cdf.varget("Epoch")
         times = pd.to_datetime(cdflib.cdfepoch.to_datetime(epoch))
 
-        bgse = cdf.varget("BGSEc")
+        bgsm = cdf.varget("BGSM")
         mag = cdf.varget("Magnitude")
 
-        bgse = np.where(bgse < FILL_VALUE, np.nan, bgse)
+        bgsm = np.where(bgsm < FILL_VALUE, np.nan, bgsm)
         mag = np.where(mag < FILL_VALUE, np.nan, mag)
 
         df = pd.DataFrame(
             {
                 "time_tag": times,
-                "bx_gse": bgse[:, 0],
-                "by_gse": bgse[:, 1],
-                "bz_gse": bgse[:, 2],
+                "bx_gsm": bgsm[:, 0],
+                "by_gsm": bgsm[:, 1],
+                "bz_gsm": bgsm[:, 2],
                 "bt": mag,
             }
         )
