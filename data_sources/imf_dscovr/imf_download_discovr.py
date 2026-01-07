@@ -144,7 +144,7 @@ def _emit_missing_ranges(label: str, days: list) -> None:
 
 
 def _extract(df):
-    required = ["time", "bt", "bx_gse", "by_gse", "bz_gse"]
+    required = ["time", "bt", "bx_gsm", "by_gsm", "bz_gsm"]
 
     for col in required:
         if col not in df.columns:
@@ -152,7 +152,7 @@ def _extract(df):
 
     df = df[required].copy()
     df.rename(
-        columns={"time": "time_tag", "bx_gse": "bx", "by_gse": "by", "bz_gse": "bz"},
+        columns={"time": "time_tag", "bx_gsm": "bx", "by_gsm": "by", "bz_gsm": "bz"},
         inplace=True,
     )
     df["time_tag"] = pd.to_datetime(df["time_tag"], utc=True)

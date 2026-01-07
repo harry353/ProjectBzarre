@@ -8,9 +8,9 @@ def _normalize_payload(df: pd.DataFrame, dataset_label: str) -> pd.DataFrame:
     payload = payload.dropna(subset=["time_tag"]).sort_values("time_tag")
 
     rename_map = {
-        "bx_gse": "bx",
-        "by_gse": "by",
-        "bz_gse": "bz",
+        "bx_gsm": "bx",
+        "by_gsm": "by",
+        "bz_gsm": "bz",
     }
     payload = payload.rename(columns=rename_map)
 

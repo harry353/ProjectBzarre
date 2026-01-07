@@ -39,7 +39,7 @@ def run_case(description, days):
 
 
 def main():
-    run_case("Integer days = 7", (date(2004, 1, 1), date(2005, 1, 1)))
+    run_case("Integer days = 7", (date(1980, 1, 1), date(1980, 1, 1)))
 
 
 if __name__ == "__main__":
