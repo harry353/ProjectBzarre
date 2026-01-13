@@ -90,19 +90,20 @@ def create_dst_agg_features() -> pd.DataFrame:
     out = df.copy()
 
     min_periods = max(1, int(np.ceil(WINDOW_H * MIN_FRACTION_COVERAGE)))
+    window = f"{WINDOW_H}h"
 
     # --------------------------------------------------------------
     # Aggregate features (5 total)
     # --------------------------------------------------------------
     out[f"dst_min_{WINDOW_H}h"] = (
         df["dst"]
-        .rolling(WINDOW_H, min_periods=min_periods)
+        .rolling(window, min_periods=min_periods)
         .min()
     )
 
     out[f"dst_mean_{WINDOW_H}h"] = (
         df["dst"]
-        .rolling(WINDOW_H, min_periods=min_periods)
+        .rolling(window, min_periods=min_periods)
         .mean()
     )
 
@@ -112,13 +113,13 @@ def create_dst_agg_features() -> pd.DataFrame:
 
     out[f"dst_slope_{WINDOW_H}h"] = (
         df["dst"]
-        .rolling(WINDOW_H, min_periods=min_periods)
+        .rolling(window, min_periods=min_periods)
         .apply(_linear_slope, raw=False)
     )
 
     out[f"dst_neg_frac_{WINDOW_H}h"] = (
         (df["dst"] < 0)
-        .rolling(WINDOW_H, min_periods=min_periods)
+        .rolling(window, min_periods=min_periods)
         .mean()
     )
 

@@ -20,12 +20,14 @@ def _target_col(target_horizon_h: int | None) -> str:
 def load_split_tables(
     merged_db: Path,
     target_horizon_h: int | None = None,
+    label_source: str = "full_storm",
 ) -> Dict[str, pd.DataFrame]:
     if not merged_db.exists():
         raise FileNotFoundError(f"Merged dataset not found at {merged_db}")
 
     target_col = _target_col(target_horizon_h)
-    desired_label = f"full_storm_labels_storm_flag_h{target_horizon_h or TARGET_HORIZON_H}"
+    label_prefix = f"{label_source}_labels_"
+    desired_label = f"{label_prefix}storm_flag_h{target_horizon_h or TARGET_HORIZON_H}"
 
     splits: Dict[str, pd.DataFrame] = {}
     with sqlite3.connect(merged_db) as conn:
@@ -50,7 +52,7 @@ def load_split_tables(
                 label_col = "storm_labels_storm_severity_next_8h"
             else:
                 for col in df.columns:
-                    if col.startswith("full_storm_labels_") or col.startswith("storm_labels_"):
+                    if col.startswith(label_prefix) or col.startswith("storm_labels_"):
                         label_col = col
                         break
 
@@ -89,6 +91,7 @@ def feature_columns(df: pd.DataFrame, target_col: str | None = None) -> list[str
         if c not in drop_cols
         and not c.startswith("storm_labels_")
         and not c.startswith("full_storm_labels_")
+        and not c.startswith("main_phase_labels_")
     ]
 
 

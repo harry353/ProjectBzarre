@@ -5,20 +5,20 @@ from space_weather_warehouse import SpaceWeatherWarehouse
 IMF_ACE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS ace_mfi (
     time_tag TEXT PRIMARY KEY,
-    bx_gse REAL,
-    by_gse REAL,
-    bz_gse REAL,
+    bx_gsm REAL,
+    by_gsm REAL,
+    bz_gsm REAL,
     bt REAL,
     source_type TEXT
 );
 """
 
 IMF_ACE_INSERT_SQL = """
-INSERT OR REPLACE INTO ace_mfi (time_tag, bx_gse, by_gse, bz_gse, bt, source_type)
+INSERT OR REPLACE INTO ace_mfi (time_tag, bx_gsm, by_gsm, bz_gsm, bt, source_type)
 VALUES (?, ?, ?, ?, ?, ?);
 """
 
-IMF_ACE_COLUMNS = ["time_tag", "bx_gse", "by_gse", "bz_gse", "bt", "source_type"]
+IMF_ACE_COLUMNS = ["time_tag", "bx_gsm", "by_gsm", "bz_gsm", "bt", "source_type"]
 
 
 def ingest_imf_ace(df, warehouse: SpaceWeatherWarehouse):

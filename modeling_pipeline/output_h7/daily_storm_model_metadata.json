@@ -1,24 +1,24 @@
 {
-  "saved_at_utc": "2026-01-03T02:06:34.290506+00:00",
+  "saved_at_utc": "2026-01-08T19:06:15.564378+00:00",
   "hyperparameters": {
-    "n_estimators": 372,
+    "n_estimators": 641,
     "max_depth": 3,
-    "learning_rate": 0.02285193069417467,
-    "subsample": 0.8868468420304547,
-    "colsample_bytree": 0.6679759153211312,
-    "min_child_weight": 2.5895906640847026,
-    "gamma": 0.792506171048712,
-    "reg_alpha": 1.0940739059537462e-05,
-    "reg_lambda": 0.11759536292082105
+    "learning_rate": 0.08424286310782078,
+    "subsample": 0.8018216214196175,
+    "colsample_bytree": 0.7875233614073527,
+    "min_child_weight": 5.3350791241315605,
+    "gamma": 4.156198409691373,
+    "reg_alpha": 0.001793517574276323,
+    "reg_lambda": 0.7672504779822853
   },
   "scale_pos_weight": 2.863863447127394,
   "feature_count": 50,
   "pruning_target": 50,
   "metrics": {
-    "validation_average_precision": 0.6544176105155143,
-    "test_average_precision": 0.7368455954198754,
-    "test_roc_auc": 0.8772885120538425,
-    "test_precision": 0.5051097246127366,
-    "test_recall": 0.8579389731408734
+    "validation_average_precision": 1.0,
+    "test_average_precision": 1.0,
+    "test_roc_auc": 0.8208123332445467,
+    "test_precision": 0.3152208823615288,
+    "test_recall": 0.986296363968573
   }
 }

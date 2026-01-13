@@ -20,7 +20,7 @@ else:
     PROJECT_ROOT = PROJECT_ROOT.parent
 
 PIPELINE_ROOT = PROJECT_ROOT / "preprocessing_pipeline"
-MERGED_DB = PIPELINE_ROOT / "final" / "all_preprocessed_sources.db"
+MERGED_DB = PIPELINE_ROOT / "check_multicolinearity" / "all_preprocessed_sources.db"
 
 OUTPUT_DIR = Path(__file__).resolve().parent
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

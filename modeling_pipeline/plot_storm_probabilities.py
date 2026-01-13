@@ -20,12 +20,12 @@ else:
     PROJECT_ROOT = PROJECT_ROOT.parent
 
 PIPELINE_ROOT = PROJECT_ROOT / "preprocessing_pipeline"
-MERGED_DB = PIPELINE_ROOT / "final" / "all_preprocessed_sources.db"
+MERGED_DB = PIPELINE_ROOT / "check_multicolinearity" / "all_preprocessed_sources.db"
 DST_DB = PIPELINE_ROOT / "dst" / "1_averaging" / "dst_aver.db"
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "outputs"
-MODEL_PATH = OUTPUT_DIR / "daily_storm_model.json"
-FEATURES_JSON = OUTPUT_DIR / "daily_storm_features.json"
+MODEL_PATH = OUTPUT_DIR / "/home/haris/Documents/ProjectBzarre/modeling_pipeline/output_h1/daily_storm_model.json"
+FEATURES_JSON = OUTPUT_DIR / "/home/haris/Documents/ProjectBzarre/modeling_pipeline/output_h1/daily_storm_features.json"
 
 YEAR = 2024
 PLOT_ONLY_ABOVE = False

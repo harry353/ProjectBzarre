@@ -20,7 +20,7 @@ End-to-end space weather ML pipeline for data ingestion, preprocessing, label ge
 6. Plot diagnostics as needed.
 
 ## Key artifacts
-- `preprocessing_pipeline/final/all_preprocessed_sources.db`: merged feature/label dataset
+- `preprocessing_pipeline/check_multicolinearity/all_preprocessed_sources.db`: merged feature/label dataset
 - `modeling_pipeline/output_h{X}/`: per-horizon models and diagnostics
 - `probability_calibration/validation_calibration.db`: calibration dataset
 - `probability_calibration/calibration_h{X}/`: per-horizon isotonic calibrators + metadata
@@ -28,7 +28,7 @@ End-to-end space weather ML pipeline for data ingestion, preprocessing, label ge
 ## Running
 Most scripts are executable as standalone Python files. Example:
 ```
-/bin/python3 preprocessing_pipeline/final/merge_final_datasets.py
+/bin/python3 preprocessing_pipeline/check_multicolinearity/merge_features.py
 /bin/python3 modeling_pipeline/train_model.py
 /bin/python3 probability_calibration/build_calibration_db.py
 /bin/python3 probability_calibration/regime_aware_calibration.py

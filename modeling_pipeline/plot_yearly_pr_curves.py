@@ -18,7 +18,7 @@ from modeling_pipeline_daily.data_utils import TARGET_COL, load_split_tables
 
 
 PIPELINE_ROOT = PROJECT_ROOT / "preprocessing_pipeline"
-MERGED_DB = PIPELINE_ROOT / "final" / "all_preprocessed_sources.db"
+MERGED_DB = PIPELINE_ROOT / "check_multicolinearity" / "all_preprocessed_sources.db"
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "outputs"
 PLOT_DIR = OUTPUT_DIR / "yearly_pr_curves"

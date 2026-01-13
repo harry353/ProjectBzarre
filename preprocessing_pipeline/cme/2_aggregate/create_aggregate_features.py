@@ -70,50 +70,65 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
     def _min_periods(w: int) -> int:
         return max(1, int(np.ceil(w * MIN_FRACTION_COVERAGE)))
 
+    agg_cols: list[str] = []
+
     # --------------------------------------------------------------
     # Closest CME in recent history
     # --------------------------------------------------------------
     w = HOURS_SINCE_MIN_WINDOW_H
-    out[f"min_hours_since_last_cme_{w}h"] = (
+    window = f"{w}h"
+    col = f"min_hours_since_last_cme_{w}h"
+    out[col] = (
         df["hours_since_last_cme"]
-        .rolling(w, min_periods=_min_periods(w))
+        .rolling(window, min_periods=_min_periods(w))
         .min()
     )
+    agg_cols.append(col)
 
     # --------------------------------------------------------------
     # Fastest CME observed recently
     # --------------------------------------------------------------
     w = V_MED_MAX_WINDOW_H
-    out[f"max_last_cme_v_med_{w}h"] = (
+    window = f"{w}h"
+    col = f"max_last_cme_v_med_{w}h"
+    out[col] = (
         df["last_cme_v_med"]
-        .rolling(w, min_periods=_min_periods(w))
+        .rolling(window, min_periods=_min_periods(w))
         .max()
     )
+    agg_cols.append(col)
 
     # --------------------------------------------------------------
     # Sustained CME influence
     # --------------------------------------------------------------
     w = INFLUENCE_MEAN_WINDOW_H
-    out[f"mean_cme_influence_exp_{w}h"] = (
+    window = f"{w}h"
+    col = f"mean_cme_influence_exp_{w}h"
+    out[col] = (
         df["cme_influence_exp"]
-        .rolling(w, min_periods=_min_periods(w))
+        .rolling(window, min_periods=_min_periods(w))
         .mean()
     )
+    agg_cols.append(col)
 
     # --------------------------------------------------------------
     # Strongest shock signature
     # --------------------------------------------------------------
     w = SHOCK_MAX_WINDOW_H
-    out[f"max_last_cme_shock_proxy_{w}h"] = (
+    window = f"{w}h"
+    col = f"max_last_cme_shock_proxy_{w}h"
+    out[col] = (
         df["last_cme_shock_proxy"]
-        .rolling(w, min_periods=_min_periods(w))
+        .rolling(window, min_periods=_min_periods(w))
         .max()
     )
+    agg_cols.append(col)
 
     # --------------------------------------------------------------
     # Final cleanup
     # --------------------------------------------------------------
-    out = out.dropna()
+    out = out.dropna(axis=1, how="all")
+    out = out.dropna(subset=agg_cols)
 
     if out.empty:
         raise RuntimeError("No aggregated CME features produced.")

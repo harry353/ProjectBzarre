@@ -75,15 +75,16 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
     # Background level and variability
     # --------------------------------------------------------------
     w = MEAN_STD_WINDOW_H
+    window = f"{w}h"
     out[f"ssn_mean_{w}h"] = (
         df["ssn"]
-        .rolling(w, min_periods=_min_periods(w))
+        .rolling(window, min_periods=_min_periods(w))
         .mean()
     )
 
     out[f"ssn_std_{w}h"] = (
         df["ssn"]
-        .rolling(w, min_periods=_min_periods(w))
+        .rolling(window, min_periods=_min_periods(w))
         .std()
         .fillna(0.0)
     )
@@ -103,7 +104,7 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
 
     out[f"ssn_anomaly_frac_{MEAN_STD_WINDOW_H}h"] = (
         above
-        .rolling(MEAN_STD_WINDOW_H, min_periods=_min_periods(MEAN_STD_WINDOW_H))
+        .rolling(f"{MEAN_STD_WINDOW_H}h", min_periods=_min_periods(MEAN_STD_WINDOW_H))
         .mean()
     )
 
