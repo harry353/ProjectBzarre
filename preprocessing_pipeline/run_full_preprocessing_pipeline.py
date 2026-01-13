@@ -32,7 +32,7 @@ RUNNERS = [
 ]
 
 FINAL_SCRIPTS = [
-    PIPELINE_DIR / "final" / "merge_final_datasets.py",
+    PIPELINE_DIR / "check_multicolinearity" / "merge_features.py",
 ]
 
 DEFAULT_WINDOWS = {

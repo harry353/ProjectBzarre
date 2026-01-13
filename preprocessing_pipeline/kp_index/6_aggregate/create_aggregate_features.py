@@ -85,19 +85,20 @@ def create_kp_agg_features() -> pd.DataFrame:
     out = df.copy()
 
     min_periods = max(1, int(np.ceil(WINDOW_H * MIN_FRACTION_COVERAGE)))
+    window = f"{WINDOW_H}h"
 
     # --------------------------------------------------------------
     # Aggregate features (5 total)
     # --------------------------------------------------------------
     out[f"kp_max_{WINDOW_H}h"] = (
         df["kp"]
-        .rolling(WINDOW_H, min_periods=min_periods)
+        .rolling(window, min_periods=min_periods)
         .max()
     )
 
     out[f"kp_mean_{WINDOW_H}h"] = (
         df["kp"]
-        .rolling(WINDOW_H, min_periods=min_periods)
+        .rolling(window, min_periods=min_periods)
         .mean()
     )
 
@@ -107,13 +108,13 @@ def create_kp_agg_features() -> pd.DataFrame:
 
     out[f"kp_ge5_frac_{WINDOW_H}h"] = (
         (df["kp"] >= 5.0)
-        .rolling(WINDOW_H, min_periods=min_periods)
+        .rolling(window, min_periods=min_periods)
         .mean()
     )
 
     out[f"kp_slope_{WINDOW_H}h"] = (
         df["kp"]
-        .rolling(WINDOW_H, min_periods=min_periods)
+        .rolling(window, min_periods=min_periods)
         .apply(_linear_slope, raw=False)
     )
 

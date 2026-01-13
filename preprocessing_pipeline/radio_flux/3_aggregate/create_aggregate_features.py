@@ -90,9 +90,10 @@ def _build_aggregates(df: pd.DataFrame) -> pd.DataFrame:
     # Smoothed background
     # --------------------------------------------------------------
     w = MEAN_WINDOW_H
+    window = f"{w}h"
     out[f"f107_mean_{w}h"] = (
         df["f107"]
-        .rolling(w, min_periods=_min_periods(w))
+        .rolling(window, min_periods=_min_periods(w))
         .mean()
     )
 
@@ -106,9 +107,10 @@ def _build_aggregates(df: pd.DataFrame) -> pd.DataFrame:
     # Variability
     # --------------------------------------------------------------
     w = STD_WINDOW_H
+    window = f"{w}h"
     out[f"f107_std_{w}h"] = (
         df["f107"]
-        .rolling(w, min_periods=_min_periods(w))
+        .rolling(window, min_periods=_min_periods(w))
         .std(ddof=0)
     )
 
@@ -116,9 +118,10 @@ def _build_aggregates(df: pd.DataFrame) -> pd.DataFrame:
     # Log-space baseline
     # --------------------------------------------------------------
     w = LOG_MEAN_WINDOW_H
+    window = f"{w}h"
     out[f"log_f107_mean_{w}h"] = (
         df["log_f107"]
-        .rolling(w, min_periods=_min_periods(w))
+        .rolling(window, min_periods=_min_periods(w))
         .mean()
     )
 
@@ -126,10 +129,11 @@ def _build_aggregates(df: pd.DataFrame) -> pd.DataFrame:
     # Contextual anomaly
     # --------------------------------------------------------------
     w = ANOMALY_WINDOW_H
+    window = f"{w}h"
     out[f"f107_anomaly_{w}h"] = (
         df["f107"]
         - df["f107"]
-        .rolling(w, min_periods=_min_periods(w))
+        .rolling(window, min_periods=_min_periods(w))
         .mean()
     )
 
@@ -164,4 +168,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

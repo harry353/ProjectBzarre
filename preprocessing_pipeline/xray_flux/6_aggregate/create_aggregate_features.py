@@ -98,7 +98,7 @@ def _rolling_slope(series: pd.Series, w: int) -> pd.Series:
         ym = values.mean()
         return float(((x - xm) * (values - ym)).sum() / denom)
 
-    return series.rolling(w, min_periods=_min_periods(w)).apply(_calc, raw=False)
+    return series.rolling(f"{w}h", min_periods=_min_periods(w)).apply(_calc, raw=False)
 
 
 # ---------------------------------------------------------------------
@@ -112,19 +112,19 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
     # --------------------------------------------------------------
     w = MEAN_WINDOW_H
     out[f"log_xrsb_mean_{w}h"] = df["log_xrsb"].rolling(
-        w, min_periods=_min_periods(w)
+        f"{w}h", min_periods=_min_periods(w)
     ).mean()
 
     w = MAX_WINDOW_H
     out[f"log_xrsb_max_{w}h"] = df["log_xrsb"].rolling(
-        w, min_periods=_min_periods(w)
+        f"{w}h", min_periods=_min_periods(w)
     ).max()
 
     w = SLOPE_WINDOW_H
     out[f"log_xrsb_slope_{w}h"] = _rolling_slope(df["log_xrsb"], w)
 
     w = PEAK_BG_WINDOW_H
-    bg = df["log_xrsb"].rolling(w, min_periods=_min_periods(w)).min()
+    bg = df["log_xrsb"].rolling(f"{w}h", min_periods=_min_periods(w)).min()
     out[f"log_xrsb_peak_to_bg_{w}h"] = df["log_xrsb"] - bg
 
     # --------------------------------------------------------------
@@ -132,19 +132,19 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
     # --------------------------------------------------------------
     w = MEAN_WINDOW_H
     out[f"log_xrsa_mean_{w}h"] = df["log_xrsa"].rolling(
-        w, min_periods=_min_periods(w)
+        f"{w}h", min_periods=_min_periods(w)
     ).mean()
 
     w = MAX_WINDOW_H
     out[f"log_xrsa_max_{w}h"] = df["log_xrsa"].rolling(
-        w, min_periods=_min_periods(w)
+        f"{w}h", min_periods=_min_periods(w)
     ).max()
 
     w = SLOPE_WINDOW_H
     out[f"log_xrsa_slope_{w}h"] = _rolling_slope(df["log_xrsa"], w)
 
     w = PEAK_BG_WINDOW_H
-    bg = df["log_xrsa"].rolling(w, min_periods=_min_periods(w)).min()
+    bg = df["log_xrsa"].rolling(f"{w}h", min_periods=_min_periods(w)).min()
     out[f"log_xrsa_peak_to_bg_{w}h"] = df["log_xrsa"] - bg
 
     # --------------------------------------------------------------
@@ -154,14 +154,14 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
     out[f"hrs_since_rapid_rise_xrsb_{w}h"] = (
         (df["dlog_xrsb_1h"] > 0.3)
         .astype(int)
-        .rolling(w, min_periods=1)
+        .rolling(f"{w}h", min_periods=1)
         .apply(lambda x: np.argmax(x[::-1]) if x.any() else np.nan)
     )
 
     out[f"hrs_since_rapid_rise_xrsa_{w}h"] = (
         (df["dlog_xrsa_1h"] > 0.3)
         .astype(int)
-        .rolling(w, min_periods=1)
+        .rolling(f"{w}h", min_periods=1)
         .apply(lambda x: np.argmax(x[::-1]) if x.any() else np.nan)
     )
 

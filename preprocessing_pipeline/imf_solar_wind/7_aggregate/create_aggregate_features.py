@@ -77,9 +77,10 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
     # Strong southward IMF
     # --------------------------------------------------------------
     w = BZ_MIN_WINDOW_H
+    window = f"{w}h"
     out[f"bz_min_{w}h"] = (
         df["bz_gse"]
-        .rolling(w, min_periods=_min_periods(w))
+        .rolling(window, min_periods=_min_periods(w))
         .min()
     )
 
@@ -87,9 +88,10 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
     # Southward IMF persistence
     # --------------------------------------------------------------
     w = BZ_SOUTH_FRAC_WINDOW_H
+    window = f"{w}h"
     out[f"bz_south_frac_{w}h"] = (
         (df["bz_gse"] < 0)
-        .rolling(w, min_periods=_min_periods(w))
+        .rolling(window, min_periods=_min_periods(w))
         .mean()
     )
 
@@ -97,9 +99,10 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
     # Integrated coupling (Newell)
     # --------------------------------------------------------------
     w = NEWELL_INT_WINDOW_H
+    window = f"{w}h"
     out[f"newell_int_{w}h"] = (
         df["newell_dphi_dt"]
-        .rolling(w, min_periods=_min_periods(w))
+        .rolling(window, min_periods=_min_periods(w))
         .sum()
     )
 
@@ -107,9 +110,10 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
     # Mean reconnection electric field
     # --------------------------------------------------------------
     w = EY_MEAN_WINDOW_H
+    window = f"{w}h"
     out[f"ey_mean_{w}h"] = (
         df["ey"]
-        .rolling(w, min_periods=_min_periods(w))
+        .rolling(window, min_periods=_min_periods(w))
         .mean()
     )
 
@@ -117,9 +121,10 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
     # Sustained compression
     # --------------------------------------------------------------
     w = PDYN_MAX_WINDOW_H
+    window = f"{w}h"
     out[f"pdyn_max_{w}h"] = (
         df["dynamic_pressure"]
-        .rolling(w, min_periods=_min_periods(w))
+        .rolling(window, min_periods=_min_periods(w))
         .max()
     )
 

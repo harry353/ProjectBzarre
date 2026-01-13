@@ -25,7 +25,7 @@ else:
 
 
 PIPELINE_ROOT = PROJECT_ROOT / "preprocessing_pipeline"
-MERGED_DB = PIPELINE_ROOT / "final" / "all_preprocessed_sources.db"
+MERGED_DB = PIPELINE_ROOT / "check_multicolinearity" / "all_preprocessed_sources.db"
 DST_DB = PIPELINE_ROOT / "dst" / "1_averaging" / "dst_aver.db"
 
 HORIZON_H = 1

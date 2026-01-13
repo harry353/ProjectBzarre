@@ -38,8 +38,11 @@ LOG_Z_COLS = [
 
     # Aggregates
     "min_hours_since_last_cme_8h",
+    "min_hours_since_last_cme_6h",
     "max_last_cme_v_med_8h",
+    "max_last_cme_v_med_12h",
     "max_last_cme_shock_proxy_8h",
+    "max_last_cme_shock_proxy_6h",
 ]
 
 Z_COLS = [
@@ -49,6 +52,7 @@ Z_COLS = [
 
     # Aggregates
     "mean_cme_influence_exp_8h",
+    "mean_cme_influence_exp_12h",
 ]
 
 NO_SCALE_COLS = [
