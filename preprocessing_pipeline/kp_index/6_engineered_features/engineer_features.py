@@ -43,6 +43,14 @@ OUTPUT_TABLES = {
 
 WINDOW_H = 6
 MIN_FRACTION_COVERAGE = 0.5
+KP_TO_AP = {
+    0.00: 0, 0.33: 2, 0.67: 3, 1.00: 4, 1.33: 5, 1.67: 6, 2.00: 7,
+    2.33: 9, 2.67: 12, 3.00: 15, 3.33: 18, 3.67: 22, 4.00: 27,
+    4.33: 32, 4.67: 39, 5.00: 48, 5.33: 56, 5.67: 67, 6.00: 80,
+    6.33: 94, 6.67: 111, 7.00: 132, 7.33: 154, 7.67: 179, 8.00: 207,
+    8.33: 236, 8.67: 300, 9.00: 400,
+}
+KP_KEYS = np.array(sorted(KP_TO_AP.keys()), dtype=float)
 
 # ---------------------------------------------------------------------
 # Feature engineering (HOURLY, NO AGGREGATES)
@@ -55,34 +63,36 @@ def _add_kp_features(df: pd.DataFrame) -> pd.DataFrame:
 
     kp = working["kp_index"].astype(float)
 
-    # --------------------------------------------------------------
-    # Core KP features (6 total)
-    # --------------------------------------------------------------
-    working["kp"] = kp
+    ap = kp.round(2).map(KP_TO_AP)
+    missing = ap.isna()
+    if missing.any():
+        vals = kp.round(2)[missing].to_numpy()
+        idx = np.abs(vals[:, None] - KP_KEYS[None, :]).argmin(axis=1)
+        ap.loc[missing] = [KP_TO_AP[k] for k in KP_KEYS[idx]]
+    working["ap"] = ap.astype(float)
 
-    working["kp_delta_1h"] = kp.diff(1)
-    working["kp_delta_3h"] = kp.diff(3)
-    working["kp_delta_6h"] = kp.diff(6)
-
-    working["kp_ge5_flag"] = (kp >= 5.0).astype(int)
-
-    working["kp_entered_storm"] = (
-        (kp >= 5.0) & (kp.shift(1) < 5.0)
+    working["kp_regime"] = pd.cut(
+        kp,
+        bins=[-np.inf, 2, 4, 6, np.inf],
+        labels=[0, 1, 2, 3],
     ).astype(int)
 
-    # --------------------------------------------------------------
-    # Cleanup
-    # --------------------------------------------------------------
+    working["ap_3h_change"] = working["ap"].diff().fillna(0.0)
+
+    working["ap_level_bucket"] = pd.cut(
+        working["ap"],
+        bins=[-np.inf, 10, 30, 80, 200, np.inf],
+        labels=[0, 1, 2, 3, 4],
+    ).astype(int)
+
     working = working.dropna()
 
     return working[
         [
-            "kp",
-            # "kp_delta_1h",
-            # "kp_delta_3h",
-            # "kp_delta_6h",
-            "kp_ge5_flag",
-            "kp_entered_storm",
+            "ap",
+            "kp_regime",
+            "ap_3h_change",
+            "ap_level_bucket",
         ]
     ]
 
