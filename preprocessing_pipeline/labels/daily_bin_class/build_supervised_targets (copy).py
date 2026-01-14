@@ -25,7 +25,7 @@ DST_DB = PIPELINE_ROOT / "dst" / "1_averaging" / "dst_aver.db"
 AP_DB = (
     PIPELINE_ROOT
     / "kp_index"
-    / "5_engineered_features"
+    / "6_engineered_features"
     / "kp_index_aver_filt_imp_eng.db"
 )
 KP_DB = PIPELINE_ROOT / "kp_index" / "1_averaging" / "kp_index_aver.db"

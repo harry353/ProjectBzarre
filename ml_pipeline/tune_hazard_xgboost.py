@@ -7,7 +7,8 @@ from pathlib import Path
 import numpy as np
 import optuna
 import pandas as pd
-from sklearn.metrics import average_precision_score, brier_score_loss, log_loss
+from sklearn.metrics import average_precision_score, brier_score_loss, log_loss, precision_recall_curve
+import matplotlib.pyplot as plt
 from xgboost import XGBClassifier
 
 
@@ -70,7 +71,7 @@ def _merge_split(split: str, target_col: str) -> pd.DataFrame:
 def _prepare_xy(df: pd.DataFrame, target_col: str):
     numeric = df.select_dtypes(include=[np.number]).dropna(axis=0, how="any")
 
-    drop_patterns = ["sunspot"]
+    drop_patterns = ["dst", "kp"]
     if drop_patterns:
         drop_cols = [
             c for c in numeric.columns
@@ -132,6 +133,7 @@ def main() -> None:
     val_logloss = log_loss(y_val, val_prob)
     val_ap = average_precision_score(y_val, val_prob)
     bs = brier_score_loss(y_val, val_prob)
+    precision, recall, _ = precision_recall_curve(y_val, val_prob)
 
     output_dir = OUTPUT_ROOT / f"h{TARGET_HORIZON_H}"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -151,6 +153,17 @@ def main() -> None:
     model_path = output_dir / "model.json"
     model.get_booster().save_model(model_path)
 
+    pr_path = output_dir / "precision_recall_curve.png"
+    plt.figure(figsize=(6, 5))
+    plt.plot(recall, precision, color="tab:blue")
+    plt.xlabel("Recall")
+    plt.ylabel("Precision")
+    plt.title(f"Precision-Recall Curve (h{TARGET_HORIZON_H})")
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(pr_path, dpi=200)
+    plt.close()
+
     with (output_dir / "best_params.json").open("w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
 
@@ -169,6 +182,7 @@ def main() -> None:
     print(f"[INFO] Val average precision  : {val_ap:.4f}")
     print(f"[INFO] Val Brier score        : {bs:.4f}")
     print(f"[INFO] Model saved to         : {model_path}")
+    print(f"[INFO] PR curve saved to      : {pr_path}")
     print("[INFO] Best params:")
     for key in sorted(best_params):
         print(f"[INFO]   {key}: {best_params[key]}")

@@ -99,12 +99,16 @@ def _deduplicate_onsets(onsets: list[pd.Timestamp]) -> list[pd.Timestamp]:
 
 
 def _infer_onsets(dst: pd.Series, ap: pd.Series) -> list[pd.Timestamp]:
-    peaks = _find_peaks(ap)
     prev = dst.shift(1)
     crossings = dst.index[(dst <= 0) & (prev > 0)]
+    storm_mask = (ap > 39) & (dst < -50)
+    if not storm_mask.any():
+        return []
     onsets = []
-    for peak in peaks:
-        prior = crossings[crossings <= peak]
+    groups = (storm_mask != storm_mask.shift()).cumsum()
+    for _, seg in dst[storm_mask].groupby(groups[storm_mask]):
+        start = seg.index[0]
+        prior = crossings[crossings <= start]
         if len(prior) == 0:
             continue
         onsets.append(prior[-1])

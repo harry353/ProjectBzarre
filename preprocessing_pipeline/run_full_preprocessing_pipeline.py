@@ -26,9 +26,9 @@ RUNNERS = [
     PIPELINE_DIR / "sunspot_number" / "run_pipeline.py",
     PIPELINE_DIR / "cme" / "run_pipeline.py",
     PIPELINE_DIR / "imf_solar_wind" / "run_pipeline.py",
-    PIPELINE_DIR / "xray_flux" / "run_pipeline.py",
+    # PIPELINE_DIR / "xray_flux" / "run_pipeline.py",
     PIPELINE_DIR / "radio_flux" / "run_pipeline.py",
-    PIPELINE_DIR / "features_targets" / "daily_bin_class" / "build_supervised_targets.py",
+    PIPELINE_DIR / "labels" / "hazard_label" / "build_supervised_targets.py",
 ]
 
 FINAL_SCRIPTS = [

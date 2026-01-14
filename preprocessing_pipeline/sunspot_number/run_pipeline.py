@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -33,19 +32,14 @@ def main() -> None:
         SOURCE_DIR / "2_missingness" / "plot_missingness.py",
         SOURCE_DIR / "3_hard_filtering" / "apply_filters.py",
         SOURCE_DIR / "4_imputation" / "run_imputation.py",
-        SOURCE_DIR / "5_engineered_features" / "engineer_features.py",
-        SOURCE_DIR / "6_aggregate" / "create_aggregate_features.py",
-        SOURCE_DIR / "7_train_test_split" / "create_splits.py",
-        SOURCE_DIR / "8_normalization" / "normalize.py",
+        SOURCE_DIR / "5_train_test_split" / "create_splits.py",
+        SOURCE_DIR / "6_engineered_features" / "engineer_features.py",
     ]
     for script in stages:
         _run_stage(script)
 
-    final_stage_dir = SOURCE_DIR / "8_normalization"
-    final_db = final_stage_dir / "sunspot_number_agg_eng_split_norm.db"
-    destination = SOURCE_DIR / "sunspot_number_fin.db"
-    shutil.copy2(final_db, destination)
-    print(f"[OK] Sunspot number final database available at {final_db} (copied to {destination})")
+    final_db = SOURCE_DIR / "sunspot_number_fin.db"
+    print(f"[OK] Sunspot number final database available at {final_db}")
 
 
 if __name__ == "__main__":
