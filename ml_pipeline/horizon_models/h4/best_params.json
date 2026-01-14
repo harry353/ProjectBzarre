@@ -64,18 +64,18 @@
   ],
   "train_rows": 156479,
   "validation_rows": 33743,
-  "val_logloss": 0.0033008290813842573,
+  "val_logloss": 0.0033220511739583828,
   "val_average_precision": 1.0,
-  "val_brier_score": 0.0005693572456948459,
+  "val_brier_score": 0.000572116463445127,
   "best_params": {
-    "n_estimators": 1127,
-    "max_depth": 13,
-    "learning_rate": 0.010744695078675601,
-    "subsample": 0.589131552090691,
-    "colsample_bytree": 0.5932403470468235,
-    "min_child_weight": 5.74420143743194,
-    "gamma": 3.21747868014954,
-    "reg_alpha": 0.02834979795132671,
-    "reg_lambda": 5.260515899894483
+    "n_estimators": 1864,
+    "max_depth": 8,
+    "learning_rate": 0.05009482737361669,
+    "subsample": 0.6273489821871312,
+    "colsample_bytree": 0.6872593574122428,
+    "min_child_weight": 8.844646047481078,
+    "gamma": 3.6356904540497617,
+    "reg_alpha": 4.740120691877108e-06,
+    "reg_lambda": 9.060262159947852
   }
 }

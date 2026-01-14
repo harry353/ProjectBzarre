@@ -55,27 +55,17 @@ def _add_dst_features(df: pd.DataFrame) -> pd.DataFrame:
 
     dst = working["dst"].astype(float)
 
-    # --------------------------------------------------------------
-    # Core DST features (6 total)
-    # --------------------------------------------------------------
     working["dst"] = dst
+    working["dst_mean_6h"] = working["dst"].rolling(window="6h", min_periods=1).mean()
+    working["dst_std_6h"] = (
+        working["dst"]
+        .rolling(window="6h", min_periods=1)
+        .std(ddof=0)
+        .fillna(0.0)
+    )
+    working["dst_derivative"] = (working["dst"] - working["dst"].shift(1)).fillna(0.0)
 
-    # working["dst_delta_1h"] = dst.diff(1)
-    # working["dst_delta_3h"] = dst.diff(3)
-    # working["dst_delta_6h"] = dst.diff(6)
-
-    # working["dst_negative_flag"] = (dst < 0).astype(int)
-
-    # working["dst_recovery_flag"] = (
-    #     (dst < -30) & (dst.diff(1) > 0)
-    # ).astype(int)
-
-    # --------------------------------------------------------------
-    # Cleanup
-    # --------------------------------------------------------------
-    working = working.dropna()
-
-    return working
+    return working[["dst", "dst_mean_6h", "dst_std_6h", "dst_derivative"]]
 
 # ---------------------------------------------------------------------
 # Pipeline entry
