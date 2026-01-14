@@ -28,7 +28,7 @@ AP_DB = (
     PROJECT_ROOT
     / "preprocessing_pipeline"
     / "kp_index"
-    / "5_engineered_features"
+    / "6_engineered_features"
     / "kp_index_aver_filt_imp_eng.db"
 )
 DAILY_DB = STAGE_DIR / "storm_daily_labels.db"

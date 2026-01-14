@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -25,33 +24,20 @@ def _run_stage(script: Path) -> None:
 
 
 def main() -> None:
-    skip_splits = os.environ.get("XRS_SKIP_SPLITS") == "1"
-
     stages = [
         SOURCE_DIR / "1_averaging" / "build_hourly.py",
         SOURCE_DIR / "2_missingness" / "plot_missingness.py",
         SOURCE_DIR / "3_hard_filtering" / "apply_filters.py",
         SOURCE_DIR / "4_imputation" / "run_imputation.py",
-        SOURCE_DIR / "5_feature_engineering" / "engineer_features.py",
-        SOURCE_DIR / "6_aggregate" / "create_aggregate_features.py",
+        SOURCE_DIR / "5_train_test_split" / "create_splits.py",
+        SOURCE_DIR / "6_feature_engineering" / "engineer_features.py",
     ]
-
-    if skip_splits:
-        os.environ["XRS_INFERENCE_MODE"] = "1"
-        stages.append(SOURCE_DIR / "8_normalization" / "normalize.py")
-    else:
-        os.environ.pop("XRS_INFERENCE_MODE", None)
-        stages.extend(
-            [
-                SOURCE_DIR / "7_train_test_split" / "create_splits.py",
-                SOURCE_DIR / "8_normalization" / "normalize.py",
-            ]
-        )
 
     for script in stages:
         _run_stage(script)
 
-    print("[OK] X-ray flux preprocessing pipeline completed. Final DB located at xray_flux_fin.db")
+    final_db = SOURCE_DIR / "xray_flux_fin.db"
+    print(f"[OK] X-ray flux preprocessing pipeline completed. Final DB located at {final_db}")
 
 
 if __name__ == "__main__":

@@ -27,19 +27,15 @@ def _run_stage(script: Path) -> None:
 def main() -> None:
     stages = [
         SOURCE_DIR / "1_hard_filtering" / "apply_filters.py",
-        SOURCE_DIR / "2_engineered_features" / "engineer_features.py",
-        SOURCE_DIR / "3_aggregate" / "create_aggregate_features.py",
-        SOURCE_DIR / "4_train_test_split" / "create_splits.py",
-        SOURCE_DIR / "5_normalization" / "normalize.py",
+        SOURCE_DIR / "2_train_test_split" / "create_splits.py",
+        SOURCE_DIR / "3_engineered_features" / "engineer_features.py",
     ]
 
     for script in stages:
         _run_stage(script)
 
-    final_db = SOURCE_DIR / "5_normalization" / "radio_flux_agg_eng_split_norm.db"
-    destination = SOURCE_DIR / "radio_flux_fin.db"
-    destination.write_bytes(final_db.read_bytes())
-    print(f"[OK] Radio flux pipeline complete. Final DB: {final_db} (copied to {destination})")
+    final_db = SOURCE_DIR / "radio_flux_fin.db"
+    print(f"[OK] Radio flux pipeline complete. Final DB: {final_db}")
 
 
 if __name__ == "__main__":

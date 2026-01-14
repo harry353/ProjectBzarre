@@ -25,7 +25,7 @@ if str(PROJECT_ROOT) not in sys.path:
 PIPELINE_ROOT = PROJECT_ROOT / "preprocessing_pipeline"
 
 DST_DB = PIPELINE_ROOT / "dst" / "1_averaging" / "dst_aver.db"
-AP_DB = PIPELINE_ROOT / "kp_index" / "5_engineered_features" / "kp_index_aver_filt_imp_eng.db"
+AP_DB = PIPELINE_ROOT / "kp_index" / "6_engineered_features" / "kp_index_aver_filt_imp_eng.db"
 KP_DB = PIPELINE_ROOT / "kp_index" / "1_averaging" / "kp_index_aver.db"
 
 OUTPUT_DB = STAGE_DIR / "storm_labels_daily_onset.db"

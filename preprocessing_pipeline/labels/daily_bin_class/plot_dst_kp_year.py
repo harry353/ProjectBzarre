@@ -22,7 +22,7 @@ KP_DB = PIPELINE_ROOT / "kp_index" / "1_averaging" / "kp_index_aver.db"
 AP_DB = (
     PIPELINE_ROOT
     / "kp_index"
-    / "5_engineered_features"
+    / "6_engineered_features"
     / "kp_index_aver_filt_imp_eng.db"
 )
 DAILY_DB = STAGE_DIR / "storm_labels_daily_onset.db"

@@ -30,16 +30,15 @@ def main() -> None:
         SOURCE_DIR / "3_missingness" / "plot_missingness.py",
         SOURCE_DIR / "4_hard_filtering" / "apply_filters.py",
         SOURCE_DIR / "5_imputation" / "run_imputation.py",
-        SOURCE_DIR / "6_engineered_features" / "engineer_features.py",
-        SOURCE_DIR / "7_aggregate" / "create_aggregate_features.py",
-        SOURCE_DIR / "8_train_test_split" / "create_splits.py",
-        SOURCE_DIR / "9_normalization" / "normalize.py",
+        SOURCE_DIR / "6_train_test_split" / "create_splits.py",
+        SOURCE_DIR / "7_engineered_features" / "engineer_features.py",
     ]
 
     for script in stages:
         _run_stage(script)
 
-    print("[OK] IMF + solar wind preprocessing pipeline completed. Final DB located at imf_solar_wind_fin.db")
+    final_db = SOURCE_DIR / "imf_solar_wind_fin.db"
+    print(f"[OK] IMF + solar wind preprocessing pipeline completed. Final DB located at {final_db}")
 
 
 if __name__ == "__main__":
