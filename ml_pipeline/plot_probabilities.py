@@ -14,7 +14,8 @@ MODEL_ROOT = PROJECT_ROOT / "ml_pipeline" / "horizon_models"
 DST_DB = PROJECT_ROOT / "preprocessing_pipeline" / "dst" / "1_averaging" / "dst_aver.db"
 
 CALIB_TABLE = "calibrated_probs"
-TARGET_HORIZONS_H = range(1, 9)
+HOURS_AHEAD_PREDICTION = 6
+TARGET_HORIZONS_H = range(1, HOURS_AHEAD_PREDICTION + 1)
 
 YEAR_TO_PLOT = 2024
 SPLIT = "test"
@@ -70,7 +71,15 @@ def _load_calibrated_probs() -> pd.DataFrame:
     return out.sort_values("timestamp").reset_index(drop=True)
 
 
-def plot_hazard_probabilities(year: int, output: Path | None = None) -> None:
+def _compute_cumulative_probability(probs: pd.DataFrame) -> pd.Series:
+    hazard_cols = [f"p_h{h}" for h in TARGET_HORIZONS_H if f"p_h{h}" in probs.columns]
+    surv = 1.0
+    for col in hazard_cols:
+        surv *= 1.0 - probs[col]
+    return 1.0 - surv
+
+
+def plot_cumulative_probability(year: int, output: Path | None = None) -> None:
     dst = _load_dst()
     probs = _load_calibrated_probs()
 
@@ -82,6 +91,8 @@ def plot_hazard_probabilities(year: int, output: Path | None = None) -> None:
         (probs["timestamp"] >= start) & (probs["timestamp"] < end)
     ]
 
+    probs["p_cumulative"] = _compute_cumulative_probability(probs)
+
     fig, (ax_dst, ax_prob) = plt.subplots(
         2, 1, figsize=(14, 6), sharex=True, height_ratios=[2, 1]
     )
@@ -90,32 +101,27 @@ def plot_hazard_probabilities(year: int, output: Path | None = None) -> None:
     ax_dst.axhline(0, color="gray", alpha=0.5)
     ax_dst.axhline(-50, color="gray", linestyle=":", alpha=0.4)
 
-    for h in TARGET_HORIZONS_H:
-        col = f"p_h{h}"
-        if col in probs.columns:
-            ax_prob.plot(
-                probs["timestamp"],
-                probs[col],
-                linewidth=1.2,
-                label=f"h{h}",
-            )
+    ax_prob.plot(
+        probs["timestamp"],
+        probs["p_cumulative"],
+        color="tab:red",
+        linewidth=1.5,
+    )
 
     ax_dst.set_ylabel("Dst (nT)")
-    ax_prob.set_ylabel("Probability")
+    ax_prob.set_ylabel(f"P(storm within next {HOURS_AHEAD_PREDICTION}h)")
     ax_prob.set_xlabel("Time")
 
     ax_dst.set_title(
-        f"DST and calibrated interval hazard probabilities ({SPLIT}) — {year}"
+        f"DST and cumulative storm probability ({SPLIT}) — {year}"
     )
 
     ax_dst.grid(alpha=0.3)
     ax_prob.grid(alpha=0.3)
 
     ax_prob.legend(
-        handles=[
-            Line2D([0], [0], label=f"h{h}") for h in TARGET_HORIZONS_H
-        ],
-        ncol=4,
+        handles=[Line2D([0], [0], color="tab:red", label=f"≤ {HOURS_AHEAD_PREDICTION}h cumulative")],
+        loc="upper right",
     )
 
     fig.tight_layout()
@@ -130,7 +136,7 @@ def plot_hazard_probabilities(year: int, output: Path | None = None) -> None:
 
 
 def main() -> None:
-    plot_hazard_probabilities(YEAR_TO_PLOT, OUTPUT_PATH)
+    plot_cumulative_probability(YEAR_TO_PLOT, OUTPUT_PATH)
 
 
 if __name__ == "__main__":
