@@ -23,8 +23,7 @@ LABELS_DB = (
     PROJECT_ROOT
     / "preprocessing_pipeline"
     / "labels"
-    / "hazard_label"
-    / "storm_onset_hazards.db"
+    / "main_phase_labels.db"
 )
 OUTPUT_ROOT = PROJECT_ROOT / "ml_pipeline" / "horizon_models"
 
