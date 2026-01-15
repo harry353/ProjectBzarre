@@ -21,7 +21,7 @@ else:
 DST_DB = PROJECT_ROOT / "preprocessing_pipeline" / "dst" / "1_averaging" / "dst_aver.db"
 KP_DB = PROJECT_ROOT / "preprocessing_pipeline" / "kp_index" / "1_averaging" / "kp_index_aver.db"
 
-OUTPUT_DB = STAGE_DIR / "storm_onset_hazards.db"
+OUTPUT_DB = STAGE_DIR / "main_phase_labels.db"
 TRAIN_TABLE = "storm_onset_train"
 VAL_TABLE = "storm_onset_validation"
 TEST_TABLE = "storm_onset_test"

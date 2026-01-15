@@ -1,8 +1,0 @@
-Multicollinearity: PRESENT
-Rows: 157777, Features: 78
-Condition number: 4.65e+34
-High-correlation pairs (|r| >= 0.8): 88/78
-VIF >= 5.0: 55; VIF >= 10.0: 41
-Near-degenerate singular values (<= 0.001369): 7
-Top VIF features: imf_solar_wind_bz_gse_missing_flag(inf), imf_solar_wind_by_gse_missing_flag(inf), radio_flux_df107_24h(inf), radio_flux_f107_delta_24h(inf), imf_solar_wind_bx_gse_source_id(inf)
-Top correlation pairs: radio_flux_df107_24h~radio_flux_f107_delta_24h(1.00), imf_solar_wind_bx_gse_missing_flag~imf_solar_wind_by_gse_missing_flag(1.00), imf_solar_wind_bx_gse_missing_flag~imf_solar_wind_bz_gse_missing_flag(1.00), imf_solar_wind_bx_gse_source_id~imf_solar_wind_by_gse_source_id(1.00), imf_solar_wind_bx_gse_source_id~imf_solar_wind_bz_gse_source_id(1.00)

@@ -15,7 +15,7 @@ from xgboost import XGBClassifier
 # --- Configuration & Paths ---
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FEATURES_DB = PROJECT_ROOT / "preprocessing_pipeline" / "check_multicolinearity" / "all_preprocessed_sources.db"
-LABELS_DB = PROJECT_ROOT / "preprocessing_pipeline" / "labels" / "hazard_label" / "storm_onset_hazards.db"
+LABELS_DB = PROJECT_ROOT / "preprocessing_pipeline" / "labels" / "main_phase_labels.db"
 OUTPUT_ROOT = PROJECT_ROOT / "ml_pipeline" / "horizon_models"
 
 def _load_validation_data(h: int | str):
