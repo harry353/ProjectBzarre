@@ -1,7 +1,15 @@
 {
   "target_horizon_h": 4,
-  "feature_count": 59,
+  "feature_count": 67,
   "feature_columns": [
+    "dst_dst",
+    "dst_dst_mean_6h",
+    "dst_dst_std_6h",
+    "dst_dst_derivative",
+    "kp_ap",
+    "kp_kp_regime",
+    "kp_ap_3h_change",
+    "kp_ap_level_bucket",
     "sunspot_ssn",
     "sunspot_log_ssn",
     "sunspot_ssn_slope_27d",
@@ -64,18 +72,18 @@
   ],
   "train_rows": 156479,
   "validation_rows": 33743,
-  "val_logloss": 0.0033220511739583828,
-  "val_average_precision": 1.0,
-  "val_brier_score": 0.000572116463445127,
+  "val_logloss": 0.0031216056083765986,
+  "val_average_precision": 0.9999999999999999,
+  "val_brier_score": 0.0005647038342431188,
   "best_params": {
-    "n_estimators": 1864,
-    "max_depth": 8,
-    "learning_rate": 0.05009482737361669,
-    "subsample": 0.6273489821871312,
-    "colsample_bytree": 0.6872593574122428,
-    "min_child_weight": 8.844646047481078,
-    "gamma": 3.6356904540497617,
-    "reg_alpha": 4.740120691877108e-06,
-    "reg_lambda": 9.060262159947852
+    "n_estimators": 1394,
+    "max_depth": 2,
+    "learning_rate": 0.02637612417053565,
+    "subsample": 0.7191954556419632,
+    "colsample_bytree": 0.7359271717708262,
+    "min_child_weight": 8.739262537838323,
+    "gamma": 3.037905696159719,
+    "reg_alpha": 0.038371719878136465,
+    "reg_lambda": 5.848671615573248
   }
 }

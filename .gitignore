@@ -3,5 +3,7 @@ __pycache__/
 .pytest_cache/
 *.cache
 data_source_status.csv
+*.csv
+*.json
 *.db
 archived_sources/

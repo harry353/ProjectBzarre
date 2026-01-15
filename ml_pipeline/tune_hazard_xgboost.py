@@ -37,7 +37,7 @@ LABEL_TABLES = {
     "validation": "storm_onset_validation",
 }
 
-TARGET_HORIZON_H = 4
+HORIZONS = range(1, 9)
 RANDOM_STATE = 41
 N_JOBS = 16
 N_TRIALS_COARSE = 30
@@ -71,7 +71,7 @@ def _merge_split(split: str, target_col: str) -> pd.DataFrame:
 def _prepare_xy(df: pd.DataFrame, target_col: str):
     numeric = df.select_dtypes(include=[np.number]).dropna(axis=0, how="any")
 
-    drop_patterns = ["dst", "kp"]
+    drop_patterns = []
     if drop_patterns:
         drop_cols = [
             c for c in numeric.columns
@@ -88,8 +88,8 @@ def _prepare_xy(df: pd.DataFrame, target_col: str):
     return X.to_numpy(dtype=np.float32), y, feature_cols
 
 
-def main() -> None:
-    target_col = f"h_{TARGET_HORIZON_H}"
+def _train_horizon(horizon: int) -> None:
+    target_col = f"h_{horizon}"
     train_df = _merge_split("train", target_col)
     val_df = _merge_split("validation", target_col)
 
@@ -135,11 +135,11 @@ def main() -> None:
     bs = brier_score_loss(y_val, val_prob)
     precision, recall, _ = precision_recall_curve(y_val, val_prob)
 
-    output_dir = OUTPUT_ROOT / f"h{TARGET_HORIZON_H}"
+    output_dir = OUTPUT_ROOT / f"h{horizon}"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     summary = {
-        "target_horizon_h": int(TARGET_HORIZON_H),
+        "target_horizon_h": int(horizon),
         "feature_count": len(feature_cols),
         "feature_columns": feature_cols,
         "train_rows": int(len(y_train)),
@@ -158,7 +158,7 @@ def main() -> None:
     plt.plot(recall, precision, color="tab:blue")
     plt.xlabel("Recall")
     plt.ylabel("Precision")
-    plt.title(f"Precision-Recall Curve (h{TARGET_HORIZON_H})")
+    plt.title(f"Precision-Recall Curve (h{horizon})")
     plt.grid(alpha=0.3)
     plt.tight_layout()
     plt.savefig(pr_path, dpi=200)
@@ -172,7 +172,7 @@ def main() -> None:
     )
 
     print("[INFO] -------- Hazard Model Summary --------")
-    print(f"[INFO] Horizon (h)            : {TARGET_HORIZON_H}")
+    print(f"[INFO] Horizon (h)            : {horizon}")
     print(f"[INFO] Features used          : {len(feature_cols)}")
     print(f"[INFO] Train rows             : {len(y_train):,}")
     print(f"[INFO] Validation rows        : {len(y_val):,}")
@@ -187,6 +187,11 @@ def main() -> None:
     for key in sorted(best_params):
         print(f"[INFO]   {key}: {best_params[key]}")
     print("[INFO] --------------------------------------")
+
+
+def main() -> None:
+    for horizon in HORIZONS:
+        _train_horizon(horizon)
 
 
 if __name__ == "__main__":
