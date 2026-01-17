@@ -10,4 +10,5 @@ data_source_status.csv
 !inference/predicted_probabilities.png
 !inference/horizon_predictions.db
 !inference/space_weather_last_6m.db
+!ml_pipeline/**/*.json
 archived_sources/

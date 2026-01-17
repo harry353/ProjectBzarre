@@ -1,0 +1,18 @@
+{
+  "horizon": 2,
+  "feature_count": 50,
+  "val_logloss": 0.0028784519341064994,
+  "val_average_precision": 1.0,
+  "val_brier_score": 0.0005537185934372246,
+  "best_params": {
+    "n_estimators": 1104,
+    "max_depth": 3,
+    "learning_rate": 0.010296968571882554,
+    "subsample": 0.9337535078686133,
+    "colsample_bytree": 0.9589103961134113,
+    "min_child_weight": 4.999538049125454,
+    "gamma": 0.893753695444211,
+    "reg_alpha": 0.40863746097670045,
+    "reg_lambda": 9.698181478806452
+  }
+}
