@@ -5,7 +5,7 @@ permissions:
 
 on:
   schedule:
-    - cron: "53 * * * *"
+    - cron: "01 * * * *"
   workflow_dispatch:
   push:
     branches-ignore:
