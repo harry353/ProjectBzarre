@@ -112,6 +112,9 @@ def main() -> None:
     if not INPUT_DB.exists():
         raise FileNotFoundError(f"Input DB not found: {INPUT_DB}")
 
+    OUTPUT_DB.parent.mkdir(parents=True, exist_ok=True)
+    OUTPUT_DB.unlink(missing_ok=True)
+
     frames = []
     with sqlite3.connect(INPUT_DB) as conn_in:
         for horizon in range(1, HOURS_AHEAD_PREDICTION + 1):
@@ -139,6 +142,21 @@ def main() -> None:
     for col in prob_cols:
         surv *= (1.0 - merged[col].to_numpy())
     merged["p_cumulative"] = 1.0 - surv
+
+    # Write calibrated horizon probabilities with timestamps (append/update by timestamp if present)
+    with sqlite3.connect(OUTPUT_DB) as out_conn:
+        if "predictions" in {
+            row[0]
+            for row in out_conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+            )
+        }:
+            existing = pd.read_sql_query("SELECT * FROM predictions", out_conn)
+            combined = pd.concat([existing, merged], ignore_index=True)
+            if ts_col and ts_col in combined.columns:
+                combined = combined.drop_duplicates(subset=[ts_col], keep="last")
+            merged = combined
+        merged.to_sql("predictions", out_conn, if_exists="replace", index=False)
 
     last_row = merged.iloc[-1]
     if ts_col:
