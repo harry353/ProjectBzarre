@@ -46,6 +46,16 @@ DEFAULT_WINDOWS = {
 
 PIPELINE_ANCHOR_HOURS = 0
 PIPELINE_AGG_FREQUENCY = "8h"
+CLEAN_DB = True
+CLEAN_DIRS = [
+    PIPELINE_DIR / "cme",
+    PIPELINE_DIR / "dst",
+    PIPELINE_DIR / "imf_solar_wind",
+    PIPELINE_DIR / "kp_index",
+    PIPELINE_DIR / "radio_flux",
+    PIPELINE_DIR / "sunspot_number",
+    PIPELINE_DIR / "xray_flux",
+]
 
 
 def _run(script: Path) -> None:
@@ -65,6 +75,20 @@ def _set_split_env(args: argparse.Namespace) -> None:
     os.environ["PREPROC_SPLIT_TEST_END"] = args.test_end
 
 
+def _clean_db_artifacts() -> None:
+    removed = 0
+    for folder in CLEAN_DIRS:
+        if not folder.exists():
+            continue
+        for db_file in folder.rglob("*.db"):
+            try:
+                db_file.unlink()
+                removed += 1
+            except Exception as exc:
+                print(f"[WARN] Could not remove {db_file}: {exc}")
+    print(f"[INFO] Cleaned {removed} .db files from preprocessing directories.")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run all preprocessing pipelines with shared split windows.")
     parser.add_argument("--train-start", default=DEFAULT_WINDOWS["train_start"])
@@ -80,10 +104,14 @@ def main() -> None:
     os.environ["PREPROC_AGG_FREQ"] = PIPELINE_AGG_FREQUENCY
 
     start = time.perf_counter()
+    if CLEAN_DB:
+        _clean_db_artifacts()
     for runner in RUNNERS:
         _run(runner)
     for script in FINAL_SCRIPTS:
         _run(script)
+    if CLEAN_DB:
+        _clean_db_artifacts()
     elapsed = time.perf_counter() - start
     print(f"[OK] All preprocessing pipelines completed in {elapsed:.1f} seconds.")
 
