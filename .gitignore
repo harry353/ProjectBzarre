@@ -7,4 +7,5 @@ data_source_status.csv
 *.json
 *.db
 *.png
+!inference/predicted_probabilities.png
 archived_sources/
