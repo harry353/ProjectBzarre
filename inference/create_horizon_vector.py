@@ -10,7 +10,12 @@ OUTPUT_DB = PROJECT_ROOT / "inference" / "horizon_vector.db"
 HORIZON_MODELS_DIR = PROJECT_ROOT / "ml_pipeline" / "horizon_models"
 
 # Table preference order if multiple merged tables exist
-SOURCE_TABLE_PREFERENCE = ["merged_test", "merged_validation", "merged_train"]
+SOURCE_TABLE_PREFERENCE = [
+    "inference_vector",
+    "merged_test",
+    "merged_validation",
+    "merged_train",
+]
 
 
 def _load_features(horizon: int) -> list[str]:

@@ -14,7 +14,7 @@ INPUT_DB = PROJECT_ROOT / "inference" / "horizon_vector.db"
 MODELS_DIR = PROJECT_ROOT / "ml_pipeline" / "horizon_models"
 OUTPUT_DB = PROJECT_ROOT / "inference" / "horizon_predictions.db"
 CALIBRATOR_PATH = MODELS_DIR / "calibrator.json"
-HOURS_AHEAD_PREDICTION = 6
+HOURS_AHEAD_PREDICTION = 8
 
 TIMESTAMP_COLS = ["timestamp", "time_tag", "date"]
 
@@ -68,7 +68,9 @@ def _apply_calibration(probs: np.ndarray, calibrator: Optional[dict]) -> np.ndar
     return np.interp(probs, x, y, left=y[0], right=y[-1])
 
 
-def _predict_horizon(h: int, conn_in: sqlite3.Connection) -> Optional[pd.DataFrame]:
+def _predict_horizon(
+    h: int, conn_in: sqlite3.Connection, calibrator: Optional[dict]
+) -> Optional[pd.DataFrame]:
     table = f"h{h}_vector"
     available_tables = {
         row[0]
@@ -97,7 +99,7 @@ def _predict_horizon(h: int, conn_in: sqlite3.Connection) -> Optional[pd.DataFra
     booster = _load_model(h)
     dmat = _prepare_matrix(df, features)
     probs = booster.predict(dmat)
-    calibrated = _apply_calibration(probs, _load_calibrator())
+    calibrated = _apply_calibration(probs, calibrator)
 
     out = pd.DataFrame({"y_prob": probs, "y_prob_calibrated": calibrated})
     if timestamp is not None:
@@ -115,11 +117,12 @@ def main() -> None:
     OUTPUT_DB.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_DB.unlink(missing_ok=True)
 
+    calibrator = _load_calibrator()
     frames = []
     with sqlite3.connect(INPUT_DB) as conn_in:
         for horizon in range(1, HOURS_AHEAD_PREDICTION + 1):
             try:
-                frame = _predict_horizon(horizon, conn_in)
+                frame = _predict_horizon(horizon, conn_in, calibrator)
                 if frame is not None and not frame.empty:
                     frames.append(frame)
             except Exception as exc:
@@ -133,14 +136,18 @@ def main() -> None:
     ts_col = next((c for c in merged.columns if c in TIMESTAMP_COLS), None)
     for frame in frames[1:]:
         if ts_col and ts_col in frame.columns:
-            merged = merged.merge(frame, on=ts_col, how="inner")
+            merged = merged.merge(frame, on=ts_col, how="outer")
         else:
-            merged = pd.concat([merged.reset_index(drop=True), frame.reset_index(drop=True)], axis=1)
+            merged = pd.concat(
+                [merged.reset_index(drop=True), frame.reset_index(drop=True)], axis=1
+            )
+    if ts_col and ts_col in merged.columns:
+        merged = merged.sort_values(ts_col).reset_index(drop=True)
 
     prob_cols = [c for c in merged.columns if c.startswith("p_h")]
     surv = 1.0
     for col in prob_cols:
-        surv *= (1.0 - merged[col].to_numpy())
+        surv *= (1.0 - merged[col].fillna(0.0).to_numpy())
     merged["p_cumulative"] = 1.0 - surv
 
     # Write calibrated horizon probabilities with timestamps (append/update by timestamp if present)

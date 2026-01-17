@@ -14,8 +14,8 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from database_builder.logging_utils import stamp
 
-SNAPSHOT_DB = PROJECT_ROOT / "inference" / "space_weather_last_1944h.db"
-UPDATE_SCRIPT = PROJECT_ROOT / "inference" / "update_space_weather_last_1944h.py"
+SNAPSHOT_DB = PROJECT_ROOT / "inference" / "space_weather_last_6m.db"
+UPDATE_SCRIPT = PROJECT_ROOT / "inference" / "update_space_weather_last_6m.py"
 PIPELINE_RUNNER = PROJECT_ROOT / "preprocessing_pipeline" / "run_full_preprocessing_pipeline.py"
 MERGED_OUTPUT_DB = (
     PROJECT_ROOT
@@ -25,6 +25,8 @@ MERGED_OUTPUT_DB = (
 )
 OUTPUT_DIR = PROJECT_ROOT / "inference"
 OUTPUT_FILENAME = "inference_vector.db"
+KEEP_LATEST_ENTRIES = 720
+SOURCE_TABLE_PREFERENCE = ["merged_test", "merged_validation", "merged_train", "original_vector"]
 
 
 def main() -> None:
@@ -52,42 +54,55 @@ def main() -> None:
 
     output_path = OUTPUT_DIR / OUTPUT_FILENAME
     shutil.copy2(MERGED_OUTPUT_DB, output_path)
-    _keep_last_entry(output_path)
+    _collapse_to_single_table(output_path, KEEP_LATEST_ENTRIES)
 
     elapsed = time.time() - started
     print(stamp(f"Preprocessed snapshot written to {output_path}"))
     print(stamp(f"Pipeline run completed in {elapsed:.1f} seconds."))
 
 
-def _keep_last_entry(db_path: Path) -> None:
-    """Trim each table to its most recent row by timestamp-like column."""
+def _collapse_to_single_table(db_path: Path, limit: int) -> None:
+    """Keep only one preferred table and trim it to the latest N rows."""
     import sqlite3
+    import pandas as pd
 
     time_columns = ("timestamp", "time_tag", "date")
     with sqlite3.connect(db_path) as conn:
-        tables = [
+        tables = {
+            row[0]
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+            )
+        }
+        source_table = None
+        for candidate in SOURCE_TABLE_PREFERENCE:
+            if candidate in tables:
+                source_table = candidate
+                break
+        if source_table is None:
+            if not tables:
+                raise RuntimeError("No tables found to collapse.")
+            source_table = sorted(tables)[0]
+
+        df = pd.read_sql_query(f"SELECT * FROM {source_table}", conn)
+        time_col = next((c for c in time_columns if c in df.columns), None)
+        if time_col:
+            df[time_col] = pd.to_datetime(df[time_col], errors="coerce", utc=True)
+            df = df.dropna(subset=[time_col])
+            df = df.sort_values(time_col)
+        if limit and limit > 0 and not df.empty:
+            df = df.iloc[-limit:]
+
+        existing_tables = [
             row[0]
             for row in conn.execute(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
             )
         ]
-        for table in tables:
-            cols = [row[1] for row in conn.execute(f"PRAGMA table_info({table})")]
-            time_col = next((c for c in time_columns if c in cols), None)
-            if not time_col:
-                continue
-            row = conn.execute(
-                f"SELECT {time_col} FROM {table} ORDER BY datetime({time_col}) DESC LIMIT 1"
-            ).fetchone()
-            if not row or row[0] is None:
-                continue
-            latest = row[0]
-            conn.execute(
-                f"DELETE FROM {table} WHERE datetime({time_col}) < datetime(?) OR {time_col} IS NULL",
-                (latest,),
-            )
+        for tbl in existing_tables:
+            conn.execute(f"DROP TABLE IF EXISTS {tbl}")
+        df.to_sql("inference_vector", conn, if_exists="replace", index=False)
         conn.commit()
-
 
 if __name__ == "__main__":
     main()
