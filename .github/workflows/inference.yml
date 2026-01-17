@@ -1,5 +1,8 @@
 name: ProjectBzarre Inference
 
+permissions:
+  contents: write
+
 on:
   schedule:
     - cron: "15 * * * *"
