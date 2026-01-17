@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+import json
 
 import numpy as np
 import pandas as pd
@@ -44,6 +45,19 @@ def _load_tables(
             return train, val, None
 
     raise RuntimeError("No raw probability tables found.")
+
+
+def _save_calibrator(iso: IsotonicRegression) -> None:
+    payload = {
+        "type": "isotonic_regression",
+        "fit": "joint_validation",
+        "x_thresholds": [float(x) for x in iso.X_thresholds_],
+        "y_thresholds": [float(y) for y in iso.y_thresholds_],
+        "clip": True,
+    }
+    path = MODEL_ROOT / "calibrator.json"
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    print(f"[OK] Joint calibrator saved to {path}")
 
 
 def main() -> None:
@@ -91,6 +105,8 @@ def main() -> None:
         f"{log_loss(val_all.y_true, iso.transform(val_all.y_prob)): .4f}"
     )
     print("[INFO] ------------------------------------------")
+
+    _save_calibrator(iso)
 
     for horizon, (train, val, test) in per_horizon.items():
         calib_db = MODEL_ROOT / f"h{horizon}" / "calibrated_probabilities.db"

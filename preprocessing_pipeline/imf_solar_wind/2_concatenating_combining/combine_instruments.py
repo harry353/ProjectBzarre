@@ -76,8 +76,10 @@ def combine_imf() -> pd.DataFrame:
     ace = _load(AVERAGING_DIR / "ace_mfi_aver.db", "hourly_data")
     dscovr = _load(AVERAGING_DIR / "dscovr_m1m_aver.db", "hourly_data")
 
-    # Map DSCOVR column names to ACE equivalent
+    # Map DSCOVR and ACE column names to a shared schema
     dscovr = dscovr.rename(columns={"bx": "bx_gse", "by": "by_gse", "bz": "bz_gse"})
+    if "bx_gsm" in ace.columns:
+        ace = ace.rename(columns={"bx_gsm": "bx_gse", "by_gsm": "by_gse", "bz_gsm": "bz_gse"})
     combined = combine_with_priority(dscovr, ace, "dscovr", "ace")
     columns = ["bx_gse", "by_gse", "bz_gse", "bt"]
     source_cols = [f"{col}_source_id" for col in columns]

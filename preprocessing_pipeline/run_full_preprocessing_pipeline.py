@@ -41,7 +41,7 @@ DEFAULT_WINDOWS = {
     "validation_start": "2017-01-01",
     "validation_end": "2020-12-31",
     "test_start": "2021-01-01",
-    "test_end": "2025-11-30",
+    "test_end": "2025-12-31",
 }
 
 PIPELINE_ANCHOR_HOURS = 0

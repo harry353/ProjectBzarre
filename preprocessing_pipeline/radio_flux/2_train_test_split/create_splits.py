@@ -34,6 +34,7 @@ DEFAULT_WINDOWS = {
     "test": ("2021-01-01", "2025-11-30"),
 }
 AGG_FREQ = os.environ.get("PREPROC_AGG_FREQ", "8h").replace("H", "h")
+SKIP_SPLITS = os.environ.get("PREPROC_SKIP_SPLITS", "").lower() in {"1", "true", "yes"}
 
 
 def _prepare_index(df: pd.DataFrame) -> pd.DataFrame:
@@ -95,15 +96,18 @@ def create_radio_flux_splits() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame
         raise RuntimeError("Radio flux filtered dataset is empty; run filtering first.")
     df = _prepare_index(df)
 
-    windows = _get_windows()
-    train = _slice(df, *windows["train"])
-    val = _slice(df, *windows["validation"])
-    test = _slice(df, *windows["test"])
+    if SKIP_SPLITS:
+        train = val = test = df
+    else:
+        windows = _get_windows()
+        train = _slice(df, *windows["train"])
+        val = _slice(df, *windows["validation"])
+        test = _slice(df, *windows["test"])
 
-    if train.empty or val.empty or test.empty:
-        raise RuntimeError(
-            "One or more radio flux splits are empty; adjust PREPROC_SPLIT_* env settings or confirm coverage."
-        )
+        if train.empty or val.empty or test.empty:
+            raise RuntimeError(
+                "One or more radio flux splits are empty; adjust PREPROC_SPLIT_* env settings or confirm coverage."
+            )
 
     with sqlite3.connect(OUTPUT_DB) as conn:
         train.to_sql(TRAIN_TABLE, conn, if_exists="replace", index_label="timestamp")
