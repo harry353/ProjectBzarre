@@ -50,7 +50,7 @@ jobs:
           git config user.email "actions@github.com"
 
           git checkout auto_inference
-          git add auto_inference/*.png
+          git add inference/*.png
           git diff --cached --quiet || git commit -m "Update inference plot"
           git push origin auto_inference
 
