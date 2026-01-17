@@ -7,8 +7,8 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DB = PROJECT_ROOT / "preprocessing_pipeline" / "space_weather.db"
-OUTPUT_DB = PROJECT_ROOT / "inference" / "space_weather_last_1944h.db"
-HOURS_BACK = 1944
+OUTPUT_DB = PROJECT_ROOT / "inference" / "space_weather_last_6m.db"
+HOURS_BACK = 24 * 30 * 6
 
 TIME_COLUMNS = {
     "ace_mfi": "time_tag",

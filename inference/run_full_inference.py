@@ -8,10 +8,11 @@ import time
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 SCRIPTS = [
-    PROJECT_ROOT / "inference" / "update_space_weather_last_1944h.py",
-    PROJECT_ROOT / "inference" / "run_preprocessing_on_latest_1944h.py",
+    PROJECT_ROOT / "inference" / "update_space_weather_last_6m.py",
+    PROJECT_ROOT / "inference" / "run_preprocessing_on_latest_6m.py",
     PROJECT_ROOT / "inference" / "create_horizon_vector.py",
     PROJECT_ROOT / "inference" / "run_horizon_models.py",
+    PROJECT_ROOT / "inference" / "plot_predicted_probabilities.py",
 ]
 
 

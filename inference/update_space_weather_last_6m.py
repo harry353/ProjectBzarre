@@ -25,8 +25,9 @@ from data_sources.sunspot_number.sunspot_number_data_source import (
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-OUTPUT_DB = PROJECT_ROOT / "inference" / "space_weather_last_1944h.db"
-HOURS_BACK = 1944
+OUTPUT_DB = PROJECT_ROOT / "inference" / "space_weather_last_6m.db"
+HOURS_BACK = 24 * 30 * 6
+ROW_LIMIT = HOURS_BACK
 
 TARGET_CLASS_NAMES = {
     "IMFACEDataSource",
@@ -132,6 +133,7 @@ def main() -> None:
     _extend_sunspot_to_now()
     _extend_kp_to_now()
     _extend_radio_flux_to_now()
+    _keep_latest_hours(HOURS_BACK)
 
     duration = time.time() - run_started
     print(stamp(f"Update complete in {duration:.2f} seconds"))
@@ -346,6 +348,21 @@ def _last_table_timestamp(table: Optional[str]) -> Optional[datetime]:
         if pd.isna(ts):
             return None
         return ts.to_pydatetime()
+
+
+def _keep_latest_hours(hours: int) -> None:
+    """Keep only rows within the latest N hours based on the time column."""
+    if hours <= 0:
+        return
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+    cutoff_str = cutoff.strftime("%Y-%m-%d %H:%M:%S")
+    with sqlite3.connect(OUTPUT_DB) as conn:
+        for table, col in TIME_COLUMNS.items():
+            conn.execute(
+                f"DELETE FROM {table} WHERE {col} IS NULL OR datetime({col}) < datetime(?)",
+                (cutoff_str,),
+            )
+        conn.commit()
 
 
 if __name__ == "__main__":
