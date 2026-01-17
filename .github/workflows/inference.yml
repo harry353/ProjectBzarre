@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
   push:
     branches-ignore:
-      - inference
+      - auto_inference
 
 jobs:
   run-inference:
@@ -49,8 +49,8 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
 
-          git checkout inference
-          git add inference/*.png
+          git checkout auto_inference
+          git add auto_inference/*.png
           git diff --cached --quiet || git commit -m "Update inference plot"
-          git push origin inference
+          git push origin auto_inference
 
