@@ -112,17 +112,8 @@ def _copy_table(
     return count
 
 
-def _resolve_output_path(output_db: Path | None, overwrite: bool) -> Path:
-    target = output_db or OUTPUT_DB
-    if overwrite or not target.exists():
-        return target
-
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    return target.with_name(f"{target.stem}_{timestamp}{target.suffix}")
-
-
 def main(output_db: Path | None = None, overwrite: bool = False) -> Path:
-    output_path = _resolve_output_path(output_db, overwrite)
+    output_path = output_db or OUTPUT_DB
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with sqlite3.connect(SOURCE_DB) as src:
