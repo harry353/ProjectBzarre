@@ -4,6 +4,7 @@ import os
 import sys
 from pathlib import Path
 import sqlite3
+from datetime import datetime, timezone
 
 import numpy as np
 import pandas as pd
@@ -30,6 +31,7 @@ DEFAULT_WINDOWS = {
     "validation": ("2017-01-01", "2020-12-31"),
     "test": ("2021-01-01", "2025-11-30"),
 }
+SKIP_SPLITS = os.environ.get("PREPROC_SKIP_SPLITS", "").lower() in {"1", "true", "yes"}
 
 DECAY_TAU_HOURS = 36.0
 MIN_FRACTION_COVERAGE = 0.5
@@ -76,6 +78,23 @@ def _get_windows() -> dict[str, tuple[pd.Timestamp, pd.Timestamp]]:
     return windows
 
 
+def _get_windows_from_splits() -> dict[str, tuple[pd.Timestamp, pd.Timestamp]]:
+    windows: dict[str, tuple[pd.Timestamp, pd.Timestamp]] = {}
+    for split in ("train", "validation", "test"):
+        table = f"cme_catalog_{split}"
+        df = _load_cme_catalog(table)
+        if df.empty:
+            raise RuntimeError(f"CME split '{split}' is empty; cannot derive window.")
+        time_col = "time_tag" if "time_tag" in df.columns else "timestamp"
+        series = pd.to_datetime(df[time_col], utc=True, errors="coerce").dropna()
+        if series.empty:
+            raise RuntimeError(f"CME split '{split}' has no valid timestamps.")
+        start = series.min().floor("h")
+        end = series.max().ceil("h")
+        windows[split] = (start, end)
+    return windows
+
+
 def _engineer_split(split: str, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
     table = f"cme_catalog_{split}"
     cme = _load_cme_catalog(table)
@@ -99,7 +118,9 @@ def _engineer_split(split: str, start: pd.Timestamp, end: pd.Timestamp) -> pd.Da
     earth_alignment = np.cos(pa).clip(-1.0, 1.0)
     cme["effective_width"] = cme["angular_width"] * earth_alignment.clip(0.0, 1.0)
 
-    hourly_index = pd.date_range(start, end, freq="1h", tz="UTC")
+    now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    window_end = max(end, now)
+    hourly_index = pd.date_range(start, window_end, freq="1h", tz="UTC")
     hourly = pd.DataFrame(index=hourly_index)
     hourly.index.name = "time_tag"
 
@@ -217,7 +238,7 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def engineer_cme_features() -> dict[str, pd.DataFrame]:
-    windows = _get_windows()
+    windows = _get_windows_from_splits() if SKIP_SPLITS else _get_windows()
     outputs: dict[str, pd.DataFrame] = {}
     for split, (start, end) in windows.items():
         hourly = _engineer_split(split, start, end)

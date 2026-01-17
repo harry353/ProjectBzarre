@@ -39,6 +39,7 @@ DEFAULT_WINDOWS: Dict[str, Tuple[str, str]] = {
     "test": ("2021-01-01", "2025-11-30"),
 }
 AGG_FREQ = os.environ.get("PREPROC_AGG_FREQ", "1h").replace("H", "h")
+SKIP_SPLITS = os.environ.get("PREPROC_SKIP_SPLITS", "").lower() in {"1", "true", "yes"}
 
 
 def _prepare_index(df: pd.DataFrame) -> pd.DataFrame:
@@ -101,13 +102,16 @@ def create_imf_solar_wind_splits() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataF
         raise RuntimeError("IMF + solar wind imputed dataset is empty; run imputation step first.")
     df = _prepare_index(df)
 
-    windows = _get_windows()
-    train = _slice(df, *windows["train"])
-    val = _slice(df, *windows["validation"])
-    test = _slice(df, *windows["test"])
+    if SKIP_SPLITS:
+        train = val = test = df
+    else:
+        windows = _get_windows()
+        train = _slice(df, *windows["train"])
+        val = _slice(df, *windows["validation"])
+        test = _slice(df, *windows["test"])
 
-    if train.empty or val.empty or test.empty:
-        raise RuntimeError("Unable to create non-empty IMF + solar wind splits; adjust PREPROC_SPLIT_* windows.")
+        if train.empty or val.empty or test.empty:
+            raise RuntimeError("Unable to create non-empty IMF + solar wind splits; adjust PREPROC_SPLIT_* windows.")
 
     with sqlite3.connect(OUTPUT_DB) as conn:
         train.to_sql(TRAIN_TABLE, conn, if_exists="replace", index_label="timestamp")

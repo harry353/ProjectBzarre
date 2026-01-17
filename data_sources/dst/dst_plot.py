@@ -19,7 +19,7 @@ def plot_dst(df: pd.DataFrame):
     plt.xlabel("Date")
     plt.ylabel("Dst [nT]")
     plt.grid(True, alpha=0.3)
-    plt.ylim(-500, 100)
+    # plt.ylim(-500, 100)
     plt.tight_layout()
     plt.show()
 

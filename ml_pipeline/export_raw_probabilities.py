@@ -55,13 +55,11 @@ def _merge(split: str, target: str) -> pd.DataFrame:
     f["timestamp"] = _normalize_timestamp(f["timestamp"])
     y["timestamp"] = _normalize_timestamp(y["timestamp"])
 
-    merged = f.merge(
+    return f.merge(
         y[["timestamp", target]],
         on="timestamp",
         how="inner",
     )
-
-    return merged
 
 
 def _prepare(df: pd.DataFrame, target: str):
@@ -93,9 +91,10 @@ def main() -> None:
         X_test, y_test, ts_test = _prepare(test_df, target)
 
         model_dir = MODEL_ROOT / f"h{horizon}"
-        summary_path = model_dir / "best_params.json"
+        summary_path = model_dir / "summary.json"
         with summary_path.open("r", encoding="utf-8") as fp:
-            params = json.load(fp)["best_params"]
+            summary = json.load(fp)
+            params = summary["best_params"]
 
         model = XGBClassifier(
             objective="binary:logistic",
@@ -144,6 +143,7 @@ def main() -> None:
         prob_db.parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(prob_db) as conn:
             out.to_sql("raw_probs", conn, if_exists="replace", index=False)
+
         print(f"[OK] Raw probabilities saved to {prob_db}")
 
 

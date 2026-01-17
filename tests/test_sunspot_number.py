@@ -39,7 +39,7 @@ def run_case(description, days):
     print("Plot complete.")
 
 def main():
-    run_case("Integer days = 7", 335)
+    run_case("Integer days = 7", 7)
 
 
 if __name__ == "__main__":

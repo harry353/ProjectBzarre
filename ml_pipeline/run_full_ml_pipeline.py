@@ -9,10 +9,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ML_PIPELINE = PROJECT_ROOT / "ml_pipeline"
 
 SCRIPTS = [
-    ML_PIPELINE / "tune_hazard_xgboost.py",
+    ML_PIPELINE / "train_m odel.py",
     ML_PIPELINE / "export_raw_probabilities.py",
     ML_PIPELINE / "probability_calibration.py",
-    # ML_PIPELINE / "build_storm_onset_distribution.py",
 ]
 
 

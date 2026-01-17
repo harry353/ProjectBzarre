@@ -7,7 +7,12 @@ from pathlib import Path
 import numpy as np
 import optuna
 import pandas as pd
-from sklearn.metrics import average_precision_score, brier_score_loss, log_loss, precision_recall_curve
+from sklearn.metrics import (
+    average_precision_score,
+    brier_score_loss,
+    log_loss,
+    precision_recall_curve,
+)
 import matplotlib.pyplot as plt
 from xgboost import XGBClassifier
 
@@ -40,6 +45,8 @@ HORIZONS = range(1, 9)
 RANDOM_STATE = 41
 N_JOBS = 16
 N_TRIALS_COARSE = 30
+N_TRIALS_FINE = 40
+MIN_FEATURES_TO_KEEP = 50
 
 
 def _load_table(db_path: Path, table: str) -> pd.DataFrame:
@@ -58,7 +65,7 @@ def _normalize_timestamp(series: pd.Series) -> pd.Series:
 
 def _merge_split(split: str, target_col: str) -> pd.DataFrame:
     features = _load_table(FEATURES_DB, FEATURE_TABLES[split])
-    labels = _load_table(LABELS_DB, LABEL_TABLES[split])[[ "timestamp", target_col ]]
+    labels = _load_table(LABELS_DB, LABEL_TABLES[split])[["timestamp", target_col]]
     features["timestamp"] = _normalize_timestamp(features["timestamp"])
     labels["timestamp"] = _normalize_timestamp(labels["timestamp"])
     merged = features.merge(labels, on="timestamp", how="inner")
@@ -67,44 +74,78 @@ def _merge_split(split: str, target_col: str) -> pd.DataFrame:
     return merged
 
 
-def _prepare_xy(df: pd.DataFrame, target_col: str):
+def _prepare_xy(
+    df: pd.DataFrame,
+    target_col: str,
+    feature_cols: list[str] | None = None,
+):
     numeric = df.select_dtypes(include=[np.number]).dropna(axis=0, how="any")
-
-    drop_patterns = []
-    if drop_patterns:
-        drop_cols = [
-            c for c in numeric.columns
-            if any(pat in c for pat in drop_patterns) and c != target_col
-        ]
-        if drop_cols:
-            numeric = numeric.drop(columns=drop_cols)
-
+    if feature_cols is not None:
+        numeric = numeric[[target_col, *feature_cols]]
     y = numeric[target_col].astype(int).to_numpy()
     X = numeric.drop(columns=[target_col])
-    
-    feature_cols = X.columns.tolist()
+    return X.to_numpy(dtype=np.float32), y, X.columns.tolist()
 
-    return X.to_numpy(dtype=np.float32), y, feature_cols
+
+def _embedded_prune_features(
+    X: np.ndarray,
+    y: np.ndarray,
+    feature_cols: list[str],
+    base_kwargs: dict,
+    params: dict,
+    min_gain_fraction: float = 0.01,
+    min_features: int = MIN_FEATURES_TO_KEEP,
+):
+    if X.shape[1] <= min_features:
+        return X, feature_cols
+
+    model = XGBClassifier(**base_kwargs, **params)
+    model.fit(X, y)
+
+    scores = model.get_booster().get_score(importance_type="gain")
+
+    if scores:
+        ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        total_gain = sum(scores.values())
+
+        keep = [
+            f for f, g in ranked
+            if g / total_gain >= min_gain_fraction
+        ]
+    else:
+        keep = []
+
+    if len(keep) < min_features:
+        keep = feature_cols[:min_features]
+
+    idx = [i for i, f in enumerate(feature_cols) if f in keep]
+
+    if len(idx) < min_features:
+        idx = list(range(min_features))
+
+    return X[:, idx], [feature_cols[i] for i in idx]
 
 
 def _train_horizon(horizon: int) -> None:
     target_col = f"h_{horizon}"
+
     train_df = _merge_split("train", target_col)
     val_df = _merge_split("validation", target_col)
+
+    X_train, y_train, feature_cols = _prepare_xy(train_df, target_col)
+    X_val, y_val, _ = _prepare_xy(val_df, target_col, feature_cols)
 
     base_kwargs = dict(
         objective="binary:logistic",
         eval_metric="logloss",
         tree_method="hist",
         n_jobs=N_JOBS,
+        random_state=RANDOM_STATE,
     )
-
-    X_train, y_train, feature_cols = _prepare_xy(train_df, target_col)
-    X_val, y_val, _ = _prepare_xy(val_df, target_col)
 
     def coarse_objective(trial: optuna.Trial) -> float:
         params = {
-            "n_estimators": trial.suggest_int("n_estimators", 100, 2000),
+            "n_estimators": trial.suggest_int("n_estimators", 200, 2000),
             "max_depth": trial.suggest_int("max_depth", 2, 15),
             "learning_rate": trial.suggest_float("learning_rate", 0.001, 0.2, log=True),
             "subsample": trial.suggest_float("subsample", 0.5, 1.0),
@@ -113,84 +154,123 @@ def _train_horizon(horizon: int) -> None:
             "gamma": trial.suggest_float("gamma", 0.0, 5.0),
             "reg_alpha": trial.suggest_float("reg_alpha", 1e-8, 1.0, log=True),
             "reg_lambda": trial.suggest_float("reg_lambda", 0.1, 10.0),
-            "random_state": RANDOM_STATE,
         }
         model = XGBClassifier(**base_kwargs, **params)
         model.fit(X_train, y_train)
-        val_prob = model.predict_proba(X_val)[:, 1]
-        return log_loss(y_val, val_prob)
+        return log_loss(y_val, model.predict_proba(X_val)[:, 1])
 
-    coarse_study = optuna.create_study(direction="minimize")
-    coarse_study.optimize(
-        coarse_objective, n_trials=N_TRIALS_COARSE, show_progress_bar=True
+    coarse = optuna.create_study(direction="minimize")
+    coarse.optimize(coarse_objective, n_trials=N_TRIALS_COARSE, show_progress_bar=True)
+
+    X_train_p, feature_cols_p = _embedded_prune_features(
+        X_train,
+        y_train,
+        feature_cols,
+        base_kwargs,
+        coarse.best_params,
+        min_gain_fraction=0.01,
     )
+    assert X_train_p.shape[1] >= MIN_FEATURES_TO_KEEP
 
-    best_params = coarse_study.best_params
-    model = XGBClassifier(**base_kwargs, **best_params)
-    model.fit(X_train, y_train)
-    val_prob = model.predict_proba(X_val)[:, 1]
-    val_logloss = log_loss(y_val, val_prob)
-    val_ap = average_precision_score(y_val, val_prob)
-    bs = brier_score_loss(y_val, val_prob)
+    idx = [feature_cols.index(f) for f in feature_cols_p]
+    X_val_p = X_val[:, idx]
+
+    def fine_objective(trial: optuna.Trial) -> float:
+        bp = coarse.best_params
+        params = {
+            "n_estimators": trial.suggest_int(
+                "n_estimators",
+                max(50, int(bp["n_estimators"] * 0.7)),
+                int(bp["n_estimators"] * 1.3),
+            ),
+            "max_depth": trial.suggest_int(
+                "max_depth",
+                max(1, bp["max_depth"] - 2),
+                bp["max_depth"] + 2,
+            ),
+            "learning_rate": trial.suggest_float(
+                "learning_rate",
+                bp["learning_rate"] * 0.5,
+                bp["learning_rate"] * 1.5,
+                log=True,
+            ),
+            "subsample": trial.suggest_float(
+                "subsample",
+                max(0.3, bp["subsample"] - 0.2),
+                min(1.0, bp["subsample"] + 0.2),
+            ),
+            "colsample_bytree": trial.suggest_float(
+                "colsample_bytree",
+                max(0.3, bp["colsample_bytree"] - 0.2),
+                min(1.0, bp["colsample_bytree"] + 0.2),
+            ),
+            "min_child_weight": trial.suggest_float(
+                "min_child_weight",
+                max(0.1, bp["min_child_weight"] * 0.5),
+                bp["min_child_weight"] * 1.5,
+            ),
+            "gamma": trial.suggest_float(
+                "gamma",
+                max(0.0, bp["gamma"] * 0.5),
+                bp["gamma"] * 1.5,
+            ),
+            "reg_alpha": trial.suggest_float(
+                "reg_alpha",
+                bp["reg_alpha"] * 0.5,
+                bp["reg_alpha"] * 2.0,
+                log=True,
+            ),
+            "reg_lambda": trial.suggest_float(
+                "reg_lambda",
+                bp["reg_lambda"] * 0.5,
+                bp["reg_lambda"] * 2.0,
+            ),
+        }
+        model = XGBClassifier(**base_kwargs, **params)
+        model.fit(X_train_p, y_train)
+        return log_loss(y_val, model.predict_proba(X_val_p)[:, 1])
+
+    fine = optuna.create_study(direction="minimize")
+    fine.optimize(fine_objective, n_trials=N_TRIALS_FINE, show_progress_bar=True)
+
+    model = XGBClassifier(**base_kwargs, **fine.best_params)
+    model.fit(X_train_p, y_train)
+
+    val_prob = model.predict_proba(X_val_p)[:, 1]
+
+    out = OUTPUT_ROOT / f"h{horizon}"
+    out.mkdir(parents=True, exist_ok=True)
+
+    model.get_booster().save_model(out / "model.json")
+
+    with (out / "selected_features.json").open("w") as f:
+        json.dump(feature_cols_p, f, indent=2)
+
+    with (out / "summary.json").open("w") as f:
+        json.dump(
+            {
+                "horizon": horizon,
+                "feature_count": len(feature_cols_p),
+                "val_logloss": log_loss(y_val, val_prob),
+                "val_average_precision": average_precision_score(y_val, val_prob),
+                "val_brier_score": brier_score_loss(y_val, val_prob),
+                "best_params": fine.best_params,
+            },
+            f,
+            indent=2,
+        )
+
     precision, recall, _ = precision_recall_curve(y_val, val_prob)
-
-    output_dir = OUTPUT_ROOT / f"h{horizon}"
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    summary = {
-        "target_horizon_h": int(horizon),
-        "feature_count": len(feature_cols),
-        "feature_columns": feature_cols,
-        "train_rows": int(len(y_train)),
-        "validation_rows": int(len(y_val)),
-        "val_logloss": float(val_logloss),
-        "val_average_precision": float(val_ap),
-        "val_brier_score": float(bs),
-        "best_params": best_params,
-    }
-
-    model_path = output_dir / "model.json"
-    model.get_booster().save_model(model_path)
-
-    pr_path = output_dir / "precision_recall_curve.png"
     plt.figure(figsize=(6, 5))
-    plt.plot(recall, precision, color="tab:blue")
-    plt.xlabel("Recall")
-    plt.ylabel("Precision")
-    plt.title(f"Precision-Recall Curve (h{horizon})")
-    plt.grid(alpha=0.3)
+    plt.plot(recall, precision)
     plt.tight_layout()
-    plt.savefig(pr_path, dpi=200)
+    plt.savefig(out / "precision_recall_curve.png", dpi=200)
     plt.close()
-
-    with (output_dir / "best_params.json").open("w", encoding="utf-8") as f:
-        json.dump(summary, f, indent=2)
-
-    coarse_study.trials_dataframe().to_csv(
-        output_dir / "optuna_trials_coarse.csv", index=False
-    )
-
-    print("[INFO] -------- Hazard Model Summary --------")
-    print(f"[INFO] Horizon (h)            : {horizon}")
-    print(f"[INFO] Features used          : {len(feature_cols)}")
-    print(f"[INFO] Train rows             : {len(y_train):,}")
-    print(f"[INFO] Validation rows        : {len(y_val):,}")
-    print(f"[INFO] Positive rate (train)  : {y_train.mean():.4f}")
-    print(f"[INFO] Positive rate (val)    : {y_val.mean():.4f}")
-    print(f"[INFO] Val log loss           : {val_logloss:.4f}")
-    print(f"[INFO] Val average precision  : {val_ap:.4f}")
-    print(f"[INFO] Val Brier score        : {bs:.4f}")
-    print(f"[INFO] Model saved to         : {model_path}")
-    print(f"[INFO] PR curve saved to      : {pr_path}")
-    print("[INFO] Best params:")
-    for key in sorted(best_params):
-        print(f"[INFO]   {key}: {best_params[key]}")
-    print("[INFO] --------------------------------------")
 
 
 def main() -> None:
-    for horizon in HORIZONS:
-        _train_horizon(horizon)
+    for h in HORIZONS:
+        _train_horizon(h)
 
 
 if __name__ == "__main__":

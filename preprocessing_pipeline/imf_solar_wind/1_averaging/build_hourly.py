@@ -41,7 +41,7 @@ CONFIGS = [
         "label": "ACE IMF (MFI)",
         "table": "ace_mfi",
         "time_col": "time_tag",
-        "value_cols": ["bx_gse", "by_gse", "bz_gse", "bt"],
+        "value_cols": ["bx_gsm", "by_gsm", "bz_gsm", "bt"],
         "output": BASE_DIR / "ace_mfi_aver.db",
         "method": "mean",
     },

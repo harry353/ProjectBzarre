@@ -18,8 +18,10 @@ else:
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from database_builder.constants import DB_PATH
+
 STAGE_DIR = Path(__file__).resolve().parent
-CATALOG_DB = STAGE_DIR.parents[1] / "space_weather.db"
+CATALOG_DB = Path(DB_PATH)
 CATALOG_TABLE = "lasco_cme_catalog"
 OUTPUT_DB = STAGE_DIR / "cme_catalog_split.db"
 
@@ -32,6 +34,7 @@ DEFAULT_WINDOWS = {
     "validation": ("2017-01-01", "2020-12-31"),
     "test": ("2021-01-01", "2025-11-30"),
 }
+SKIP_SPLITS = os.environ.get("PREPROC_SKIP_SPLITS", "").lower() in {"1", "true", "yes"}
 
 
 def _prepare_index(df: pd.DataFrame) -> pd.DataFrame:
@@ -99,13 +102,16 @@ def create_cme_splits() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         raise RuntimeError("CME catalog dataset is empty.")
     df = _prepare_index(df)
 
-    windows = _get_windows()
-    train = _slice(df, *windows["train"])
-    val = _slice(df, *windows["validation"])
-    test = _slice(df, *windows["test"])
+    if SKIP_SPLITS:
+        train = val = test = df
+    else:
+        windows = _get_windows()
+        train = _slice(df, *windows["train"])
+        val = _slice(df, *windows["validation"])
+        test = _slice(df, *windows["test"])
 
-    if train.empty or val.empty or test.empty:
-        raise RuntimeError("Unable to create non-empty temporal splits; adjust PREPROC_SPLIT_* windows.")
+        if train.empty or val.empty or test.empty:
+            raise RuntimeError("Unable to create non-empty temporal splits; adjust PREPROC_SPLIT_* windows.")
 
     with sqlite3.connect(OUTPUT_DB) as conn:
         train.to_sql(TRAIN_TABLE, conn, if_exists="replace", index_label="timestamp")
