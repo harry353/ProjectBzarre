@@ -1,0 +1,22 @@
+name: projectbzarre
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy
+  - pandas
+  - scipy
+  - matplotlib
+  - astropy
+  - sunpy
+  - xarray
+  - h5py
+  - cdflib
+  - statsmodels
+  - scikit-learn
+  - optuna
+  - requests
+  - pip
+  - pip:
+      - xgboost
+

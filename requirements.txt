@@ -1,0 +1,15 @@
+astropy
+cdflib
+h5py
+matplotlib
+numpy
+optuna
+pandas
+requests
+scipy
+scikit-learn
+statsmodels
+sunpy
+xarray
+xgboost
+
