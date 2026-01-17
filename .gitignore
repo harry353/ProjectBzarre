@@ -6,4 +6,5 @@ data_source_status.csv
 *.csv
 *.json
 *.db
+*.png
 archived_sources/
