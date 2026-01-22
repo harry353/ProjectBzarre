@@ -5,6 +5,8 @@ __pycache__/
 data_source_status.csv
 *.csv
 *.json
+!classification_pipeline/**/*.json
+
 *.db
 *.png
 !inference/predicted_probabilities.png
