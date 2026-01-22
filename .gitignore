@@ -8,4 +8,23 @@ data_source_status.csv
 *.db
 *.png
 !inference/predicted_probabilities.png
+!inference/horizon_predictions.db
+!inference/space_weather_last_6m.db
+!ml_pipeline/**/*.json
 archived_sources/
+
+# Ignore heavy model/artifact directories
+/regression_pipeline/poly_regime_aware_model/
+/regression_pipeline/rf_student_t_model/
+/regression_pipeline/rf_regime_aware_model/
+/regression_pipeline/poly_student_t_model/
+/regression_pipeline/xgb_student_t_model/
+/regression_pipeline/xgb_quantile_model/
+
+# Keep diagnostics and quantile model dirs
+!/regression_pipeline/diagnostics/
+!/regression_pipeline/diagnostics/**
+
+!/regression_pipeline/xgb_quantile_regime_aware_model/
+!/regression_pipeline/xgb_quantile_regime_aware_model/**
+*.joblib
