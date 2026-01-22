@@ -71,6 +71,8 @@ def download_dst(
             right = swpc.set_index("time_tag")
             left.update(right[["dst", "source_type"]])
             data = left.reset_index()
+    # Merge the latest SWPC point (rolled +1h) into the archive data
+    data = _merge_latest_swpc(data, session)
     data = data.dropna(subset=["dst"]).reset_index(drop=True)
     data = data.reindex(columns=DST_COLUMNS)
     return data
@@ -263,6 +265,68 @@ def _fetch_swpc_dst(
     df = df.dropna(subset=["time_tag"])
     df = df[(df["time_tag"] >= start_dt) & (df["time_tag"] <= end_dt)]
     return df[["time_tag", "dst", "source_type"]]
+
+
+def _fetch_latest_swpc(session: requests.Session) -> dict | None:
+    """
+    Fetch the most recent SWPC Dst reading.
+    """
+    resp = http_get(DST_SWPC_URL, session=session, log_name="DstSWPCLatest", timeout=30)
+    if resp is None:
+        return None
+    try:
+        payload = resp.json()
+    except Exception:
+        return None
+    if not isinstance(payload, list) or not payload:
+        return None
+    if isinstance(payload[0], list):
+        header = payload[0]
+        rows = payload[1:]
+        df = pd.DataFrame(rows, columns=header)
+    else:
+        df = pd.DataFrame(payload)
+    lower = {col.lower(): col for col in df.columns}
+    time_col = lower.get("time_tag") or lower.get("time") or lower.get("date")
+    dst_col = lower.get("dst")
+    if time_col is None or dst_col is None:
+        return None
+    df = df.rename(columns={time_col: "time_tag", dst_col: "dst"})
+    df["time_tag"] = pd.to_datetime(df["time_tag"], errors="coerce", utc=True)
+    df["dst"] = pd.to_numeric(df["dst"], errors="coerce")
+    df = df.dropna(subset=["time_tag", "dst"]).sort_values("time_tag")
+    if df.empty:
+        return None
+    latest = df.iloc[-1]
+    return {"time_tag": latest["time_tag"], "dst": int(latest["dst"])}
+
+
+def _merge_latest_swpc(data: pd.DataFrame, session: requests.Session) -> pd.DataFrame:
+    """
+    Roll the latest SWPC timestamp +1h and replace/append into the archive data.
+    """
+    latest = _fetch_latest_swpc(session)
+    if latest is None:
+        return data
+
+    rolled_ts = latest["time_tag"] + timedelta(hours=1)
+    data = data.copy()
+    data["time_tag"] = pd.to_datetime(data["time_tag"], errors="coerce", utc=True)
+    mask = data["time_tag"] == rolled_ts
+    if mask.any():
+        data.loc[mask, "dst"] = latest["dst"]
+        data.loc[mask, "source_type"] = "swpc_latest"
+    else:
+        data = pd.concat(
+            [
+                data,
+                pd.DataFrame(
+                    [{"time_tag": rolled_ts, "dst": latest["dst"], "source_type": "swpc_latest"}]
+                ),
+            ],
+            ignore_index=True,
+        )
+    return data.sort_values("time_tag").reset_index(drop=True)
 
 
 def _fill_with_html(

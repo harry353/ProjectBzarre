@@ -11,7 +11,7 @@ from xgboost import Booster, DMatrix
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 INPUT_DB = PROJECT_ROOT / "inference" / "classification" / "classification_horizons_vector_1m.db"
-MODELS_DIR = PROJECT_ROOT / "classification_pipeline_" / "horizon_models"
+MODELS_DIR = PROJECT_ROOT / "classification_pipeline" / "horizon_models"
 OUTPUT_DB = PROJECT_ROOT / "inference" / "classification" / "classification_predictions.db"
 CALIBRATOR_PATH = MODELS_DIR / "calibrator.json"
 HOURS_AHEAD_PREDICTION = 8

@@ -84,6 +84,7 @@ def main() -> None:
     )
 
     _clear_forward_fills()
+    _normalize_dst_timezone()
     warehouse = SpaceWeatherWarehouse(str(OUTPUT_DB))
 
     classes = [
@@ -144,6 +145,30 @@ def _clear_forward_fills() -> None:
         conn.execute("DELETE FROM kp_index WHERE source_type = 'forward_fill'")
         conn.execute("DELETE FROM sunspot_numbers WHERE source_type = 'forward_fill'")
         conn.execute("DELETE FROM radio_flux WHERE source_type = 'forward_fill'")
+        conn.commit()
+
+
+def _normalize_dst_timezone() -> None:
+    """
+    Ensure existing dst_index rows carry explicit UTC offset before new rows are appended.
+    """
+    with sqlite3.connect(OUTPUT_DB) as conn:
+        df = pd.read_sql_query("SELECT * FROM dst_index", conn)
+        if df.empty:
+            return
+
+        df["time_tag"] = pd.to_datetime(df["time_tag"], errors="coerce", utc=True)
+        df = df.dropna(subset=["time_tag"])
+        df["time_tag"] = df["time_tag"].dt.strftime("%Y-%m-%d %H:%M:%S+00:00")
+
+        df = (
+            df.sort_values("time_tag")
+            .groupby("time_tag", as_index=False)
+            .last()
+        )
+
+        conn.execute("DELETE FROM dst_index")
+        df.to_sql("dst_index", conn, if_exists="append", index=False)
         conn.commit()
 
 

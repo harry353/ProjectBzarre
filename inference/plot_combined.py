@@ -27,7 +27,7 @@ HISTORY_HOURS = 24 * 30
 FUTURE_HOURS = 6
 QUANTILES = [0.1, 0.5, 0.9]
 DST_THRESHOLD = -20.0
-ZOOMED_IN_DAYS = 3
+ZOOMED_IN_DAYS = 2
 
 TIMESTAMP_COLS = ["timestamp", "time_tag", "date"]
 DST_TARGET_CANDIDATES = ["h1", "dst", "Dst", "dst_value", "dst_dst"]
@@ -125,7 +125,7 @@ def main() -> None:
         model = model_cache[key]
         return float(model.predict(x)[0])
 
-    # Past issued forecasts (shifted back to issue time)
+    # Past issued forecasts
     history_preds = {
         "storm": {"t": [], "q10": [], "q50": [], "q90": [], "color": STORM_COLOR},
         "calm": {"t": [], "q10": [], "q50": [], "q90": [], "color": CALM_COLOR},
@@ -232,7 +232,7 @@ def main() -> None:
                 "interp": True,
             }
         )
-    # Interpolate from last past segment to first future forecast point
+    # Interpolate shading from last past segment to first future forecast point
     if hist_segments and forecast_times:
         last_seg = max(hist_segments, key=lambda s: _as_ts(s["end"]))
         first_future_ts = pd.to_datetime(forecast_times[0]).tz_localize(None)
