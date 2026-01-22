@@ -1,0 +1,394 @@
+{
+  "entries": [
+    {
+      "horizon": 1,
+      "regime": "storm",
+      "quantile": 0.1,
+      "coverage_before": 0.09692194943202638,
+      "coverage_after": 0.2913155001832173,
+      "n": 5458
+    },
+    {
+      "horizon": 1,
+      "regime": "storm",
+      "quantile": 0.5,
+      "coverage_before": 0.4952363503114694,
+      "coverage_after": 0.474899230487358,
+      "n": 5458
+    },
+    {
+      "horizon": 1,
+      "regime": "storm",
+      "quantile": 0.9,
+      "coverage_before": 0.8972150971051668,
+      "coverage_after": 0.6931110296812019,
+      "n": 5458
+    },
+    {
+      "horizon": 1,
+      "regime": "calm",
+      "quantile": 0.1,
+      "coverage_before": 0.10184509538204942,
+      "coverage_after": 0.33816324403210674,
+      "n": 28779
+    },
+    {
+      "horizon": 1,
+      "regime": "calm",
+      "quantile": 0.5,
+      "coverage_before": 0.503770110149762,
+      "coverage_after": 0.49695958858890166,
+      "n": 28779
+    },
+    {
+      "horizon": 1,
+      "regime": "calm",
+      "quantile": 0.9,
+      "coverage_before": 0.9017339031933007,
+      "coverage_after": 0.671531324924424,
+      "n": 28779
+    },
+    {
+      "horizon": 2,
+      "regime": "storm",
+      "quantile": 0.1,
+      "coverage_before": 0.10113594723341883,
+      "coverage_after": 0.20850128252107,
+      "n": 5458
+    },
+    {
+      "horizon": 2,
+      "regime": "storm",
+      "quantile": 0.5,
+      "coverage_before": 0.5005496518871382,
+      "coverage_after": 0.471051667277391,
+      "n": 5458
+    },
+    {
+      "horizon": 2,
+      "regime": "storm",
+      "quantile": 0.9,
+      "coverage_before": 0.8975815316965922,
+      "coverage_after": 0.7423964822279223,
+      "n": 5458
+    },
+    {
+      "horizon": 2,
+      "regime": "calm",
+      "quantile": 0.1,
+      "coverage_before": 0.10132388199728969,
+      "coverage_after": 0.2856249348483269,
+      "n": 28779
+    },
+    {
+      "horizon": 2,
+      "regime": "calm",
+      "quantile": 0.5,
+      "coverage_before": 0.5046387991243615,
+      "coverage_after": 0.5027276833802425,
+      "n": 28779
+    },
+    {
+      "horizon": 2,
+      "regime": "calm",
+      "quantile": 0.9,
+      "coverage_before": 0.9004134959519093,
+      "coverage_after": 0.7560721359324507,
+      "n": 28779
+    },
+    {
+      "horizon": 3,
+      "regime": "storm",
+      "quantile": 0.1,
+      "coverage_before": 0.09985342616342983,
+      "coverage_after": 0.18321729571271528,
+      "n": 5458
+    },
+    {
+      "horizon": 3,
+      "regime": "storm",
+      "quantile": 0.5,
+      "coverage_before": 0.49963356540857456,
+      "coverage_after": 0.4770978380359106,
+      "n": 5458
+    },
+    {
+      "horizon": 3,
+      "regime": "storm",
+      "quantile": 0.9,
+      "coverage_before": 0.8977647489923049,
+      "coverage_after": 0.7759252473433492,
+      "n": 5458
+    },
+    {
+      "horizon": 3,
+      "regime": "calm",
+      "quantile": 0.1,
+      "coverage_before": 0.10243580388477709,
+      "coverage_after": 0.253726675701032,
+      "n": 28779
+    },
+    {
+      "horizon": 3,
+      "regime": "calm",
+      "quantile": 0.5,
+      "coverage_before": 0.5046040515653776,
+      "coverage_after": 0.5024844504673547,
+      "n": 28779
+    },
+    {
+      "horizon": 3,
+      "regime": "calm",
+      "quantile": 0.9,
+      "coverage_before": 0.9002050105980055,
+      "coverage_after": 0.7988811286007158,
+      "n": 28779
+    },
+    {
+      "horizon": 4,
+      "regime": "storm",
+      "quantile": 0.1,
+      "coverage_before": 0.09912055698057896,
+      "coverage_after": 0.19989006962257236,
+      "n": 5458
+    },
+    {
+      "horizon": 4,
+      "regime": "storm",
+      "quantile": 0.5,
+      "coverage_before": 0.5047636496885306,
+      "coverage_after": 0.48057896665445216,
+      "n": 5458
+    },
+    {
+      "horizon": 4,
+      "regime": "storm",
+      "quantile": 0.9,
+      "coverage_before": 0.8941004030780506,
+      "coverage_after": 0.7920483693660682,
+      "n": 5458
+    },
+    {
+      "horizon": 4,
+      "regime": "calm",
+      "quantile": 0.1,
+      "coverage_before": 0.10191459050001737,
+      "coverage_after": 0.23423329511101845,
+      "n": 28779
+    },
+    {
+      "horizon": 4,
+      "regime": "calm",
+      "quantile": 0.5,
+      "coverage_before": 0.5024844504673547,
+      "coverage_after": 0.5015810139337712,
+      "n": 28779
+    },
+    {
+      "horizon": 4,
+      "regime": "calm",
+      "quantile": 0.9,
+      "coverage_before": 0.9008304666597171,
+      "coverage_after": 0.8069425622849995,
+      "n": 28779
+    },
+    {
+      "horizon": 5,
+      "regime": "storm",
+      "quantile": 0.1,
+      "coverage_before": 0.09930377427629168,
+      "coverage_after": 0.20996702088677172,
+      "n": 5458
+    },
+    {
+      "horizon": 5,
+      "regime": "storm",
+      "quantile": 0.5,
+      "coverage_before": 0.49688530597288383,
+      "coverage_after": 0.47911322828875047,
+      "n": 5458
+    },
+    {
+      "horizon": 5,
+      "regime": "storm",
+      "quantile": 0.9,
+      "coverage_before": 0.8953829241480395,
+      "coverage_after": 0.7905826310003664,
+      "n": 5458
+    },
+    {
+      "horizon": 5,
+      "regime": "calm",
+      "quantile": 0.1,
+      "coverage_before": 0.10076792105354598,
+      "coverage_after": 0.22589388095486293,
+      "n": 28779
+    },
+    {
+      "horizon": 5,
+      "regime": "calm",
+      "quantile": 0.5,
+      "coverage_before": 0.5013030334618993,
+      "coverage_after": 0.5016505090517391,
+      "n": 28779
+    },
+    {
+      "horizon": 5,
+      "regime": "calm",
+      "quantile": 0.9,
+      "coverage_before": 0.9002745057159734,
+      "coverage_after": 0.8248723027207339,
+      "n": 28779
+    },
+    {
+      "horizon": 6,
+      "regime": "storm",
+      "quantile": 0.1,
+      "coverage_before": 0.10333455478197141,
+      "coverage_after": 0.1932942469769146,
+      "n": 5458
+    },
+    {
+      "horizon": 6,
+      "regime": "storm",
+      "quantile": 0.5,
+      "coverage_before": 0.498717478930011,
+      "coverage_after": 0.46921949432026383,
+      "n": 5458
+    },
+    {
+      "horizon": 6,
+      "regime": "storm",
+      "quantile": 0.9,
+      "coverage_before": 0.903444485159399,
+      "coverage_after": 0.8129351410773177,
+      "n": 5458
+    },
+    {
+      "horizon": 6,
+      "regime": "calm",
+      "quantile": 0.1,
+      "coverage_before": 0.09958650404809062,
+      "coverage_after": 0.20768616004725668,
+      "n": 28779
+    },
+    {
+      "horizon": 6,
+      "regime": "calm",
+      "quantile": 0.5,
+      "coverage_before": 0.5002258591333959,
+      "coverage_after": 0.4997741408666041,
+      "n": 28779
+    },
+    {
+      "horizon": 6,
+      "regime": "calm",
+      "quantile": 0.9,
+      "coverage_before": 0.9012821849265089,
+      "coverage_after": 0.8406824420584454,
+      "n": 28779
+    },
+    {
+      "horizon": 7,
+      "regime": "storm",
+      "quantile": 0.1,
+      "coverage_before": 0.10021986075485526,
+      "coverage_after": 0.18156834005130085,
+      "n": 5458
+    },
+    {
+      "horizon": 7,
+      "regime": "storm",
+      "quantile": 0.5,
+      "coverage_before": 0.5031146940271162,
+      "coverage_after": 0.4879076584829608,
+      "n": 5458
+    },
+    {
+      "horizon": 7,
+      "regime": "storm",
+      "quantile": 0.9,
+      "coverage_before": 0.9043605716379626,
+      "coverage_after": 0.8111029681201906,
+      "n": 5458
+    },
+    {
+      "horizon": 7,
+      "regime": "calm",
+      "quantile": 0.1,
+      "coverage_before": 0.09976024184301052,
+      "coverage_after": 0.20243927864067549,
+      "n": 28779
+    },
+    {
+      "horizon": 7,
+      "regime": "calm",
+      "quantile": 0.5,
+      "coverage_before": 0.49914868480489244,
+      "coverage_after": 0.5013030334618993,
+      "n": 28779
+    },
+    {
+      "horizon": 7,
+      "regime": "calm",
+      "quantile": 0.9,
+      "coverage_before": 0.8990930887105181,
+      "coverage_after": 0.8317870669585462,
+      "n": 28779
+    },
+    {
+      "horizon": 8,
+      "regime": "storm",
+      "quantile": 0.1,
+      "coverage_before": 0.10076951264199341,
+      "coverage_after": 0.17442286551850494,
+      "n": 5458
+    },
+    {
+      "horizon": 8,
+      "regime": "storm",
+      "quantile": 0.5,
+      "coverage_before": 0.5021986075485526,
+      "coverage_after": 0.4831440087944302,
+      "n": 5458
+    },
+    {
+      "horizon": 8,
+      "regime": "storm",
+      "quantile": 0.9,
+      "coverage_before": 0.9027116159765481,
+      "coverage_after": 0.8235617442286551,
+      "n": 5458
+    },
+    {
+      "horizon": 8,
+      "regime": "calm",
+      "quantile": 0.1,
+      "coverage_before": 0.09823134924771534,
+      "coverage_after": 0.19976371659890893,
+      "n": 28779
+    },
+    {
+      "horizon": 8,
+      "regime": "calm",
+      "quantile": 0.5,
+      "coverage_before": 0.49862747142013275,
+      "coverage_after": 0.4964731227631259,
+      "n": 28779
+    },
+    {
+      "horizon": 8,
+      "regime": "calm",
+      "quantile": 0.9,
+      "coverage_before": 0.8990930887105181,
+      "coverage_after": 0.8435664894541158,
+      "n": 28779
+    }
+  ],
+  "quantiles": [
+    0.1,
+    0.5,
+    0.9
+  ],
+  "dst_threshold": -20.0
+}
