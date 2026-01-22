@@ -54,6 +54,11 @@ def apply_filters() -> pd.DataFrame:
 
     filtered = df.loc[df.index >= MIN_TIMESTAMP].copy()
     filtered = _drop_long_missing_runs(filtered, MISSING_THRESHOLD_HOURS)
+    non_negative_cols = [col for col in ("density", "speed", "temperature") if col in filtered.columns]
+    if not non_negative_cols:
+        raise RuntimeError("No expected solar wind columns found in input dataset.")
+    # Remove rows with negative density/speed/temperature; keep signed magnetic field values.
+    filtered = filtered.loc[~(filtered[non_negative_cols] < 0).any(axis=1)].copy()
     dropped = len(df) - len(filtered)
     write_sqlite_table(filtered, OUTPUT_DB, OUTPUT_TABLE)
     print(f"[OK] Filtered dataset saved to {OUTPUT_DB} (dropped {dropped} rows)")

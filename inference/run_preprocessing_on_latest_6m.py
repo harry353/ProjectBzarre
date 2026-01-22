@@ -24,7 +24,7 @@ MERGED_OUTPUT_DB = (
     / "all_preprocessed_sources.db"
 )
 OUTPUT_DIR = PROJECT_ROOT / "inference"
-OUTPUT_FILENAME = "inference_vector.db"
+OUTPUT_FILENAME = "preprocessed_vector_1m.db"
 KEEP_LATEST_ENTRIES = 720
 SOURCE_TABLE_PREFERENCE = ["merged_test", "merged_validation", "merged_train", "original_vector"]
 

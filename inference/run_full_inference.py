@@ -20,9 +20,13 @@ CLEAN_DIRS = [
 SCRIPTS = [
     PROJECT_ROOT / "inference" / "update_space_weather_last_6m.py",
     PROJECT_ROOT / "inference" / "run_preprocessing_on_latest_6m.py",
-    PROJECT_ROOT / "inference" / "create_horizon_vector.py",
-    PROJECT_ROOT / "inference" / "run_horizon_models.py",
-    PROJECT_ROOT / "inference" / "plot_predicted_probabilities.py",
+    PROJECT_ROOT / "inference" / "classification" / "create_classification_vector.py",
+    PROJECT_ROOT / "inference" / "classification" / "run_classification_inference.py",
+    PROJECT_ROOT / "inference" / "classification" / "plot_storm_probability.py",
+    PROJECT_ROOT / "inference" / "regression" / "create_regression_vector.py",
+    PROJECT_ROOT / "inference" / "regression" / "run_regression_inference.py",
+    PROJECT_ROOT / "inference" / "regression" / "plot_predicted_dst.py",
+    PROJECT_ROOT / "inference" / "plot_combined.py",
 ]
 
 
@@ -53,7 +57,12 @@ def main() -> None:
     for script in SCRIPTS:
         _run(script)
     # Clean up intermediate DBs
-    for fname in ("horizon_vector.db", "inference_vector.db"):
+    for fname in (
+        # "classification_horizons_vector_1m.db",
+        # "preprocessed_vector_1m.db",
+        # "classification/classification_horizons_vector_1m.db",
+        # "regression/pca_regression_vector_1m.db",
+    ):
         path = PROJECT_ROOT / "inference" / fname
         if path.exists():
             try:
