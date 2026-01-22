@@ -11,7 +11,8 @@ data_source_status.csv
 
 *.db
 *.png
-!inference/predicted_probabilities.png
+!inference/combined_predicted_dst_and_prob.png
+
 !inference/horizon_predictions.db
 !inference/space_weather_last_6m.db
 !ml_pipeline/**/*.json
