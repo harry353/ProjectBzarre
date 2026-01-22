@@ -259,7 +259,7 @@ def main() -> None:
         figsize=(14, 8),
         sharex="col",
         sharey="row",
-        gridspec_kw={"width_ratios": [2, 1]},
+        gridspec_kw={"width_ratios": [2, 1], "wspace": 0.04},
     )
 
     # DST history and forecasts (matching plot_predicted_dst)
@@ -455,7 +455,7 @@ def main() -> None:
     if anchor_ts is not None:
         ts_for_title = anchor_ts.tz_convert("UTC") if anchor_ts.tzinfo else anchor_ts
         latest_ts_str = ts_for_title.strftime("%Y-%m-%d %H:%M:%S %Z").strip()
-        fig.suptitle(f"Latest observation: {latest_ts_str}")
+        fig.suptitle(f"Latest observation: {latest_ts_str} UTC")
     else:
         fig.suptitle("Latest observation: unavailable")
 
