@@ -1,0 +1,15 @@
+{
+  "n_estimators": 591,
+  "max_depth": 4,
+  "learning_rate": 0.03356303013790167,
+  "subsample": 0.7206173011254826,
+  "colsample_bytree": 0.9205164063267369,
+  "min_child_weight": 17,
+  "gamma": 1.255919067036806,
+  "reg_alpha": 0.0008499025080005913,
+  "reg_lambda": 1.0490399745025951,
+  "random_state": 42,
+  "n_jobs": -1,
+  "objective": "reg:quantileerror",
+  "quantile_alpha": 0.1
+}
