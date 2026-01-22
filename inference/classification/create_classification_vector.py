@@ -7,7 +7,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 INPUT_DB = PROJECT_ROOT / "inference" / "preprocessed_vector_1m.db"
 OUTPUT_DB = PROJECT_ROOT / "inference" / "classification" / "classification_horizons_vector_1m.db"
-HORIZON_MODELS_DIR = PROJECT_ROOT / "classification_pipeline_" / "horizon_models"
+HORIZON_MODELS_DIR = PROJECT_ROOT / "classification_pipeline" / "horizon_models"
 
 # Table preference order if multiple merged tables exist
 SOURCE_TABLE_PREFERENCE = [

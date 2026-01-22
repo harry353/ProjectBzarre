@@ -48,7 +48,7 @@ def run_case(description, days):
     print("Plot complete.")
 
 def main():
-    run_case("Integer days = 7", (date(2026, 1, 15), date(2026, 1, 16)))
+    run_case("Integer days = 7", (date(2026, 1, 22), date(2026, 1, 22)))
 
 
 if __name__ == "__main__":
