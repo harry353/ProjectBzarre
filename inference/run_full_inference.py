@@ -26,7 +26,7 @@ SCRIPTS = [
     PROJECT_ROOT / "inference" / "regression" / "create_regression_vector.py",
     PROJECT_ROOT / "inference" / "regression" / "run_regression_inference.py",
     PROJECT_ROOT / "inference" / "regression" / "plot_predicted_dst.py",
-    PROJECT_ROOT / "inference" / "plot_combined.py",
+    PROJECT_ROOT / "inference" / "combined_plot" / "plot_combined.py",
 ]
 
 
