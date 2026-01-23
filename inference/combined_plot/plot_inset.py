@@ -122,9 +122,9 @@ def plot_inset(
         inset.plot(
             ts_bridge_inset,
             q50_bridge_inset,
-            color="black",
+            color="red",
             linewidth=1.0,
-            linestyle="-",
+            linestyle="--",
             alpha=0.8,
         )
 
@@ -152,6 +152,12 @@ def plot_inset(
         return f"{int(round((dt - anchor_ts_naive).total_seconds() / 3600))}"
 
     inset.xaxis.set_major_formatter(FuncFormatter(_hours_from_anchor))
+    ticks = inset.get_xticks()
+    tick_labels = [_hours_from_anchor(t, None) for t in ticks]
+    if tick_labels:
+        tick_labels[-1] = ""  # keep last tick mark but blank its label
+        inset.set_xticks(ticks)
+        inset.set_xticklabels(tick_labels)
     inset.set_xlabel("Hourly offset", fontsize=8)
     inset.xaxis.tick_top()
     inset.xaxis.set_label_position("top")

@@ -58,10 +58,10 @@ def main() -> None:
         _run(script)
     # Clean up intermediate DBs
     for fname in (
-        "classification_horizons_vector_1m.db",
-        "preprocessed_vector_1m.db",
-        "classification/classification_horizons_vector_1m.db",
-        "regression/pca_regression_vector_1m.db",
+        # "classification_horizons_vector_1m.db",
+        # "preprocessed_vector_1m.db",
+        # "classification/classification_horizons_vector_1m.db",
+        # "regression/pca_regression_vector_1m.db",
     ):
         path = PROJECT_ROOT / "inference" / fname
         if path.exists():

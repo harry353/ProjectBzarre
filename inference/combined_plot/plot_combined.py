@@ -333,10 +333,8 @@ def main() -> None:
     latest_ts_str = "unavailable"
     if anchor_ts is not None:
         ts_for_title = anchor_ts.tz_convert("UTC") if anchor_ts.tzinfo else anchor_ts
-        latest_ts_str = ts_for_title.strftime("%Y-%m-%d %H:%M:%S %Z").strip()
-        fig.suptitle(f"Latest observation: {latest_ts_str} UTC")
-    else:
-        fig.suptitle("Latest observation: unavailable")
+        latest_ts_str = ts_for_title.strftime("%H:%M")
+    fig.suptitle(f"Geomagnetic Storm Forecast (Last Update: {latest_ts_str} UTC)")
 
     out_path = PROJECT_ROOT / "combined_predicted_dst_and_prob.png"
     fig.tight_layout(rect=[0, 0, 1, 0.95])

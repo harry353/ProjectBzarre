@@ -17,11 +17,17 @@ def plot_prob_main(ax: plt.Axes, prob_df: pd.DataFrame, history_hours: int) -> N
         label="Storm probability",
     )
     ax.set_title(f"Storm Probability (Last {history_hours // 24} Days)")
-    ax.set_xlabel("Timestamp")
+    ax.set_xlabel("Date")
     ax.set_ylabel("Probability")
     ax.grid(True, linestyle="--", alpha=0.4)
     ax.legend()
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%d-%b-%Y"))
+    locator = mdates.AutoDateLocator()
+    formatter = mdates.AutoDateFormatter(locator)
+    formatter.scaled[1 / 24] = "%d-%b %H:%M"  # show time when zoomed to hours
+    formatter.scaled[1.0] = "%d-%b"  # show day when viewing days
+    formatter.scaled[30.0] = "%d-%b-%Y"  # include year for long spans
+    ax.xaxis.set_major_locator(locator)
+    ax.xaxis.set_major_formatter(formatter)
     for lbl in ax.get_xticklabels():
         lbl.set_rotation(30)
         lbl.set_ha("right")

@@ -1,9 +1,0 @@
-{
-  "horizon": 4,
-  "regime": "calm",
-  "quantile": 0.1,
-  "n": 28779,
-  "coverage_before": 0.10191459050001737,
-  "coverage_after": 0.23423329511101845,
-  "dst_threshold": -20.0
-}
