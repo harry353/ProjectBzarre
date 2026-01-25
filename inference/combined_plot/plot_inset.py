@@ -122,10 +122,9 @@ def plot_inset(
         inset.plot(
             ts_bridge_inset,
             q50_bridge_inset,
-            color="red",
+            color=color,
             linewidth=1.0,
             linestyle="--",
-            alpha=0.8,
         )
 
     # Anchor line to first forecast for context
@@ -133,10 +132,9 @@ def plot_inset(
         inset.plot(
             [anchor_ts, pd.to_datetime(ft_inset[0])],
             [anchor_dst, q50_inset[0] if q50_inset else anchor_dst],
-            color="black",
-            linewidth=1,
-            alpha=0.9,
-            linestyle="-",
+            color=color,
+            linewidth=1.0,
+            linestyle="--",
         )
 
     inset.set_xlim(inset_start, inset_end)

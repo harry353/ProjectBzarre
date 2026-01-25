@@ -20,7 +20,7 @@ PIPELINE_RUNNER = PROJECT_ROOT / "preprocessing_pipeline" / "run_full_preprocess
 MERGED_OUTPUT_DB = (
     PROJECT_ROOT
     / "preprocessing_pipeline"
-    / "check_multicolinearity"
+    / "merge_features"
     / "all_preprocessed_sources.db"
 )
 OUTPUT_DIR = PROJECT_ROOT / "inference"

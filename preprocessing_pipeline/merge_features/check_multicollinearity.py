@@ -12,7 +12,7 @@ from statsmodels.tools.tools import add_constant
 
 
 DESIGN_MATRIX_PATH = Path(
-    "/home/haris/Documents/ProjectBzarre/preprocessing_pipeline/check_multicolinearity/all_preprocessed_sources.db"
+    "/home/haris/Documents/ProjectBzarre/preprocessing_pipeline/merge_features/all_preprocessed_sources.db"
 )
 DESIGN_MATRIX_TABLE = "merged_train"
 OUTPUT_DIR = Path(__file__).resolve().parent / "multicollinearity_diagnostics"

@@ -13,7 +13,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FEATURES_DB = (
     PROJECT_ROOT
     / "preprocessing_pipeline"
-    / "check_multicolinearity"
+    / "merge_features"
     / "all_preprocessed_sources.db"
 )
 LABELS_DB = (

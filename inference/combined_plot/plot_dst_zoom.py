@@ -57,9 +57,9 @@ def plot_dst_zoom(
             ax.plot(
                 [anchor_ts, ft_zoom[0]],
                 [anchor_dst, q50_zoom[0]],
-                color="black",
-                linewidth=1.2,
-                linestyle="-",
+                color=color,
+                linewidth=plt.rcParams["lines.linewidth"],
+                linestyle="--",
                 label=None,
             )
 

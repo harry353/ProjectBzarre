@@ -8,7 +8,7 @@ from scipy import stats
 
 
 DEFAULT_DB = Path(
-    "/home/haris/Documents/ProjectBzarre/preprocessing_pipeline/check_multicolinearity/all_preprocessed_sources.db"
+    "/home/haris/Documents/ProjectBzarre/preprocessing_pipeline/merge_features/all_preprocessed_sources.db"
 )
 DEFAULT_TABLE = "merged_train"
 DEFAULT_OUTPUT_CSV = Path(

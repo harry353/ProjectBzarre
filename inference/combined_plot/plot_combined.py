@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import sys
 from pathlib import Path
 
-# Ensure project root on path for direct execution
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -41,7 +40,6 @@ from inference.combined_plot.plot_dst_zoom import plot_dst_zoom
 from inference.combined_plot.plot_prob_zoom import plot_prob_zoom
 from inference.combined_plot.plot_inset import plot_inset
 
-
 def main() -> None:
     if not DST_DB.exists():
         raise FileNotFoundError(f"DST DB not found: {DST_DB}")
@@ -52,7 +50,6 @@ def main() -> None:
     if not PROB_DB.exists():
         raise FileNotFoundError(f"Classification predictions DB not found: {PROB_DB}")
 
-    # Load DST
     dst_df = _load_table(DST_DB, DST_TABLE)
     ts_col_dst = _detect_ts(dst_df)
     dst_col = _detect_dst(dst_df)
@@ -72,7 +69,6 @@ def main() -> None:
     hist_start = anchor_ts_naive - pd.Timedelta(hours=HISTORY_HOURS)
     dst_hist = dst_df[dst_df[ts_col_dst] >= hist_start]
 
-    # Load features and merge dst_dst
     feat_df = _load_table(FEATURE_DB, FEATURE_TABLE)
     ts_col_feat = _detect_ts(feat_df)
     if not ts_col_feat:
@@ -107,7 +103,6 @@ def main() -> None:
         model = model_cache[key]
         return float(model.predict(x)[0])
 
-    # Past issued forecasts
     history_preds = {
         "storm": {"t": [], "q10": [], "q50": [], "q90": [], "color": STORM_COLOR},
         "calm": {"t": [], "q10": [], "q50": [], "q90": [], "color": CALM_COLOR},
@@ -127,7 +122,6 @@ def main() -> None:
         history_preds[regime_row]["q50"].append(q50)
         history_preds[regime_row]["q90"].append(q90)
 
-    # Future forecasts from anchor
     forecast_times: list[pd.Timestamp] = []
     q10_list: list[float] = []
     q50_list: list[float] = []
@@ -149,7 +143,6 @@ def main() -> None:
         q50_list.append(preds[0.5])
         q90_list.append(preds[0.9])
 
-    # Build contiguous segments of past issued forecasts
     hist_segments = []
     gap = pd.Timedelta(hours=1.5)
     for reg_name, data in history_preds.items():
@@ -194,7 +187,6 @@ def main() -> None:
             }
         )
 
-    # Interpolate regime changes and bridge to future start
     hist_segments_sorted = sorted(hist_segments, key=lambda s: _as_ts(s["start"]))
     for prev, nxt in zip(hist_segments_sorted, hist_segments_sorted[1:]):
         if prev["regime"] == nxt["regime"]:
@@ -239,7 +231,6 @@ def main() -> None:
                 }
             )
 
-    # Probability data
     prob_df = _load_table(PROB_DB, PROB_TABLE)
     if PROB_TS_COL not in prob_df:
         raise RuntimeError(f"Prediction table missing timestamp column '{PROB_TS_COL}'.")
@@ -306,7 +297,6 @@ def main() -> None:
     )
     plot_prob_zoom(ax_prob_zoom, prob_df, zoom_start, ZOOMED_IN_DAYS)
 
-    # Align x limits
     x_min_candidates = [hist_start]
     x_max_candidates = [anchor_ts_naive]
     if not dst_hist.empty:
@@ -333,7 +323,9 @@ def main() -> None:
     latest_ts_str = "unavailable"
     if anchor_ts is not None:
         ts_for_title = anchor_ts.tz_convert("UTC") if anchor_ts.tzinfo else anchor_ts
-        latest_ts_str = ts_for_title.strftime("%H:%M")
+        date_str = ts_for_title.strftime("%d-%b-%Y")
+        time_str = ts_for_title.strftime("%H:%M")
+        latest_ts_str = f"{date_str} {time_str}"
     fig.suptitle(f"Geomagnetic Storm Forecast (Last Update: {latest_ts_str} UTC)")
 
     out_path = PROJECT_ROOT / "combined_predicted_dst_and_prob.png"

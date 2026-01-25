@@ -11,7 +11,7 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 FEATURES_DB = PROJECT_ROOT / "regression_pipeline" / "pca_features.db"
 LABELS_DB = PROJECT_ROOT / "preprocessing_pipeline" / "labels" / "dst_regression" / "dst_regression_labels.db"
-DST_DB = PROJECT_ROOT / "preprocessing_pipeline" / "check_multicolinearity" / "all_preprocessed_sources.db"
+DST_DB = PROJECT_ROOT / "preprocessing_pipeline" / "merge_features" / "all_preprocessed_sources.db"
 
 FEATURE_TABLES = {
     "train": "pca_train",

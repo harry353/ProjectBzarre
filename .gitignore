@@ -17,6 +17,7 @@ data_source_status.csv
 !inference/space_weather_last_6m.db
 !ml_pipeline/**/*.json
 archived_sources/
+HMM/
 
 # Ignore heavy model/artifact directories
 /regression_pipeline/poly_regime_aware_model/
@@ -37,3 +38,4 @@ archived_sources/
 !regression_pipeline/**/*.joblib
 !regression_pipeline/**/*.json
 
+.aider*

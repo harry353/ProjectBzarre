@@ -86,7 +86,7 @@ SOURCES = [
     },
 ]
 
-OUTPUT_DB = FINAL_DIR / "check_multicolinearity" / "all_preprocessed_sources.db"
+OUTPUT_DB = FINAL_DIR / "merge_features" / "all_preprocessed_sources.db"
 
 CHUNK_SIZE = 50_000
 
