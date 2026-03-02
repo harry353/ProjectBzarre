@@ -3,6 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from matplotlib.ticker import PercentFormatter
 
 
 def plot_prob_zoom(ax: plt.Axes, prob_df: pd.DataFrame, zoom_start: pd.Timestamp, zoomed_days: int) -> None:
@@ -42,6 +43,7 @@ def plot_prob_zoom(ax: plt.Axes, prob_df: pd.DataFrame, zoom_start: pd.Timestamp
 
     ax.set_title(f"Storm Probability (Last {zoomed_days} Days)")
     ax.set_xlabel("Time (UTC)")
+    ax.yaxis.set_major_formatter(PercentFormatter(xmax=1.0))
     ax.grid(True, linestyle="--", alpha=0.4)
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
     for lbl in ax.get_xticklabels():
