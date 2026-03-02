@@ -3,6 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from matplotlib.ticker import PercentFormatter
 
 
 def plot_prob_main(ax: plt.Axes, prob_df: pd.DataFrame, history_hours: int) -> None:
@@ -19,6 +20,7 @@ def plot_prob_main(ax: plt.Axes, prob_df: pd.DataFrame, history_hours: int) -> N
     ax.set_title(f"Storm Probability (Last {history_hours // 24} Days)")
     ax.set_xlabel("Date")
     ax.set_ylabel("Probability")
+    ax.yaxis.set_major_formatter(PercentFormatter(xmax=1.0))
     ax.grid(True, linestyle="--", alpha=0.4)
     ax.legend()
     locator = mdates.AutoDateLocator()
