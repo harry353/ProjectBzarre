@@ -18,7 +18,9 @@ CLEAN_DIRS = [
 ]
 
 SCRIPTS = [
+    PROJECT_ROOT / "inference" / "backup_swpc_imf.py",
     PROJECT_ROOT / "inference" / "update_space_weather_last_6m.py",
+    PROJECT_ROOT / "inference" / "insert_swpc_imf_backup.py",
     PROJECT_ROOT / "inference" / "run_preprocessing_on_latest_6m.py",
     PROJECT_ROOT / "inference" / "classification" / "create_classification_vector.py",
     PROJECT_ROOT / "inference" / "classification" / "run_classification_inference.py",
