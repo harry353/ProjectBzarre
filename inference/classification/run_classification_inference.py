@@ -14,6 +14,7 @@ INPUT_DB = PROJECT_ROOT / "inference" / "classification" / "classification_horiz
 MODELS_DIR = PROJECT_ROOT / "classification_pipeline" / "horizon_models"
 OUTPUT_DB = PROJECT_ROOT / "inference" / "classification" / "classification_predictions.db"
 CALIBRATOR_PATH = MODELS_DIR / "calibrator.json"
+PREPROCESSED_DB = PROJECT_ROOT / "inference" / "preprocessed_vector_1m.db"
 HOURS_AHEAD_PREDICTION = 8
 
 TIMESTAMP_COLS = ["timestamp", "time_tag", "date"]
@@ -149,6 +150,39 @@ def main() -> None:
     for col in prob_cols:
         surv *= (1.0 - merged[col].fillna(0.0).to_numpy())
     merged["p_cumulative"] = 1.0 - surv
+
+    if PREPROCESSED_DB.exists():
+        with sqlite3.connect(PREPROCESSED_DB) as p_conn:
+            flags_df = pd.read_sql_query(
+                "SELECT timestamp, imf_solar_wind_bx_gse_missing_flag, "
+                "imf_solar_wind_by_gse_missing_flag, imf_solar_wind_bz_gse_missing_flag "
+                "FROM inference_vector", p_conn
+            )
+            if "timestamp" in flags_df.columns:
+                flags_df["timestamp"] = pd.to_datetime(flags_df["timestamp"], utc=True, errors="coerce")
+                if ts_col and ts_col in merged.columns:
+                    merged[ts_col] = pd.to_datetime(merged[ts_col], utc=True, errors="coerce")
+                    merged = merged.merge(flags_df, left_on=ts_col, right_on="timestamp", how="left", suffixes=("", "_drop"))
+                    
+                    # Drop duplicate timestamp from merge if present
+                    if "timestamp_drop" in merged.columns:
+                        merged = merged.drop(columns=["timestamp_drop"])
+                    elif "timestamp" in merged.columns and ts_col != "timestamp":
+                        merged = merged.drop(columns=["timestamp"])
+
+                    # If any of the flags are == 1.0, set p_cumulative to NaN
+                    mask = (
+                        (merged["imf_solar_wind_bx_gse_missing_flag"] == 1.0) |
+                        (merged["imf_solar_wind_by_gse_missing_flag"] == 1.0) |
+                        (merged["imf_solar_wind_bz_gse_missing_flag"] == 1.0)
+                    )
+                    merged.loc[mask, "p_cumulative"] = np.nan
+
+                    merged = merged.drop(columns=[
+                        "imf_solar_wind_bx_gse_missing_flag",
+                        "imf_solar_wind_by_gse_missing_flag",
+                        "imf_solar_wind_bz_gse_missing_flag"
+                    ], errors="ignore")
 
     # Write calibrated horizon probabilities with timestamps (append/update by timestamp if present)
     with sqlite3.connect(OUTPUT_DB) as out_conn:
