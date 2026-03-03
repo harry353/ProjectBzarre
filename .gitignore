@@ -15,6 +15,7 @@ data_source_status.csv
 
 !inference/horizon_predictions.db
 !inference/space_weather_last_6m.db
+!inference/backup_imf_swpc.db
 !ml_pipeline/**/*.json
 archived_sources/
 HMM/
