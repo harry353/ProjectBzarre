@@ -1,40 +1,39 @@
 # ProjectBzarre
 
-End-to-end space weather ML pipeline for data ingestion, preprocessing, label generation, model training, and probability calibration.
+End-to-end space weather ML pipeline for data ingestion, preprocessing, label generation, model training (regression and classification), and inference.
 
-## Repository layout
-- `data_sources/`: data download and collection scripts
-- `database_builder/`: raw data warehouse and table construction
-- `preprocessing_pipeline/`: feature engineering, aggregation, splits, normalization, labels, and final merge
-- `modeling_pipeline/`: training and evaluation scripts (multi-horizon)
-- `modeling_pipeline_daily/`: legacy daily modeling utilities and plots
-- `probability_calibration/`: calibration DB builder, regime-aware isotonic calibration, and plots
-- `tests/`: test suite
+## Project Architecture
 
-## Typical workflow
-1. Build or refresh raw data sources.
-2. Run preprocessing pipelines per data source.
-3. Merge final datasets into a unified SQLite DB.
-4. Train models for horizons 1–8.
-5. Build calibration DB and fit regime-aware calibrators.
-6. Plot diagnostics as needed.
+The project is structured into distinct pipeline stages:
 
-## Key artifacts
-- `preprocessing_pipeline/merge_features/all_preprocessed_sources.db`: merged feature/label dataset
-- `modeling_pipeline/output_h{X}/`: per-horizon models and diagnostics
-- `probability_calibration/validation_calibration.db`: calibration dataset
-- `probability_calibration/calibration_h{X}/`: per-horizon isotonic calibrators + metadata
+1. **`data_sources/`**: Scripts to download and collect raw space weather data from various sources (ACE, DSCOVR, SWPC, etc.).
+2. **`database_builder/`**: SQLite utilities to handle raw data warehousing and table construction.
+3. **`preprocessing_pipeline/`**: Feature engineering, aggregation, splits, normalization, label target generation, and merging into unified datasets.
+4. **`regression_pipeline/` & `classification_pipeline/`**: Training, evaluation, and modeling scripts for multi-horizon forecasting and probability calculation.
+5. **`inference/`**: End-to-end inference execution, taking live/recent data, formatting it, and running the pre-trained models.
+6. **`common/`**: Shared utilities (e.g., logging, HTTP requests).
+7. **`tests/`**: Project tests.
 
-## Running
-Most scripts are executable as standalone Python files. Example:
+## Setup & Environment
+
+The project requires several scientific and machine learning libraries (e.g., NumPy, Pandas, Astropy, Sunpy, Scikit-Learn, XGBoost). 
+You can set up the environment using Conda with the provided `environment.yml` or pip with `requirements.txt`.
+
+Example using Conda:
+```bash
+conda env create -f environment.yml
+conda activate projectbzarre
 ```
-/bin/python3 preprocessing_pipeline/merge_features/merge_features.py
-/bin/python3 modeling_pipeline/train_model.py
-/bin/python3 probability_calibration/build_calibration_db.py
-/bin/python3 probability_calibration/regime_aware_calibration.py
-```
+
+## Running the Pipelines
+
+Most major stages of the pipeline have top-level runner scripts that execute the components in the correct order. Example entry points:
+
+- **Preprocessing**: `python3 preprocessing_pipeline/run_full_preprocessing_pipeline.py`
+- **Regression Modeling**: `python3 regression_pipeline/run_full_regression.py`
+- **Inference**: `python3 inference/run_full_inference.py`
 
 ## Notes
-- Databases are SQLite and live under their respective pipeline directories.
-- Many stages rely on environment variables for split windows and aggregation cadence.
-- Horizon selection for training and calibration is handled by constants in the scripts.
+- Databases are primarily Local SQLite (`.db`) files and reside under their respective pipeline directories.
+- Many stages rely on environment variables for configuration, such as defining split windows and aggregation cadences (e.g., `PREPROC_SPLIT_TRAIN_START`, `PREPROC_AGG_FREQ`).
+- Horizon selection for training is generally handled by constants within the specific modeling scripts.
