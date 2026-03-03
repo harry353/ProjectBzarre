@@ -11,6 +11,8 @@ data_source_status.csv
 
 *.db
 *.png
+*.svg
+!common/projectbzarre_logo.png
 !combined_predicted_dst_and_prob.png
 
 !inference/horizon_predictions.db
