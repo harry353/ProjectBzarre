@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="common/projectbzarre_logo.png" width="300">
+</p>
+
 # ProjectBzarre
 
 End-to-end space weather ML pipeline for data ingestion, preprocessing, label generation, model training (regression and classification), and inference.
