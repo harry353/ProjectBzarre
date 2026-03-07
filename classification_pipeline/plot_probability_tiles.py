@@ -18,6 +18,10 @@ SPLIT = "test"
 
 
 def _load_probs_at_timestamp(ts: pd.Timestamp) -> list[float]:
+    """
+    Retrieves calibrated interval probabilities for all target horizons 
+    at a specific UTC timestamp from separate SQLite databases.
+    """
     probs: list[float] = []
 
     for h in TARGET_HORIZONS_H:
@@ -49,18 +53,22 @@ def _load_probs_at_timestamp(ts: pd.Timestamp) -> list[float]:
 
 
 def main() -> None:
+    """ Main entry point to load probabilities and render the tile-based visualization. """
     ts = pd.to_datetime(DATETIME_STR, utc=True)
     probs = _load_probs_at_timestamp(ts)
 
+    # Use Yellow-Orange-Brown colormap for probability intensity
     cmap = plt.cm.YlOrBr
     norm = plt.Normalize(vmin=0.0, vmax=1.0)
 
+    # Create a horizontal row of tiles, one for each forecast horizon
     fig, axes = plt.subplots(1, len(TARGET_HORIZONS_H), figsize=(14, 2))
 
     for idx, ax in enumerate(axes):
         value = probs[idx]
         color = cmap(norm(value))
 
+        # Render each tile with background color corresponding to probability
         ax.set_facecolor(color)
         ax.text(
             0.5,
@@ -71,6 +79,7 @@ def main() -> None:
             fontsize=10,
             color="black",
         )
+        # Remove axes decorations for a cleaner "tile" appearance
         ax.set_xticks([])
         ax.set_yticks([])
         ax.set_xlim(0, 1)
