@@ -24,15 +24,18 @@ TIME_COLUMNS = {
 ROW_BATCH_SIZE = 5000
 
 
+# Parse datetime strings from various formats (ISO, UTC, SQL) into datetime objects
 def _parse_dt(value: str | None) -> datetime | None:
     if not value:
         return None
     text = value.strip()
+    # Normalize 'Z' suffix for Python ISO parser
     if text.endswith("Z"):
         text = text[:-1] + "+00:00"
     try:
         return datetime.fromisoformat(text)
     except ValueError:
+        # Fallback to common database string formats if ISO fails
         for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
             try:
                 return datetime.strptime(text, fmt)
@@ -41,6 +44,7 @@ def _parse_dt(value: str | None) -> datetime | None:
     return None
 
 
+# Scan all monitored tables in source DB to find the most recent global timestamp
 def _latest_timestamp(conn: sqlite3.Connection) -> datetime:
     tables = [
         row[0]
@@ -53,6 +57,7 @@ def _latest_timestamp(conn: sqlite3.Connection) -> datetime:
         col = TIME_COLUMNS.get(table)
         if not col:
             continue
+        # Retrieve the maximum timestamp value for the current table
         row = conn.execute(
             f"SELECT MAX(datetime({col})) FROM {table} WHERE {col} IS NOT NULL"
         ).fetchone()
@@ -64,6 +69,7 @@ def _latest_timestamp(conn: sqlite3.Connection) -> datetime:
     return latest
 
 
+# Copy records for a specific table from source to destination within a time window
 def _copy_table(
     src: sqlite3.Connection,
     dst: sqlite3.Connection,
@@ -71,6 +77,7 @@ def _copy_table(
     cutoff: str | None,
     end_cutoff: str | None = None,
 ) -> int:
+    # Replicate the original table schema in the destination database
     ddl_row = src.execute(
         "SELECT sql FROM sqlite_master WHERE type='table' AND name=?",
         (table,),
@@ -85,6 +92,7 @@ def _copy_table(
     insert_sql = f"INSERT INTO {table} ({','.join(cols)}) VALUES ({placeholders})"
 
     time_col = TIME_COLUMNS.get(table)
+    # Construct filtered SELECT statement if time tracking metadata is present
     if time_col and cutoff:
         select_sql = (
             f"SELECT * FROM {table} WHERE {time_col} IS NOT NULL "
@@ -100,6 +108,7 @@ def _copy_table(
 
     count = 0
     batch = []
+    # Stream rows from source and perform bulk insertions to destination
     for row in src.execute(select_sql, params):
         batch.append(row)
         if len(batch) >= ROW_BATCH_SIZE:
@@ -112,15 +121,18 @@ def _copy_table(
     return count
 
 
+# Main logic to create a sliding-window subset of the space weather database
 def main(output_db: Path | None = None, overwrite: bool = False) -> Path:
     output_path = output_db or OUTPUT_DB
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with sqlite3.connect(SOURCE_DB) as src:
+        # Calculate the 6-month cutoff based on the latest available data
         latest = _latest_timestamp(src)
         cutoff_dt = latest - timedelta(hours=HOURS_BACK)
         cutoff = cutoff_dt.strftime("%Y-%m-%d %H:%M:%S")
 
+        # Select tables that have defined time columns
         tables = [
             row[0]
             for row in src.execute(
@@ -132,6 +144,7 @@ def main(output_db: Path | None = None, overwrite: bool = False) -> Path:
         with sqlite3.connect(output_path) as dst:
             total_rows = 0
             for table in tables:
+                # Process each table sequentially
                 count = _copy_table(src, dst, table, cutoff)
                 total_rows += count
                 print(f"[OK] {table}: {count:,} rows")

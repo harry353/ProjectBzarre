@@ -27,15 +27,18 @@ TIMESTAMP_COLS = ["timestamp", "time_tag", "date"]
 DST_TARGET_CANDIDATES = ["h1", "dst", "Dst", "dst_value"]
 
 
+# Helper to load a SQLite table into a pandas DataFrame
 def _load_table(db_path: Path, table: str) -> pd.DataFrame:
     with sqlite3.connect(db_path) as conn:
         return pd.read_sql_query(f"SELECT * FROM {table}", conn)
 
 
+# Standardize timestamps across different data sources to UTC
 def _normalize_ts(series: pd.Series) -> pd.Series:
     return pd.to_datetime(series, utc=True, errors="coerce")
 
 
+# Search for known timestamp column names in a DataFrame
 def _detect_ts(df: pd.DataFrame) -> str:
     for c in TIMESTAMP_COLS:
         if c in df.columns:
@@ -43,6 +46,7 @@ def _detect_ts(df: pd.DataFrame) -> str:
     return None
 
 
+# Search for known Dst target column names or fallback to the first numeric column
 def _detect_dst(df: pd.DataFrame) -> str:
     for c in DST_TARGET_CANDIDATES:
         if c in df.columns:
@@ -51,7 +55,9 @@ def _detect_dst(df: pd.DataFrame) -> str:
     return numeric[0] if numeric else None
 
 
+# Main logic to generate the Dst prediction plot with regime-aware quantile forecasts
 def main() -> None:
+    # 1. Verification of recursive pipeline dependencies
     if not DST_DB.exists():
         raise FileNotFoundError(f"DST DB not found: {DST_DB}")
     if not FEATURE_DB.exists():
@@ -59,6 +65,7 @@ def main() -> None:
     if not MODEL_BASE.exists():
         raise FileNotFoundError(f"Model base dir not found: {MODEL_BASE}")
 
+    # 2. Data Loading and Normalization
     dst_df = _load_table(DST_DB, DST_TABLE)
     ts_col_dst = _detect_ts(dst_df)
     dst_col = _detect_dst(dst_df)
@@ -70,23 +77,29 @@ def main() -> None:
     dst_df[ts_col_dst] = _normalize_ts(dst_df[ts_col_dst])
     dst_df = dst_df.dropna(subset=[ts_col_dst, dst_col]).sort_values(ts_col_dst)
 
-    # Use last timestamp as anchor
+    # 3. Pipeline Anchor Points
+    # Identify the latest record as the T0 for future forecasting
     anchor_ts = dst_df[ts_col_dst].max()
     if pd.isna(anchor_ts):
         raise RuntimeError("No valid timestamps in DST data.")
     anchor_dst = dst_df.loc[dst_df[ts_col_dst] == anchor_ts, dst_col].iloc[-1]
+    
+    # Determine if we are currently in a 'storm' or 'calm' state based on the Dst threshold
     regime = "storm" if anchor_dst <= DST_THRESHOLD else "calm"
 
+    # Slice historical data for the plot view (e.g., last 7 days)
     hist_start = anchor_ts - pd.Timedelta(hours=HISTORY_HOURS)
     dst_hist = dst_df[dst_df[ts_col_dst] >= hist_start]
 
-    # Load feature row matching anchor timestamp for prediction
+    # 4. Feature and Model Preparation
     feat_df = _load_table(FEATURE_DB, FEATURE_TABLE)
     ts_col_feat = _detect_ts(feat_df)
     if not ts_col_feat:
         raise RuntimeError(f"Feature table '{FEATURE_TABLE}' lacks a timestamp column.")
     feat_df[ts_col_feat] = _normalize_ts(feat_df[ts_col_feat])
     feat_df = feat_df.dropna(subset=[ts_col_feat]).sort_values(ts_col_feat)
+    
+    # Merge existing Dst as a feature for the regime-aware regression
     feat_df = feat_df.merge(
         dst_df[[ts_col_dst, dst_col]].rename(columns={ts_col_dst: ts_col_feat, dst_col: "dst_dst"}),
         on=ts_col_feat,
@@ -98,11 +111,14 @@ def main() -> None:
     ]
     if "dst_dst" not in feature_cols:
         raise RuntimeError("Expected 'dst_dst' to be present after merge for regime-aware model.")
+    
+    # Extract the precise feature vector for the prediction anchor
     anchor_row = feat_df[feat_df[ts_col_feat] == anchor_ts]
     if anchor_row.empty:
         raise RuntimeError(f"No feature row found at anchor timestamp {anchor_ts}.")
     x_anchor = anchor_row.iloc[0][feature_cols].to_numpy(dtype=np.float32).reshape(1, -1)
 
+    # Lazy-loader for regime-specific XGBoost quantile models
     model_cache: dict[tuple[str, int, float], object] = {}
 
     def _predict(regime: str, h: int, q: float, x: np.ndarray) -> float | None:
@@ -111,11 +127,13 @@ def main() -> None:
             model_path = MODEL_BASE / f"h{h}_{regime}" / f"q{q}" / "model.joblib"
             if not model_path.exists():
                 return None
+            # Quantile models are organized by horizon (h), regime (calm/storm), and quantile (q)
             model_cache[key] = joblib.load(model_path)
         model = model_cache[key]
         return float(model.predict(x)[0])
 
-    # Past issued 1h forecasts over history window
+    # 5. Quantile Back-forecasting (History Verification)
+    # Generate 1h-ahead predictions for all past timestamps to visualize model performance in the past
     history_preds = {
         "storm": {"t": [], "q10": [], "q50": [], "q90": [], "color": STORM_COLOR},
         "calm": {"t": [], "q10": [], "q50": [], "q90": [], "color": CALM_COLOR},
@@ -129,19 +147,21 @@ def main() -> None:
         q90 = _predict(regime_row, 1, 0.9, x_row)
         if q10 is None or q50 is None or q90 is None:
             continue
-        # Shift plotted timestamp back 1h so issued forecasts align with their origin time
+        # Issued forecasts align with their actual occurrence time
         t_plot = row[ts_col_feat]
         history_preds[regime_row]["t"].append(t_plot)
         history_preds[regime_row]["q10"].append(q10)
         history_preds[regime_row]["q50"].append(q50)
         history_preds[regime_row]["q90"].append(q90)
 
+    # 6. Future Forecast Generation
     forecast_times = []
     q10_list = []
     q50_list = []
     q90_list = []
     color = STORM_COLOR if regime == "storm" else CALM_COLOR
 
+    # Predict future horizons (h=1 to FUTURE_HOURS)
     for h in range(1, FUTURE_HOURS + 1):
         preds = {}
         for q in QUANTILES:
@@ -157,10 +177,13 @@ def main() -> None:
         q50_list.append(preds[0.5])
         q90_list.append(preds[0.9])
 
+    # 7. Visualization logic
     fig, ax = plt.subplots(figsize=(10, 5))
     actual_color = "black"
+    # Plot the observed Dst line
     ax.plot(dst_hist[ts_col_dst], dst_hist[dst_col], label="DST (actual)", color=actual_color)
 
+    # Plot future forecast bands and 50th percentile (median) prediction
     if forecast_times:
         ax.fill_between(
             forecast_times,
@@ -180,7 +203,7 @@ def main() -> None:
             linestyle="--",
             label=f"DST forecast $q_{{0.5}}$ ({regime})",
         )
-        # Bridge the gap between last actual and first forecast with a black interpolation
+        # Bridge the gap between last actual and first forecast with a black interpolation to show the trend
         ax.plot(
             [anchor_ts, forecast_times[0]],
             [anchor_dst, q50_list[0]],
@@ -189,7 +212,9 @@ def main() -> None:
             linestyle="-",
             label=None,
         )
-    # Build contiguous segments of past issued 1h forecasts and interpolate across regime changes
+
+    # 8. Historical Segment Interpolation Logic
+    # Dst shifts between regimes cause gaps in history; find continuous segments and bridge them visually
     hist_segments = []
     gap = pd.Timedelta(hours=1.5)
     for reg_name, data in history_preds.items():
@@ -202,6 +227,7 @@ def main() -> None:
 
         start = 0
         for i in range(1, len(t_sorted)):
+            # If timestamps are separated by more than the gap threshold, break into a new segment
             if t_sorted[i] - t_sorted[i - 1] > gap:
                 seg = slice(start, i)
                 hist_segments.append(
@@ -231,6 +257,7 @@ def main() -> None:
             }
         )
 
+    # Sort all segments by time and interpolate gaps between different regimes
     def _as_ts(val):
         return pd.to_datetime(val).tz_localize(None) if hasattr(val, "tzinfo") else pd.to_datetime(val)
 
@@ -240,6 +267,7 @@ def main() -> None:
             continue
         if _as_ts(nxt["start"]) <= _as_ts(prev["end"]):
             continue
+        # Linear interpolation for the uncertainty bands across regime transitions
         ts_interp = pd.to_datetime(np.linspace(_as_ts(prev["end"]).value, _as_ts(nxt["start"]).value, 3))
         hist_segments.append(
             {
@@ -253,7 +281,7 @@ def main() -> None:
                 "interp": True,
             }
         )
-    # Interpolate from last past segment to first future forecast point
+    # Final interpolation from the last historical segment to the start of the future forecast
     if hist_segments and forecast_times:
         last_seg = max(hist_segments, key=lambda s: _as_ts(s["end"]))
         first_future_ts = pd.to_datetime(forecast_times[0]).tz_localize(None)
@@ -274,6 +302,7 @@ def main() -> None:
                 }
             )
 
+    # 9. Plotting all segments with cumulative labeling
     label_used = {}
     for seg in sorted(hist_segments, key=lambda s: _as_ts(s["start"])):
         key = seg["regime"]
@@ -291,6 +320,7 @@ def main() -> None:
         )
         label_used[key] = True
 
+    # 10. Finishing touches and persistence
     ax.set_title("DST with forecast")
     ax.set_xlabel("Timestamp")
     ax.set_ylabel("DST")

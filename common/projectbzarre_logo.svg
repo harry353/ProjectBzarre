@@ -8,8 +8,8 @@
    version="1.1"
    id="svg5"
    inkscape:export-filename="projectbzarre_logo.png"
-   inkscape:export-xdpi="96"
-   inkscape:export-ydpi="96"
+   inkscape:export-xdpi="192"
+   inkscape:export-ydpi="192"
    inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
    sodipodi:docname="projectbzarre_logo.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
@@ -29,8 +29,8 @@
      showgrid="false"
      showguides="true"
      inkscape:zoom="1.9770194"
-     inkscape:cx="77.895036"
-     inkscape:cy="125.69426"
+     inkscape:cx="115.32512"
+     inkscape:cy="154.52554"
      inkscape:window-width="1704"
      inkscape:window-height="990"
      inkscape:window-x="0"
@@ -63,6 +63,13 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
+    <rect
+       style="fill:#ffffff;stroke-width:3.96875"
+       id="rect829"
+       width="82.934563"
+       height="83.538773"
+       x="-2.0603104"
+       y="-1.8927704" />
     <g
        id="g14440"
        transform="matrix(1.2055392,0,0,1.2055392,-8.1573358,-4.7085023)">

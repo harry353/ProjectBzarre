@@ -38,26 +38,20 @@ LABEL_TABLES = {
 TARGET_HORIZONS_H = range(1, 9)
 
 
+# Loads a full table from a SQLite database into a pandas DataFrame
 def _load(db: Path, table: str) -> pd.DataFrame:
-    """Loads a full table from a SQLite database into a pandas DataFrame."""
     with sqlite3.connect(db) as conn:
         return pd.read_sql_query(f"SELECT * FROM {table}", conn)
 
 
+# Standardizes timestamps: convert to UTC, floor to hour, and remove TZ awareness
 def _normalize_timestamp(series: pd.Series) -> pd.Series:
-    """
-    Standardizes timestamps by converting to UTC, flooring to the hour,
-    and removing timezone awareness for database compatibility.
-    """
     ts = pd.to_datetime(series, utc=True, errors="coerce")
     return ts.dt.floor("h").dt.tz_convert(None)
 
 
+# Loads features and labels for a split and merges them on normalized timestamps
 def _merge(split: str, target: str) -> pd.DataFrame:
-    """
-    Loads features and labels for a specific split (train/validation/test)
-    and merges them on a normalized timestamp.
-    """
     f = _load(FEATURES_DB, FEATURE_TABLES[split])
     y = _load(LABELS_DB, LABEL_TABLES[split])
 
@@ -71,17 +65,14 @@ def _merge(split: str, target: str) -> pd.DataFrame:
     )
 
 
+# Prepares X, y, and timestamps for models; handles missing data and numeric selection
 def _prepare(df: pd.DataFrame, target: str):
-    """
-    Prepares features (X), labels (y), and timestamps (ts) for model consumption.
-    Handles missing target values and fills missing features with 0.0.
-    """
     df = df.dropna(subset=[target])
 
     ts = df["timestamp"].reset_index(drop=True)
     y = df[target].astype(int).to_numpy()
 
-    # Select only numeric features and convert to float32 for XGBoost
+    # Fill missing features with zero and ensure float32 precision
     X = (
         df.drop(columns=["timestamp", target])
         .select_dtypes(include=[np.number])
@@ -92,15 +83,12 @@ def _prepare(df: pd.DataFrame, target: str):
     return X, y, ts
 
 
+# Main loop to train models across horizons and export split-wise raw probabilities
 def main() -> None:
-    """
-    Main execution loop iterating over prediction horizons to train models
-    and export raw probability predictions for all dataset splits.
-    """
     for horizon in TARGET_HORIZONS_H:
         target = f"h_{horizon}"
 
-        # Load and align datasets
+        # 1. Dataset Alignment
         train_df = _merge("train", target)
         val_df = _merge("validation", target)
         test_df = _merge("test", target)
@@ -109,14 +97,14 @@ def main() -> None:
         X_val, y_val, ts_val = _prepare(val_df, target)
         X_test, y_test, ts_test = _prepare(test_df, target)
 
-        # Retrieve best hyperparameters from tuning stages
+        # 2. Model Initialization
+        # Retrieve best hyperparams from previous tuning stages stored in JSON
         model_dir = MODEL_ROOT / f"h{horizon}"
         summary_path = model_dir / "summary.json"
         with summary_path.open("r", encoding="utf-8") as fp:
             summary = json.load(fp)
             params = summary["best_params"]
 
-        # Initialize and fit the XGBoost model
         model = XGBClassifier(
             objective="binary:logistic",
             eval_metric="logloss",
@@ -124,14 +112,16 @@ def main() -> None:
             **params,
         )
 
+        # 3. Training and Inference
         model.fit(X_train, y_train)
 
-        # Extract probability of the positive class
+        # Generate class probabilities for all splits
         train_prob = model.predict_proba(X_train)[:, 1]
         val_prob = model.predict_proba(X_val)[:, 1]
         test_prob = model.predict_proba(X_test)[:, 1]
 
-        # Consolidate results into a single table
+        # 4. Result Consolidation
+        # Union all split predictions into a single tidy dataframe
         out = pd.concat(
             [
                 pd.DataFrame(
@@ -162,7 +152,8 @@ def main() -> None:
             ignore_index=True,
         )
 
-        # Export raw probabilities to a local SQLite database for each horizon
+        # 5. Database Export
+        # Persist predictions to horizon-specific SQLite databases
         prob_db = model_dir / "raw_probabilities.db"
         prob_db.parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(prob_db) as conn:

@@ -9,6 +9,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 BACKUP_DB = PROJECT_ROOT / "inference" / "backup_imf_swpc.db"
 TARGET_DB = PROJECT_ROOT / "inference" / "space_weather_last_6m.db"
 
+# Remove all records from the target table that were previously inserted as SWPC backup data
 def delete_swpc_backup():
     if not TARGET_DB.exists():
         return
@@ -20,10 +21,11 @@ def delete_swpc_backup():
     if removed:
         print(f"[CLEANUP] Removed {removed} 'swpc_backup' records from {TARGET_DB.name}")
 
+# Main synchronization logic: Load backup data -> Filter duplicates -> Insert -> Globally sort target table
 def main() -> None:
     print(f"--- SWPC IMF Backup Insertion Started {datetime.now(timezone.utc).isoformat()} ---")
     
-    # 1. Clear out ALL existing swpc_backup data
+    # 1. Clear out ALL existing swpc_backup data to ensure a clean sync
     delete_swpc_backup()
 
     if not BACKUP_DB.exists():
@@ -34,6 +36,7 @@ def main() -> None:
         print(f"[WARN] {TARGET_DB} not found. Skipping.")
         return
 
+    # Load all records from the backup database
     with sqlite3.connect(BACKUP_DB) as b_conn:
         b_df = pd.read_sql_query("SELECT * FROM imf_swpc", b_conn)
 
@@ -41,12 +44,13 @@ def main() -> None:
         print("[INFO] No data in backup_imf_swpc.db.")
         return
 
-    # Ensure format matches dscovr_m1m: %Y-%m-%d %H:%M:%S+00:00
+    # Standardize time_tag format to match DSCOVR's internal storage format: %Y-%m-%d %H:%M:%S+00:00
     b_df["time_tag"] = pd.to_datetime(b_df["time_tag"], errors="coerce", utc=True)
     b_df = b_df.dropna(subset=["time_tag"])
     b_df["time_tag"] = b_df["time_tag"].dt.strftime("%Y-%m-%d %H:%M:%S+00:00")
     b_df["source_type"] = "swpc_backup"
 
+    # Identify existing timestamps in the target table to avoid redundant insertions
     with sqlite3.connect(TARGET_DB) as t_conn:
         t_df = pd.read_sql_query("SELECT time_tag FROM dscovr_m1m", t_conn)
         if not t_df.empty:
@@ -56,7 +60,7 @@ def main() -> None:
         else:
             existing_tags = set()
 
-    # Filter b_df to only include rows with time_tag not in existing_tags
+    # Filter out any backup records that are already present in the target table
     mask = ~b_df["time_tag"].isin(existing_tags)
     new_data = b_df[mask]
 
@@ -64,17 +68,17 @@ def main() -> None:
         print("[INFO] No new SWPC IMF data to insert.")
     else:
 
-        # Sort values by time before insertion
+        # Sort values chronologically before appending to the database
         new_data = new_data.sort_values(by="time_tag")
 
-        # Insert into dscovr_m1m
+        # Append new records into the primary dscovr_m1m table
         with sqlite3.connect(TARGET_DB) as t_conn:
             new_data.to_sql("dscovr_m1m", t_conn, if_exists="append", index=False)
             t_conn.commit()
 
         print(f"[OK] Added {len(new_data)} SWPC IMF backup records into dscovr_m1m.")
 
-    # Now, sort the ENTIRE dscovr_m1m table by time
+    # Re-sort the ENTIRE table to ensure chronological data flow after backup injection
     with sqlite3.connect(TARGET_DB) as t_conn:
         t_df_full = pd.read_sql_query("SELECT * FROM dscovr_m1m", t_conn)
         if not t_df_full.empty:

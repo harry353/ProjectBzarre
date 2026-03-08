@@ -32,18 +32,22 @@ SCRIPTS = [
 ]
 
 
+# Helper to execute a script as a separate process and wait for completion
 def _run(script: Path) -> None:
     if not script.exists():
         raise FileNotFoundError(f"Script not found: {script}")
     print(f"[RUN] {script}")
+    # Execute script using the current Python interpreter
     subprocess.run([sys.executable, str(script)], check=True)
 
 
+# Scrub intermediate database files from preprocessing directories
 def _clean_db_artifacts() -> None:
     removed = 0
     for folder in CLEAN_DIRS:
         if not folder.exists():
             continue
+        # Recursively find and delete all .db files
         for db_file in folder.rglob("*.db"):
             try:
                 db_file.unlink()
@@ -54,11 +58,14 @@ def _clean_db_artifacts() -> None:
         print(f"[CLEANUP] Removed {removed} .db files from preprocessing directories.")
 
 
+# Orchestrate the end-to-end inference pipeline: Data Update -> Preprocessing -> Classification -> Regression
 def main() -> None:
     start = time.time()
+    # Execute the sequence of scripts defined in SCRIPTS
     for script in SCRIPTS:
         _run(script)
-    # Clean up intermediate DBs
+
+    # Manual cleanup of specific intermediate vector databases
     for fname in (
         "classification_horizons_vector_1m.db",
         "preprocessed_vector_1m.db",
@@ -72,8 +79,11 @@ def main() -> None:
                 print(f"[CLEANUP] Removed {path}")
             except Exception as exc:
                 print(f"[WARN] Could not remove {path}: {exc}")
+
+    # Broad cleanup of preprocessing artifacts if configured
     if CLEAN_DB:
         _clean_db_artifacts()
+
     elapsed = time.time() - start
     print(f"[OK] Inference pipeline completed in {elapsed:.2f} seconds.")
 
