@@ -50,11 +50,13 @@ MIN_FEATURES_TO_KEEP = 50
 
 
 def _load_table(db_path: Path, table: str) -> pd.DataFrame:
+    """Loads a specific table from an SQLite database into a DataFrame."""
     with sqlite3.connect(db_path) as conn:
         return pd.read_sql_query(f"SELECT * FROM {table}", conn)
 
 
 def _normalize_timestamp(series: pd.Series) -> pd.Series:
+    """Standardizes timestamp series to UTC and removes timezone awareness."""
     ts = pd.to_datetime(series, errors="coerce")
     if ts.dt.tz is None:
         ts = ts.dt.tz_localize("UTC")
@@ -64,10 +66,12 @@ def _normalize_timestamp(series: pd.Series) -> pd.Series:
 
 
 def _merge_split(split: str, target_col: str) -> pd.DataFrame:
+    """Loads features and target labels for a split and merges them on timestamp."""
     features = _load_table(FEATURES_DB, FEATURE_TABLES[split])
     labels = _load_table(LABELS_DB, LABEL_TABLES[split])[["timestamp", target_col]]
     features["timestamp"] = _normalize_timestamp(features["timestamp"])
     labels["timestamp"] = _normalize_timestamp(labels["timestamp"])
+    # Inner join ensures we only keep rows where both features and labels exist
     merged = features.merge(labels, on="timestamp", how="inner")
     if merged.empty:
         raise RuntimeError(f"No merged rows for split '{split}'.")
@@ -79,6 +83,10 @@ def _prepare_xy(
     target_col: str,
     feature_cols: list[str] | None = None,
 ):
+    """
+    Extracts features (X) and labels (y) from a DataFrame.
+    Filters for numeric types and optionally subsets specific features.
+    """
     numeric = df.select_dtypes(include=[np.number]).dropna(axis=0, how="any")
     if feature_cols is not None:
         numeric = numeric[[target_col, *feature_cols]]
@@ -96,18 +104,24 @@ def _embedded_prune_features(
     min_gain_fraction: float = 0.01,
     min_features: int = MIN_FEATURES_TO_KEEP,
 ):
+    """
+    Prunes features based on the 'gain' importance from a trained XGBoost model.
+    Guarantees a minimum number of features are retained.
+    """
     if X.shape[1] <= min_features:
         return X, feature_cols
 
     model = XGBClassifier(**base_kwargs, **params)
     model.fit(X, y)
 
+    # Retrieve gain-based importance scores
     scores = model.get_booster().get_score(importance_type="gain")
 
     if scores:
         ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
         total_gain = sum(scores.values())
 
+        # Select features contributing significantly to total gain
         keep = [
             f for f, g in ranked
             if g / total_gain >= min_gain_fraction
@@ -115,6 +129,7 @@ def _embedded_prune_features(
     else:
         keep = []
 
+    # Ensure we don't prune below the required minimum
     if len(keep) < min_features:
         keep = feature_cols[:min_features]
 
@@ -127,14 +142,17 @@ def _embedded_prune_features(
 
 
 def _train_horizon(horizon: int) -> None:
+    """ Performs two-stage hyperparameter optimization and feature pruning for a specific forecast horizon. """
     target_col = f"h_{horizon}"
 
+    # Load and align train/validation datasets
     train_df = _merge_split("train", target_col)
     val_df = _merge_split("validation", target_col)
 
     X_train, y_train, feature_cols = _prepare_xy(train_df, target_col)
     X_val, y_val, _ = _prepare_xy(val_df, target_col, feature_cols)
 
+    # Core XGBoost configuration shared across all optimization trials
     base_kwargs = dict(
         objective="binary:logistic",
         eval_metric="logloss",
@@ -143,6 +161,7 @@ def _train_horizon(horizon: int) -> None:
         random_state=RANDOM_STATE,
     )
 
+    # STAGE 1: Coarse hyperparameter search over a wide search space
     def coarse_objective(trial: optuna.Trial) -> float:
         params = {
             "n_estimators": trial.suggest_int("n_estimators", 200, 2000),
@@ -162,6 +181,7 @@ def _train_horizon(horizon: int) -> None:
     coarse = optuna.create_study(direction="minimize")
     coarse.optimize(coarse_objective, n_trials=N_TRIALS_COARSE, show_progress_bar=True)
 
+    # Feature pruning using best coarse parameters to simplify the model before fine-tuning
     X_train_p, feature_cols_p = _embedded_prune_features(
         X_train,
         y_train,
@@ -175,6 +195,7 @@ def _train_horizon(horizon: int) -> None:
     idx = [feature_cols.index(f) for f in feature_cols_p]
     X_val_p = X_val[:, idx]
 
+    # STAGE 2: Fine-tuning around the best coarse parameters
     def fine_objective(trial: optuna.Trial) -> float:
         bp = coarse.best_params
         params = {
@@ -233,6 +254,7 @@ def _train_horizon(horizon: int) -> None:
     fine = optuna.create_study(direction="minimize")
     fine.optimize(fine_objective, n_trials=N_TRIALS_FINE, show_progress_bar=True)
 
+    # Final model training with best optimized parameters
     model = XGBClassifier(**base_kwargs, **fine.best_params)
     model.fit(X_train_p, y_train)
 
@@ -241,6 +263,7 @@ def _train_horizon(horizon: int) -> None:
     out = OUTPUT_ROOT / f"h{horizon}"
     out.mkdir(parents=True, exist_ok=True)
 
+    # Persist model, feature list, and summary statistics
     model.get_booster().save_model(out / "model.json")
 
     with (out / "selected_features.json").open("w") as f:
@@ -260,6 +283,7 @@ def _train_horizon(horizon: int) -> None:
             indent=2,
         )
 
+    # Visualizing model performance with a Precision-Recall curve
     precision, recall, _ = precision_recall_curve(y_val, val_prob)
     plt.figure(figsize=(6, 5))
     plt.plot(recall, precision)
@@ -269,6 +293,7 @@ def _train_horizon(horizon: int) -> None:
 
 
 def main() -> None:
+    """ Main execution loop to train models for all configured forecast horizons. """
     for h in HORIZONS:
         _train_horizon(h)
 
