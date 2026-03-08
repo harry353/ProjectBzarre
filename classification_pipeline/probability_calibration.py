@@ -20,19 +20,16 @@ OUT_TABLE = "calibrated_probs"
 TARGET_HORIZONS_H = range(1, 9)
 
 
+# Identifies and loads training, validation, and test probability tables from a given raw probabilities SQLite database
 def _load_tables(
     raw_prob_db: Path,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame | None]:
-    """
-    Identifies and loads training, validation, and test probability tables 
-    from a given raw probabilities SQLite database.
-    """
     with sqlite3.connect(raw_prob_db) as conn:
         tables = pd.read_sql_query(
             "SELECT name FROM sqlite_master WHERE type='table'", conn
         )["name"].tolist()
 
-        # Handle consolidated raw_probs table
+        # Handle consolidated raw_probs table format
         if RAW_TABLE in tables:
             raw = pd.read_sql_query(f"SELECT * FROM {RAW_TABLE}", conn)
             if "split" not in raw.columns:
@@ -44,7 +41,7 @@ def _load_tables(
                 test = None
             return train, val, test
 
-        # Fallback for separate train/validation tables
+        # Fallback for legacy separate train/validation tables
         if TRAIN_TABLE in tables and VAL_TABLE in tables:
             train = pd.read_sql_query(f"SELECT * FROM {TRAIN_TABLE}", conn)
             val = pd.read_sql_query(f"SELECT * FROM {VAL_TABLE}", conn)
@@ -53,8 +50,8 @@ def _load_tables(
     raise RuntimeError("No raw probability tables found.")
 
 
+# Serializes the fitted IsotonicRegression thresholds to a JSON payload for model deployment
 def _save_calibrator(iso: IsotonicRegression) -> None:
-    """ Serializes the fitted IsotonicRegression thresholds to a JSON payload. """
     payload = {
         "type": "isotonic_regression",
         "fit": "joint_validation",
@@ -67,18 +64,16 @@ def _save_calibrator(iso: IsotonicRegression) -> None:
     print(f"[OK] Joint calibrator saved to {path}")
 
 
+# Performs joint probability calibration across all forecast horizons using Isotonic Regression
 def main() -> None:
-    """
-    Performs joint probability calibration across all forecast horizons using 
-    Isotonic Regression on the validation set.
-    """
     all_train = []
     all_val = []
     all_test = []
 
     per_horizon = {}
 
-    # Gather raw probabilities from all horizon-specific databases
+    # 1. Data Ingestion
+    # Gather raw probabilities from all horizon-specific databases (h1 through h8)
     for horizon in TARGET_HORIZONS_H:
         raw_prob_db = MODEL_ROOT / f"h{horizon}" / "raw_probabilities.db"
         train, val, test = _load_tables(raw_prob_db)
@@ -100,15 +95,18 @@ def main() -> None:
 
         per_horizon[horizon] = (train, val, test)
 
-    # Consolidated data for joint calibration
+    # 2. Consolidation for Joint Calibration
+    # Union all horizons to fit a single monotonic mapper across the entire dashboard
     train_all = pd.concat(all_train, ignore_index=True)
     val_all = pd.concat(all_val, ignore_index=True)
     test_all = pd.concat(all_test, ignore_index=True) if all_test else None
 
-    # Fit a single isotonic mapper on the combined validation data
+    # 3. Model Fitting
+    # Fit a single isotonic mapper on the combined validation data (raw prob -> calibrated prob)
     iso = IsotonicRegression(out_of_bounds="clip")
     iso.fit(val_all["y_prob"].to_numpy(), val_all["y_true"].to_numpy())
 
+    # 4. Performance Summary
     print("[INFO] -------- Joint Calibration Summary --------")
     print(
         f"[INFO] Val log loss (raw)         : "
@@ -122,7 +120,8 @@ def main() -> None:
 
     _save_calibrator(iso)
 
-    # Apply the joint calibrator and save results per horizon
+    # 5. Application and Persistence
+    # Apply the joint calibrator back to per-horizon datasets and save results
     for horizon, (train, val, test) in per_horizon.items():
         calib_db = MODEL_ROOT / f"h{horizon}" / "calibrated_probabilities.db"
 
@@ -131,6 +130,7 @@ def main() -> None:
         if test is not None:
             test["prob_calibrated"] = iso.transform(test["y_prob"].to_numpy())
 
+        # Ensure split tags are present before concatenation
         if "split" not in train.columns:
             train = train.assign(split="train")
         if "split" not in val.columns:
@@ -142,6 +142,7 @@ def main() -> None:
                 test = test.assign(split="test")
             frames.append(test)
 
+        # Drop the temporary horizon column and save to local SQLite
         out = pd.concat(frames, ignore_index=True).drop(columns=["horizon"])
 
         calib_db.parent.mkdir(parents=True, exist_ok=True)

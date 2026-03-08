@@ -22,8 +22,8 @@ SPLIT = "test"
 OUTPUT_PATH: Path | None = None
 
 
+# Ensures a datetime series is UTC-localized and consistent
 def _ensure_utc(series: pd.Series) -> pd.Series:
-    """Ensures a datetime series is UTC-localized and consistent."""
     return (
         series.dt.tz_localize("UTC")
         if series.dt.tz is None
@@ -31,8 +31,8 @@ def _ensure_utc(series: pd.Series) -> pd.Series:
     )
 
 
+# Loads hourly Dst index data from the local database
 def _load_dst() -> pd.Series:
-    """Loads hourly Dst index data from the local database."""
     with sqlite3.connect(DST_DB) as conn:
         df = pd.read_sql_query(
             "SELECT time_tag AS timestamp, dst FROM hourly_data",
@@ -43,11 +43,8 @@ def _load_dst() -> pd.Series:
     return df.set_index("timestamp")["dst"].sort_index()
 
 
+# Loads calibrated probabilities for all target horizons and merges them aligned by timestamp
 def _load_calibrated_probs() -> pd.DataFrame:
-    """
-    Loads calibrated probabilities for all target horizons and merges them 
-    into a single DataFrame aligned by timestamp.
-    """
     frames = []
     for h in TARGET_HORIZONS_H:
         db = MODEL_ROOT / f"h{h}" / "calibrated_probabilities.db"
@@ -71,7 +68,7 @@ def _load_calibrated_probs() -> pd.DataFrame:
     if not frames:
         raise RuntimeError("No calibrated probability tables found.")
 
-    # Inner join all horizons on timestamp
+    # Inner join all horizons on timestamp to ensure a shared time baseline
     out = frames[0]
     for f in frames[1:]:
         out = out.merge(f, on="timestamp", how="inner")
@@ -79,24 +76,22 @@ def _load_calibrated_probs() -> pd.DataFrame:
     return out.sort_values("timestamp").reset_index(drop=True)
 
 
+# Calculates the cumulative probability of at least one event in the window using joint survival
 def _compute_cumulative_probability(probs: pd.DataFrame) -> pd.Series:
-    """
-    Calculates the cumulative probability of at least one event occurring 
-    within the look-ahead window using the complement of joint survival.
-    """
     hazard_cols = [f"p_h{h}" for h in TARGET_HORIZONS_H if f"p_h{h}" in probs.columns]
     surv = 1.0
     for col in hazard_cols:
         surv *= 1.0 - probs[col]
+    # P(at least one) = 1 - P(none)
     return 1.0 - surv
 
 
+# Generates a plot showing Dst index and cumulative storm probabilities for a given year
 def plot_cumulative_probability(year: int, output: Path | None = None) -> None:
-    """ Generates a plot showing Dst index and cumulative storm probabilities for a given year. """
     dst = _load_dst()
     probs = _load_calibrated_probs()
 
-    # Define time slice
+    # Define the time slice for the visualization
     start = pd.Timestamp(year=year, month=1, day=1, tz="UTC")
     end = start + pd.DateOffset(years=1)
 
@@ -105,19 +100,20 @@ def plot_cumulative_probability(year: int, output: Path | None = None) -> None:
         (probs["timestamp"] >= start) & (probs["timestamp"] < end)
     ]
 
+    # Calculate the rolling cumulative probability across all prediction horizons
     probs["p_cumulative"] = _compute_cumulative_probability(probs)
 
-    # Initialize layout: 2 stacked plots
+    # Initialize layout: 2 stacked plots with shared X-axis
     fig, (ax_dst, ax_prob) = plt.subplots(
         2, 1, figsize=(14, 6), sharex=True, height_ratios=[2, 1]
     )
 
-    # Panel 1: Dst index
+    # Panel 1: Historical Dst index (nT)
     ax_dst.plot(dst.index, dst, color="black", linewidth=1.2)
     ax_dst.axhline(0, color="gray", alpha=0.5)
     ax_dst.axhline(-50, color="gray", linestyle=":", alpha=0.4)
 
-    # Panel 2: Cumulative probabilities
+    # Panel 2: Predicted cumulative storm probabilities
     ax_prob.plot(
         probs["timestamp"],
         probs["p_cumulative"],
@@ -143,7 +139,7 @@ def plot_cumulative_probability(year: int, output: Path | None = None) -> None:
 
     fig.tight_layout()
 
-    # Save to file or display interactively
+    # Persistence: Save to file or display interactively
     if output:
         output.parent.mkdir(parents=True, exist_ok=True)
         fig.savefig(output, dpi=200)

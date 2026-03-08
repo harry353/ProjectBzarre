@@ -9,6 +9,7 @@ BACKUP_DB = PROJECT_ROOT / "inference" / "backup_imf_swpc.db"
 TARGET_DB = PROJECT_ROOT / "inference" / "space_weather_last_6m.db"
 SWPC_MAG_URL = "https://services.swpc.noaa.gov/products/solar-wind/mag-7-day.json"
 
+# Initialize the backup database and create the IMF table if missing
 def init_db():
     with sqlite3.connect(BACKUP_DB) as conn:
         conn.execute("""
@@ -22,8 +23,10 @@ def init_db():
         """)
         conn.commit()
 
+# Download and standardize Interplanetary Magnetic Field data from NOAA SWPC
 def download_swpc_mag():
     try:
+        # Request the 7-day magnitude JSON product
         resp = requests.get(SWPC_MAG_URL, timeout=30)
         resp.raise_for_status()
         payload = resp.json()
@@ -39,7 +42,7 @@ def download_swpc_mag():
     rows = payload[1:]
     df = pd.DataFrame(rows, columns=header)
     
-    # Standardize columns
+    # Internal mapping for SWPC fields to standardized database columns
     mapping = {
         "time_tag": "time_tag",
         "bt": "bt",
@@ -48,7 +51,7 @@ def download_swpc_mag():
         "bz_gsm": "bz"
     }
     
-    # SWPC columns are sometimes lowercase or slightly different
+    # SWPC columns are sometimes lowercase or slightly different; iterate to find matches
     cols_lower = {c.lower(): c for c in df.columns}
     rename_map = {}
     for swpc_key, internal_key in mapping.items():
@@ -57,17 +60,19 @@ def download_swpc_mag():
             
     df = df.rename(columns=rename_map)
     
-    # Convert types
+    # Convert types: normalize timestamps to UTC and readings to numeric
     df["time_tag"] = pd.to_datetime(df["time_tag"], errors="coerce", utc=True)
     for col in ("bt", "bx", "by", "bz"):
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
             
     df = df.dropna(subset=["time_tag"])
+    # Format time_tag for consistent SQLite storage
     df["time_tag"] = df["time_tag"].dt.strftime("%Y-%m-%d %H:%M:%S+00:00")
     
     return df[["time_tag", "bt", "bx", "by", "bz"]]
 
+# Persist the downloaded data to the backup database; skip duplicates via IGNORE
 def backup_data(df):
     if df is None or df.empty:
         return
@@ -83,6 +88,7 @@ def backup_data(df):
         conn.commit()
     print(f"[OK] Added {added} new records to {BACKUP_DB.name}")
 
+# Remove backup records older than 90 days to maintain database size
 def prune_old_data():
     # 3 months is roughly 90 days
     cutoff = (datetime.now(timezone.utc) - timedelta(days=90)).strftime("%Y-%m-%d %H:%M:%S+00:00")
@@ -94,6 +100,7 @@ def prune_old_data():
     if removed:
         print(f"[CLEANUP] Pruned {removed} records older than 90 days from backup_imf_swpc.db")
 
+# Main sequence: Init -> Download -> Backup -> Cleanup
 def main():
     print(f"--- SWPC IMF Backup Started {datetime.now().isoformat()} ---")
     init_db()

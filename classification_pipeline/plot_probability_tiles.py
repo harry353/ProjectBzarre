@@ -17,11 +17,8 @@ DATETIME_STR = "2024-05-10 17:00:00"
 SPLIT = "test"
 
 
+# Retrieves calibrated interval probabilities for all target horizons @ a specific UTC timestamp
 def _load_probs_at_timestamp(ts: pd.Timestamp) -> list[float]:
-    """
-    Retrieves calibrated interval probabilities for all target horizons 
-    at a specific UTC timestamp from separate SQLite databases.
-    """
     probs: list[float] = []
 
     for h in TARGET_HORIZONS_H:
@@ -30,6 +27,7 @@ def _load_probs_at_timestamp(ts: pd.Timestamp) -> list[float]:
             raise RuntimeError(f"Missing calibrated DB for h{h}")
 
         with sqlite3.connect(db) as conn:
+            # Query probabilities for the specific split and timestamp
             df = pd.read_sql_query(
                 f"""
                 SELECT prob_calibrated
@@ -52,18 +50,21 @@ def _load_probs_at_timestamp(ts: pd.Timestamp) -> list[float]:
     return probs
 
 
+# Main entry point to load probabilities and render the tile-based visualization
 def main() -> None:
-    """ Main entry point to load probabilities and render the tile-based visualization. """
     ts = pd.to_datetime(DATETIME_STR, utc=True)
     probs = _load_probs_at_timestamp(ts)
 
-    # Use Yellow-Orange-Brown colormap for probability intensity
+    # 1. Visualization configuration
+    # Use Yellow-Orange-Brown colormap for probability intensity (0 to 1 scale)
     cmap = plt.cm.YlOrBr
     norm = plt.Normalize(vmin=0.0, vmax=1.0)
 
+    # 2. Layout Initialization
     # Create a horizontal row of tiles, one for each forecast horizon
     fig, axes = plt.subplots(1, len(TARGET_HORIZONS_H), figsize=(14, 2))
 
+    # 3. Tile Rendering Loop
     for idx, ax in enumerate(axes):
         value = probs[idx]
         color = cmap(norm(value))
@@ -79,7 +80,7 @@ def main() -> None:
             fontsize=10,
             color="black",
         )
-        # Remove axes decorations for a cleaner "tile" appearance
+        # Remove axes decorations for a cleaner "tile" dashboard appearance
         ax.set_xticks([])
         ax.set_yticks([])
         ax.set_xlim(0, 1)

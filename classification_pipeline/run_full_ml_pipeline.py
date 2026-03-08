@@ -16,9 +16,10 @@ SCRIPTS = [
 ]
 
 
+# Iterate through the configured scripts and execute them sequentially
 def main() -> None:
-    """ Iterate through the configured scripts and execute them sequentially. """
     python = sys.executable
+    # Orchestration loop: running training, export, and calibration in order
     for script in SCRIPTS:
         if not script.exists():
             raise FileNotFoundError(f"Missing script: {script}")

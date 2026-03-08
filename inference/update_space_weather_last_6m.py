@@ -64,11 +64,13 @@ TIME_COLUMNS = {
 }
 
 
+# Main entry point to refresh the 6-month inference snapshot with live data
 def main() -> None:
     run_started = time.time()
     if not OUTPUT_DB.exists():
         raise FileNotFoundError(f"Snapshot DB missing: {OUTPUT_DB}")
 
+    # Wipe the most recent 2 days of data to handle potential incomplete updates/latency
     _remove_recent_data(days=2)
 
     end_dt = datetime.now(timezone.utc)
@@ -83,28 +85,35 @@ def main() -> None:
         )
     )
 
+    # Remove temporary or stale forward-fill entries
     _clear_forward_fills()
+    # Ensure historical Dst data has correct UTC string representation
     _normalize_dst_timezone()
     warehouse = SpaceWeatherWarehouse(str(OUTPUT_DB))
 
+    # Identify all active data source classes for the warehouse
     classes = [
         cls
         for cls in load_data_source_classes()
         if cls.__name__ in TARGET_CLASS_NAMES
     ]
 
+    # Specialized refresh for sunspot data which typically has unique latency
     _refresh_sunspot(start_date, end_date, warehouse)
 
     ingest_lock = threading.Lock()
 
+    # Parallel worker function for downloading and ingesting individual sources
     def _run_source(cls) -> None:
         label = friendly_name(cls.__name__)
         table = CLASS_TABLE_MAP.get(cls.__name__)
         last_ts = _last_table_timestamp(table)
         src_start_date = start_date
+        # Backtrack 2 days from the last record found in the DB to ensure continuity
         if last_ts is not None:
             src_start_date = max(start_date, (last_ts - timedelta(days=2)).date())
 
+        # Iterate through windows and perform downloads
         for w_start, w_end in iter_date_windows(src_start_date, end_date):
             print(stamp(f"[INFO] Processing {label} for {w_start} -> {w_end}"))
             try:
@@ -116,30 +125,37 @@ def main() -> None:
             if df is None or df.empty:
                 continue
             try:
+                # Thread-safe ingestion into the SQLite database
                 with ingest_lock:
                     source.ingest(df, warehouse=warehouse)
             except Exception as exc:
                 print(stamp(f"[ERROR] {label} ingest failed: {exc}"))
 
+    # Execute source updates in parallel using a thread pool
     with ThreadPoolExecutor(max_workers=min(len(classes), 6)) as executor:
         futures = [executor.submit(_run_source, cls) for cls in classes]
         for f in as_completed(futures):
             f.result()
 
+    # Apply standardization and de-duplication across various source types
     _normalize_dscovr_inplace()
     _normalize_sunspot_dedup()
     _normalize_kp_dedup()
     _normalize_radio_flux_dedup()
 
+    # Fill data gaps between last download and 'now' for persistence-based features
     _extend_sunspot_to_now()
     _extend_kp_to_now()
     _extend_radio_flux_to_now()
+    
+    # Prune database to exactly the last 6 months (HOURS_BACK)
     _keep_latest_hours(HOURS_BACK)
 
     duration = time.time() - run_started
     print(stamp(f"Update complete in {duration:.2f} seconds"))
 
 
+# Clean out existing forward-fill rows to prepare for live data replacement
 def _clear_forward_fills() -> None:
     with sqlite3.connect(OUTPUT_DB) as conn:
         conn.execute("DELETE FROM kp_index WHERE source_type = 'forward_fill'")
@@ -148,10 +164,8 @@ def _clear_forward_fills() -> None:
         conn.commit()
 
 
+# Ensure time_tag strings are ISO8601 compliant with UTC zones
 def _normalize_dst_timezone() -> None:
-    """
-    Ensure existing dst_index rows carry explicit UTC offset before new rows are appended.
-    """
     with sqlite3.connect(OUTPUT_DB) as conn:
         df = pd.read_sql_query("SELECT * FROM dst_index", conn)
         if df.empty:
@@ -161,6 +175,7 @@ def _normalize_dst_timezone() -> None:
         df = df.dropna(subset=["time_tag"])
         df["time_tag"] = df["time_tag"].dt.strftime("%Y-%m-%d %H:%M:%S+00:00")
 
+        # Deduplicate on timestamp, keeping the most recently updated record
         df = (
             df.sort_values("time_tag")
             .groupby("time_tag", as_index=False)
@@ -172,6 +187,7 @@ def _normalize_dst_timezone() -> None:
         conn.commit()
 
 
+# Delete data within the specified trailing window
 def _remove_recent_data(days: int) -> None:
     cutoff = (
         datetime.now(timezone.utc)
@@ -189,6 +205,7 @@ def _remove_recent_data(days: int) -> None:
         conn.commit()
 
 
+# Standardize DSCOVR time strings to high precision UTC format
 def _normalize_dscovr_inplace() -> None:
     with sqlite3.connect(OUTPUT_DB) as conn:
         for table in ("dscovr_f1m", "dscovr_m1m"):
@@ -202,6 +219,7 @@ def _normalize_dscovr_inplace() -> None:
         conn.commit()
 
 
+# Standardize and deduplicate Radio Flux data
 def _normalize_radio_flux_dedup() -> None:
     with sqlite3.connect(OUTPUT_DB) as conn:
         df = pd.read_sql_query("SELECT * FROM radio_flux", conn)
@@ -223,6 +241,7 @@ def _normalize_radio_flux_dedup() -> None:
         conn.commit()
 
 
+# Standardize and deduplicate Kp Index data
 def _normalize_kp_dedup() -> None:
     with sqlite3.connect(OUTPUT_DB) as conn:
         df = pd.read_sql_query("SELECT * FROM kp_index", conn)
@@ -244,6 +263,7 @@ def _normalize_kp_dedup() -> None:
         conn.commit()
 
 
+# Standardize and deduplicate Sunspot Number data (daily resolution)
 def _normalize_sunspot_dedup() -> None:
     with sqlite3.connect(OUTPUT_DB) as conn:
         df = pd.read_sql_query("SELECT * FROM sunspot_numbers", conn)
@@ -265,6 +285,7 @@ def _normalize_sunspot_dedup() -> None:
         conn.commit()
 
 
+# Repeat the last known Kp value up to the current hour
 def _extend_kp_to_now() -> None:
     now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
     with sqlite3.connect(OUTPUT_DB) as conn:
@@ -291,6 +312,7 @@ def _extend_kp_to_now() -> None:
         conn.commit()
 
 
+# Repeat the last known Radio Flux values up to the current hour
 def _extend_radio_flux_to_now() -> None:
     now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
     with sqlite3.connect(OUTPUT_DB) as conn:
@@ -318,6 +340,7 @@ def _extend_radio_flux_to_now() -> None:
         conn.commit()
 
 
+# Repeat the last known Sunspot Number up to the current date
 def _extend_sunspot_to_now() -> None:
     target_date = datetime.now(timezone.utc).date() + timedelta(days=1)
     with sqlite3.connect(OUTPUT_DB) as conn:
@@ -344,6 +367,7 @@ def _extend_sunspot_to_now() -> None:
         conn.commit()
 
 
+# Download and ingest Sunspot Number data
 def _refresh_sunspot(start_date, end_date, warehouse) -> None:
     try:
         source = SunspotNumberDataSource(days=(start_date, end_date))
@@ -359,6 +383,7 @@ def _refresh_sunspot(start_date, end_date, warehouse) -> None:
     source.ingest(df, warehouse=warehouse)
 
 
+# Fetch the latest available timestamp for a specific database table
 def _last_table_timestamp(table: Optional[str]) -> Optional[datetime]:
     if not table:
         return None
@@ -375,8 +400,8 @@ def _last_table_timestamp(table: Optional[str]) -> Optional[datetime]:
         return ts.to_pydatetime()
 
 
+# Enforce a rolling time window by deleting rows older than N hours
 def _keep_latest_hours(hours: int) -> None:
-    """Keep only rows within the latest N hours based on the time column."""
     if hours <= 0:
         return
     cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
