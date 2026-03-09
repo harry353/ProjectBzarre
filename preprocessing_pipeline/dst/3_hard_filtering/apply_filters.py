@@ -2,6 +2,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+# Handle absolute path resolution with fallbacks for local and installed project layouts
 PROJECT_ROOT = Path(__file__).resolve()
 for parent in PROJECT_ROOT.parents:
     if (parent / "space_weather_api.py").exists():
@@ -18,18 +19,25 @@ import pandas as pd
 from preprocessing_pipeline.utils import load_hourly_output, write_sqlite_table
 
 STAGE_DIR = Path(__file__).resolve().parent
+# Load averaged DST data from the primary staging database
 HOURLY_DB = STAGE_DIR.parents[1] / "dst" / "1_averaging" / "dst_aver.db"
 HOURLY_TABLE = "hourly_data"
+# Store the filtered dataset in a dedicated database for this stage
 OUTPUT_DB = STAGE_DIR / "dst_aver_filt.db"
 OUTPUT_TABLE = "filtered_data"
 REQUIRED_COLUMNS = ["dst"]
 
 
+# Removes rows with missing critical parameters to ensure downstream pipeline stability
 def apply_dst_filters() -> pd.DataFrame:
     df = load_hourly_output(HOURLY_DB, HOURLY_TABLE)
     if df.empty:
         raise RuntimeError("DST hourly data not found; run averaging step first.")
+    
+    # Perform hard filtering: any row missing 'dst' is discarded
     filtered = df.dropna(subset=REQUIRED_COLUMNS)
+    
+    # Persist the cleaned dataset
     write_sqlite_table(filtered, OUTPUT_DB, OUTPUT_TABLE)
     print(f"[OK] DST filtered dataset saved to {OUTPUT_DB}")
     return filtered

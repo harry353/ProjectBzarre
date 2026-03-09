@@ -41,6 +41,7 @@ INFLUENCE_MEAN_WINDOW_H = 12
 SHOCK_MAX_WINDOW_H = 6
 
 
+# Loads the CME catalog from LASCO split tables (train/validation/test)
 def _load_cme_catalog(table: str) -> pd.DataFrame:
     with sqlite3.connect(CATALOG_DB) as conn:
         df = pd.read_sql_query(
@@ -48,6 +49,7 @@ def _load_cme_catalog(table: str) -> pd.DataFrame:
             conn,
             parse_dates=["time_tag", "timestamp"],
         )
+    # Standardize to time_tag column to ensure consistency across different pipeline states
     if "time_tag" in df.columns:
         df["time_tag"] = pd.to_datetime(df["time_tag"], utc=True, errors="coerce")
         df = df.dropna(subset=["time_tag"])
@@ -59,6 +61,7 @@ def _load_cme_catalog(table: str) -> pd.DataFrame:
     raise RuntimeError("CME catalog split missing time_tag/timestamp column.")
 
 
+# Converts a generic date string into a UTC-aware Pandas Timestamp
 def _parse_date(value: str) -> pd.Timestamp:
     ts = pd.Timestamp(value)
     if ts.tzinfo is None:
@@ -68,16 +71,19 @@ def _parse_date(value: str) -> pd.Timestamp:
     return ts
 
 
+# Retrieves global split temporal windows from environment variables or hardcoded defaults
 def _get_windows() -> dict[str, tuple[pd.Timestamp, pd.Timestamp]]:
     env = os.environ
     windows: dict[str, tuple[pd.Timestamp, pd.Timestamp]] = {}
     for split, (start_default, end_default) in DEFAULT_WINDOWS.items():
+        # Allow runtime overrides for custom temporal segments
         start = env.get(f"PREPROC_SPLIT_{split.upper()}_START", start_default)
         end = env.get(f"PREPROC_SPLIT_{split.upper()}_END", end_default)
         windows[split] = (_parse_date(start), _parse_date(end))
     return windows
 
 
+# Derives temporal windows dynamically from the actual contents of the Lasco split tables
 def _get_windows_from_splits() -> dict[str, tuple[pd.Timestamp, pd.Timestamp]]:
     windows: dict[str, tuple[pd.Timestamp, pd.Timestamp]] = {}
     for split in ("train", "validation", "test"):
@@ -85,39 +91,48 @@ def _get_windows_from_splits() -> dict[str, tuple[pd.Timestamp, pd.Timestamp]]:
         df = _load_cme_catalog(table)
         if df.empty:
             raise RuntimeError(f"CME split '{split}' is empty; cannot derive window.")
+        # Detect whether the table uses 'time_tag' or 'timestamp' for temporal alignment
         time_col = "time_tag" if "time_tag" in df.columns else "timestamp"
         series = pd.to_datetime(df[time_col], utc=True, errors="coerce").dropna()
         if series.empty:
             raise RuntimeError(f"CME split '{split}' has no valid timestamps.")
+        # Boundary detection for resampling
         start = series.min().floor("h")
         end = series.max().ceil("h")
         windows[split] = (start, end)
     return windows
 
 
+# Performs the core feature derivation for a single data split
 def _engineer_split(split: str, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
     table = f"cme_catalog_{split}"
     cme = _load_cme_catalog(table)
     cme = cme.set_index("time_tag").sort_index()
+    # Filter out entries with invalid physical measurements
     cme = cme.dropna(subset=["median_velocity"])
     cme = cme.loc[~cme.index.duplicated(keep="last")]
 
+    # 1. Delta-based Features
     cme["prev_cme_v_med"] = cme["median_velocity"].shift(1)
     cme["last_cme_speed_ratio"] = (
         cme["median_velocity"] / cme["prev_cme_v_med"].clip(lower=1.0)
     )
+    # Binary flag indicating potentially interacting/overtaking CMEs (rapid speed increase)
     cme["cme_overtaking_flag"] = (cme["last_cme_speed_ratio"] > 1.5).astype(int)
 
+    # 2. Geometric and Physical Proxies
     cme["strength"] = cme["median_velocity"] * cme["angular_width"]
     cme["shock_proxy"] = (
         cme["median_velocity"]
         * (cme["velocity_variation"] / cme["median_velocity"].clip(lower=1.0))
     )
 
+    # Convert position angle to Earth-alignment proxy (simplified cosine weighting)
     pa = np.deg2rad(cme["position_angle"])
     earth_alignment = np.cos(pa).clip(-1.0, 1.0)
     cme["effective_width"] = cme["angular_width"] * earth_alignment.clip(0.0, 1.0)
 
+    # 3. Resampling to Hourly Grid
     now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
     window_end = max(end, now)
     hourly_index = pd.date_range(start, window_end, freq="1h", tz="UTC")
@@ -128,13 +143,16 @@ def _engineer_split(split: str, start: pd.Timestamp, end: pd.Timestamp) -> pd.Da
     if not event_index.is_monotonic_increasing:
         raise RuntimeError("CME event index not monotonic")
 
+    # Reindex events to the continuous hourly timeline using forward-fill
     event_series = pd.Series(event_index, index=event_index)
     last_event = event_series.reindex(hourly.index, method="ffill")
 
+    # Time-since-event decaying features
     hourly["hours_since_last_cme"] = (
         (hourly.index - last_event).dt.total_seconds() / 3600.0
     ).fillna(1e6)
 
+    # Cumulative physical impact within a 24-hour window
     strength_series = (
         cme["strength"]
         .groupby(pd.Grouper(freq="1h"))
@@ -146,6 +164,7 @@ def _engineer_split(split: str, start: pd.Timestamp, end: pd.Timestamp) -> pd.Da
         strength_series.rolling(24, min_periods=1).sum().fillna(0.0)
     )
 
+    # Helper function for sparse event propagation
     def ff(series: pd.Series, fill=0.0) -> pd.Series:
         s = (
             series
@@ -156,15 +175,18 @@ def _engineer_split(split: str, start: pd.Timestamp, end: pd.Timestamp) -> pd.Da
         aligned = s.reindex(hourly.index)
         return aligned.ffill().fillna(fill)
 
+    # Continuous propagation of the last observed physical state
     hourly["last_cme_v_med"] = ff(cme["median_velocity"])
     hourly["effective_width"] = ff(cme["effective_width"])
     hourly["cme_overtaking_flag"] = ff(cme["cme_overtaking_flag"], 0).astype(int)
     hourly["last_cme_shock_proxy"] = ff(cme["shock_proxy"])
 
+    # Exponential decay proxy for CME geomagnetic influence persistence
     hourly["cme_influence_exp"] = np.exp(
         -hourly["hours_since_last_cme"] / DECAY_TAU_HOURS
     )
 
+    # Consolidate the essential feature vector
     hourly = hourly[
         [
             "hours_since_last_cme",
@@ -180,15 +202,18 @@ def _engineer_split(split: str, start: pd.Timestamp, end: pd.Timestamp) -> pd.Da
     return hourly
 
 
+# Generates rolling aggregates (min/max/mean) to capture trend information
 def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
     df = df.sort_index()
     out = df.copy()
 
+    # Determine minimum required valid points based on window coverage threshold
     def _min_periods(w: int) -> int:
         return max(1, int(np.ceil(w * MIN_FRACTION_COVERAGE)))
 
     agg_cols: list[str] = []
 
+    # Recency trend: minimum hours since last eruption
     w = HOURS_SINCE_MIN_WINDOW_H
     window = f"{w}h"
     col = f"min_hours_since_last_cme_{w}h"
@@ -199,6 +224,7 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
     )
     agg_cols.append(col)
 
+    # Peak intensity trend: maximum observed velocity in the window
     w = V_MED_MAX_WINDOW_H
     window = f"{w}h"
     col = f"max_last_cme_v_med_{w}h"
@@ -209,6 +235,7 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
     )
     agg_cols.append(col)
 
+    # Persistence trend: average exponential influence
     w = INFLUENCE_MEAN_WINDOW_H
     window = f"{w}h"
     col = f"mean_cme_influence_exp_{w}h"
@@ -219,6 +246,7 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
     )
     agg_cols.append(col)
 
+    # Shock trend: maximum shock proxy intensity
     w = SHOCK_MAX_WINDOW_H
     window = f"{w}h"
     col = f"max_last_cme_shock_proxy_{w}h"
@@ -229,6 +257,7 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
     )
     agg_cols.append(col)
 
+    # Cleanup: remove outliers and invalid rows before finalizing
     out = out.replace([np.inf, -np.inf], np.nan)
     out = out.dropna(subset=agg_cols)
     if out.empty:
@@ -237,13 +266,16 @@ def _build_agg(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+# Orchestrates the feature engineering pipeline across all data splits (train/val/test)
 def engineer_cme_features() -> dict[str, pd.DataFrame]:
+    # Determine the temporal scope for each pipeline segment
     windows = _get_windows_from_splits() if SKIP_SPLITS else _get_windows()
     outputs: dict[str, pd.DataFrame] = {}
     for split, (start, end) in windows.items():
         hourly = _engineer_split(split, start, end)
         outputs[split] = _build_agg(hourly)
 
+    # Save final feature matrices to the output SQLite database
     for split, features in outputs.items():
         out = features.reset_index().rename(columns={features.index.name or "index": "timestamp"})
         with sqlite3.connect(OUTPUT_DB) as conn:

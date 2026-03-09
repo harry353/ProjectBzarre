@@ -37,18 +37,22 @@ DEFAULT_WINDOWS = {
 SKIP_SPLITS = os.environ.get("PREPROC_SKIP_SPLITS", "").lower() in {"1", "true", "yes"}
 
 
+# Ensures the dataframe has a UTC DatetimeIndex and is sorted chronologically
 def _prepare_index(df: pd.DataFrame) -> pd.DataFrame:
     if not isinstance(df.index, pd.DatetimeIndex):
         raise ValueError("CME catalog must have a DatetimeIndex.")
+    # Localize to UTC if timezone is missing, otherwise convert to UTC
     if df.index.tz is None:
         df.index = df.index.tz_localize("UTC")
     else:
         df.index = df.index.tz_convert("UTC")
+    # Ensure index is sorted for efficient time-series slicing
     if not df.index.is_monotonic_increasing:
         df = df.sort_index()
     return df
 
 
+# Converts a date string into a UTC-localized Pandas Timestamp
 def _parse_date(value: str) -> pd.Timestamp:
     ts = pd.Timestamp(value)
     if ts.tzinfo is None:
@@ -58,17 +62,21 @@ def _parse_date(value: str) -> pd.Timestamp:
     return ts
 
 
+# Retrieves temporal split boundaries from environment variables or defaults
 def _get_windows() -> dict[str, tuple[pd.Timestamp, pd.Timestamp]]:
     env = os.environ
     windows: dict[str, tuple[pd.Timestamp, pd.Timestamp]] = {}
     for split, (start_default, end_default) in DEFAULT_WINDOWS.items():
+        # Check for overrides for train, validation, and test start/end dates
         start = env.get(f"PREPROC_SPLIT_{split.upper()}_START", start_default)
         end = env.get(f"PREPROC_SPLIT_{split.upper()}_END", end_default)
         windows[split] = (_parse_date(start), _parse_date(end))
     return windows
 
 
+# Extracts a subset of the dataframe between two UTC timestamps
 def _slice(df: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
+    # Handle potential timezone mismatches between data and split markers
     if df.index.tz is not None:
         if start.tzinfo is None:
             start = start.tz_localize(df.index.tz)
@@ -80,6 +88,7 @@ def _slice(df: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataF
     return df.loc[(df.index >= start) & (df.index <= end)]
 
 
+# Loads the LASCO CME catalog from the primary SQLite database
 def _load_catalog() -> pd.DataFrame:
     with sqlite3.connect(CATALOG_DB) as conn:
         df = pd.read_sql_query(
@@ -89,6 +98,7 @@ def _load_catalog() -> pd.DataFrame:
         )
     if df.empty:
         return df
+    # Standardize time_tag to UTC and drop corrupt entries
     if "time_tag" in df.columns:
         df["time_tag"] = pd.to_datetime(df["time_tag"], utc=True, errors="coerce")
         df = df.dropna(subset=["time_tag"])
@@ -96,12 +106,14 @@ def _load_catalog() -> pd.DataFrame:
     raise RuntimeError("CME catalog missing time_tag column.")
 
 
+# Orchestrates the generation of train, validation, and test sets for CME analysis
 def create_cme_splits() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     df = _load_catalog()
     if df.empty:
         raise RuntimeError("CME catalog dataset is empty.")
     df = _prepare_index(df)
 
+    # Option to bypass temporal splitting for testing/debugging purposes
     if SKIP_SPLITS:
         train = val = test = df
     else:
@@ -113,6 +125,7 @@ def create_cme_splits() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         if train.empty or val.empty or test.empty:
             raise RuntimeError("Unable to create non-empty temporal splits; adjust PREPROC_SPLIT_* windows.")
 
+    # Persist the resulting splits into a staging SQLite database
     with sqlite3.connect(OUTPUT_DB) as conn:
         train.to_sql(TRAIN_TABLE, conn, if_exists="replace", index_label="timestamp")
         val.to_sql(VAL_TABLE, conn, if_exists="replace", index_label="timestamp")
