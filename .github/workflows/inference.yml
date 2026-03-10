@@ -43,15 +43,30 @@ jobs:
         run: |
           python inference/run_full_inference.py
 
-      - name: Commit inference output to inference branch
+      - name: Commit and Push inference output
         shell: bash -l {0}
         run: |
+          # 1. Identity Configuration
           git config user.name "github-actions"
           git config user.email "actions@github.com"
 
+          # 2. Ensure we are on the correct branch and have the latest remote state
+          git fetch origin auto_inference
           git checkout auto_inference
+
+          # 3. Stage the specific output files
           git add combined_predicted_dst_and_prob.png inference/space_weather_last_6m.db
 
-          git diff --cached --quiet || git commit -m "Update inference plot"
-          git push origin auto_inference
-
+          # 4. Conditional Commit and Rebase-Push
+          if ! git diff --cached --quiet; then
+            echo "Changes detected, committing..."
+            git commit -m "Update inference plot [skip ci]"
+            
+            # Use rebase to put your new plot on top of any database updates 
+            # pushed by other instances of this action while this one was running.
+            git pull --rebase origin auto_inference
+            
+            git push origin auto_inference
+          else
+            echo "No changes in inference output. Skipping push."
+          fi

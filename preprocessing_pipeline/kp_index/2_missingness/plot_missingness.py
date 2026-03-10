@@ -2,6 +2,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+# Handle absolute path resolution with fallbacks for local and installed project layouts
 PROJECT_ROOT = Path(__file__).resolve()
 for parent in PROJECT_ROOT.parents:
     if (parent / "space_weather_api.py").exists():
@@ -10,11 +11,13 @@ for parent in PROJECT_ROOT.parents:
 else:
     PROJECT_ROOT = PROJECT_ROOT.parent
 
+# Ensure the project root is in the system path for local module imports
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 import matplotlib
 
+# Force non-interactive Agg backend to avoid GUI dependencies during automated pipeline execution
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd
@@ -22,12 +25,14 @@ import pandas as pd
 from preprocessing_pipeline.utils import load_hourly_output
 
 STAGE_DIR = Path(__file__).resolve().parent
+# Source the hourly averaged Kp database from the previous stage
 HOURLY_DB = STAGE_DIR.parents[1] / "kp_index" / "1_averaging" / "kp_index_aver.db"
 HOURLY_TABLE = "hourly_data"
 FIGURE_PATH = STAGE_DIR / "kp_index_missingness.png"
 COLUMNS = ["kp_index"]
 
 
+# Visualizes the temporal gaps in the Kp-Index telemetry to identify missing data segments
 def plot_kp_missingness() -> None:
     df = load_hourly_output(HOURLY_DB, HOURLY_TABLE)
     if df.empty:
@@ -39,9 +44,11 @@ def plot_kp_missingness() -> None:
         series = df.get(column)
         if series is None:
             continue
+        # Isolate valid (non-NaN) samples to identify observation gaps
         clean = series.dropna()
         if clean.empty:
             continue
+        # Calculate time difference between consecutive valid samples in decimal hours
         gaps = clean.index.to_series().diff().dt.total_seconds().fillna(0.0) / 3600.0
         ax.plot(clean.index, gaps, label=column)
         plotted = True
@@ -56,6 +63,7 @@ def plot_kp_missingness() -> None:
     ax.set_ylabel("Gap (hours)")
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
+    # Persist the diagnostic plot as a PNG
     fig.savefig(FIGURE_PATH, dpi=150)
     plt.close(fig)
     print(f"[OK] Missingness plot written to {FIGURE_PATH}")

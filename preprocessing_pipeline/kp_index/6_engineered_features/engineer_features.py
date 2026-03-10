@@ -10,6 +10,7 @@ import pandas as pd
 # ---------------------------------------------------------------------
 # Project root
 # ---------------------------------------------------------------------
+# Resolve absolute path of the current script and search for project root (space_weather_api.py)
 PROJECT_ROOT = Path(__file__).resolve()
 for parent in PROJECT_ROOT.parents:
     if (parent / "space_weather_api.py").exists():
@@ -18,15 +19,14 @@ for parent in PROJECT_ROOT.parents:
 else:
     PROJECT_ROOT = PROJECT_ROOT.parent
 
+# Inject project root into system path to allow local module imports
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from preprocessing_pipeline.utils import load_hourly_output
 
-# ---------------------------------------------------------------------
-# Paths
-# ---------------------------------------------------------------------
 STAGE_DIR = Path(__file__).resolve().parent
+# Source partitioned Kp data
 SPLITS_DB = (
     STAGE_DIR.parents[1]
     / "kp_index"
@@ -34,6 +34,7 @@ SPLITS_DB = (
     / "kp_imputed_split.db"
 )
 
+# Final feature matrix for the Kp-Index module
 OUTPUT_DB = STAGE_DIR.parents[1] / "kp_index" / "kp_fin.db"
 OUTPUT_TABLES = {
     "train": "kp_train",
@@ -43,6 +44,8 @@ OUTPUT_TABLES = {
 
 WINDOW_H = 6
 MIN_FRACTION_COVERAGE = 0.5
+
+# Standard linear lookup for equivalent planetary amplitude (ap) from Kp index
 KP_TO_AP = {
     0.00: 0, 0.33: 2, 0.67: 3, 1.00: 4, 1.33: 5, 1.67: 6, 2.00: 7,
     2.33: 9, 2.67: 12, 3.00: 15, 3.33: 18, 3.67: 22, 4.00: 27,
@@ -52,9 +55,8 @@ KP_TO_AP = {
 }
 KP_KEYS = np.array(sorted(KP_TO_AP.keys()), dtype=float)
 
-# ---------------------------------------------------------------------
-# Feature engineering (HOURLY, NO AGGREGATES)
-# ---------------------------------------------------------------------
+
+# Derives instantaneous geomagnetic features from the quasi-logarithmic Kp index
 def _add_kp_features(df: pd.DataFrame) -> pd.DataFrame:
     working = df.copy().sort_index()
 
@@ -63,22 +65,27 @@ def _add_kp_features(df: pd.DataFrame) -> pd.DataFrame:
 
     kp = working["kp_index"].astype(float)
 
+    # Convert quasi-logarithmic Kp to linear Ap scale
     ap = kp.round(2).map(KP_TO_AP)
     missing = ap.isna()
     if missing.any():
+        # Handle floating point mismatches by finding the nearest valid Kp report value
         vals = kp.round(2)[missing].to_numpy()
         idx = np.abs(vals[:, None] - KP_KEYS[None, :]).argmin(axis=1)
         ap.loc[missing] = [KP_TO_AP[k] for k in KP_KEYS[idx]]
     working["ap"] = ap.astype(float)
 
+    # Categorical bins for storm intensity (Quiet, Unsettled, Active, Storm)
     working["kp_regime"] = pd.cut(
         kp,
         bins=[-np.inf, 2, 4, 6, np.inf],
         labels=[0, 1, 2, 3],
     ).astype(int)
 
+    # Captures short-term geomagnetic transitions
     working["ap_3h_change"] = working["ap"].diff().fillna(0.0)
 
+    # Mapping of Ap to standard NOAA G-scale equivalents
     working["ap_level_bucket"] = pd.cut(
         working["ap"],
         bins=[-np.inf, 10, 30, 80, 200, np.inf],
@@ -97,9 +104,7 @@ def _add_kp_features(df: pd.DataFrame) -> pd.DataFrame:
     ]
 
 
-# ---------------------------------------------------------------------
-# Pipeline entry
-# ---------------------------------------------------------------------
+# Helper to compute the rate of change using least-squares linear regression
 def _linear_slope(series: pd.Series) -> float:
     y = series.to_numpy(dtype=float)
     mask = np.isfinite(y)
@@ -118,33 +123,39 @@ def _linear_slope(series: pd.Series) -> float:
     return float(np.sum((x - x_mean) * (y - y_mean)) / denom)
 
 
+# Optional temporal aggregates (currently deactivated in the main entry point)
 def _add_kp_agg_features(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
     min_periods = max(1, int(np.ceil(WINDOW_H * MIN_FRACTION_COVERAGE)))
     window = f"{WINDOW_H}h"
 
+    # Deepest geomagnetic disturbance in the window
     out[f"kp_max_{WINDOW_H}h"] = (
         df["kp"]
         .rolling(window, min_periods=min_periods)
         .max()
     )
 
+    # Mean intensity
     out[f"kp_mean_{WINDOW_H}h"] = (
         df["kp"]
         .rolling(window, min_periods=min_periods)
         .mean()
     )
 
+    # Discrete step change since window start
     out[f"kp_delta_{WINDOW_H}h"] = (
         df["kp"] - df["kp"].shift(WINDOW_H)
     )
 
+    # Fraction of time spent in 'Storm' conditions (Kp >= 5)
     out[f"kp_ge5_frac_{WINDOW_H}h"] = (
         (df["kp"] >= 5.0)
         .rolling(window, min_periods=min_periods)
         .mean()
     )
 
+    # Linear trend of intensity across the window
     out[f"kp_slope_{WINDOW_H}h"] = (
         df["kp"]
         .rolling(window, min_periods=min_periods)
@@ -158,6 +169,7 @@ def _add_kp_agg_features(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+# Orchestrates the generation of engineered features across all data splits
 def engineer_kp_features() -> dict[str, pd.DataFrame]:
     outputs: dict[str, pd.DataFrame] = {}
     for split, table in OUTPUT_TABLES.items():
@@ -165,10 +177,14 @@ def engineer_kp_features() -> dict[str, pd.DataFrame]:
         if df.empty:
             raise RuntimeError("Imputed KP split not found; run split first.")
 
+        # Transform raw index to linear proxies and regime buckets
         features = _add_kp_features(df)
+        
+        # Aggregate features are currently disabled to maintain consistent model dimensionality
 #        features = _add_kp_agg_features(features)
         outputs[split] = features
 
+        # Save the finalized feature matrix to the module's terminal database
         out = features.reset_index().rename(columns={features.index.name or "index": "timestamp"})
         with sqlite3.connect(OUTPUT_DB) as conn:
             out.to_sql(table, conn, if_exists="replace", index=False)
@@ -180,7 +196,6 @@ def engineer_kp_features() -> dict[str, pd.DataFrame]:
     return outputs
 
 
-# ---------------------------------------------------------------------
 def main() -> None:
     engineer_kp_features()
 
