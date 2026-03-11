@@ -81,7 +81,7 @@ def download_solar_wind_dscovr(start_date, end_date, max_workers: int = 8) -> pd
 def _download_day(day) -> tuple[Optional[pd.DataFrame], bool]:
     directory = f"{BASE_DIR}/{day.year}/{day.month:02d}/"
 
-    response = http_get(directory, log_name="Solar Wind DSCOVR", timeout=15)
+    response = http_get(directory, log_name="Solar Wind DSCOVR", timeout=15, use_cache=True)
     if response is None:
         return None, True
     html = response.text

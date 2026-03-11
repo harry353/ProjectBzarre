@@ -85,6 +85,8 @@ def _copy_table(
     if not ddl_row or not ddl_row[0]:
         return 0
 
+    # Clean the destination table to allow a fresh copy
+    dst.execute(f"DROP TABLE IF EXISTS {table}")
     dst.execute(ddl_row[0])
 
     cols = [row[1] for row in src.execute(f"PRAGMA table_info({table})")]

@@ -137,6 +137,7 @@ def _resolve_filename(day: date) -> Optional[str]:
         timeout=60,
         log_name="Solar Wind ACE",
         allowed_statuses={404},
+        use_cache=True,
     )
     if response is None or response.status_code == 404:
         return None

@@ -44,7 +44,7 @@ def download_imf_discovr(start_date, end_date, max_workers=8):
         month = f"{day.month:02d}"
         directory = f"{BASE_DIR}/{year}/{month}/"
 
-        response = http_get(directory, log_name="IMF DSCOVR", timeout=15)
+        response = http_get(directory, log_name="IMF DSCOVR", timeout=15, use_cache=True)
         if response is None:
             return None, True
 

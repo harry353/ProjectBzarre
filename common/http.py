@@ -7,6 +7,11 @@ import requests
 THREAD_SESSION = threading.local()
 
 
+# Global in-memory cache for GET requests to prevent redundant network hits across threads
+_GET_CACHE: dict[str, requests.Response | None] = {}
+_CACHE_LOCK = threading.Lock()
+
+
 def http_get(
     url: str,
     *,
@@ -16,17 +21,25 @@ def http_get(
     raise_for_status: bool = True,
     retries: int = 3,
     retry_delay: float = 1.0,
+    use_cache: bool = False,
     **kwargs,
-):
+) -> Optional[requests.Response]:
     """
-    Issue an HTTP GET request with consistent logging.
+    Issue an HTTP GET request with consistent logging and optional caching.
 
-    Returns the Response on success or None if an exception occurred.
+    If use_cache is True, successful responses and permanent failures (None) 
+    are cached by URL for the lifetime of the process.
     """
+    if use_cache:
+        with _CACHE_LOCK:
+            if url in _GET_CACHE:
+                return _GET_CACHE[url]
+
     allowed = set(allowed_statuses or [])
     client = session or getattr(THREAD_SESSION, "session", None) or requests.Session()
     label = f"[{log_name}] " if log_name else ""
 
+    response: Optional[requests.Response] = None
     attempt = 0
     while True:
         attempt += 1
@@ -37,8 +50,15 @@ def http_get(
             final_url = _resolve_request_url(exc, url)
             print(f"[WARN] {label}Request failed for {final_url} (attempt {attempt}/{retries}): {exc}")
             if attempt >= retries:
+                if use_cache:
+                    with _CACHE_LOCK:
+                        _GET_CACHE[url] = None
                 return None
             time.sleep(retry_delay)
+
+    if use_cache:
+        with _CACHE_LOCK:
+            _GET_CACHE[url] = response
 
     if response.status_code in allowed:
         print(f"[INFO] {label}HTTP {response.status_code} for {response.url}")

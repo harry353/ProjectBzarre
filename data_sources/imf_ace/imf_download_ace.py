@@ -141,6 +141,7 @@ def _resolve_filename(day: date, session: requests.Session) -> Optional[str]:
         log_name="IMF ACE",
         timeout=60,
         allowed_statuses={404},
+        use_cache=True,
     )
     if response is None or response.status_code == 404:
         return None
