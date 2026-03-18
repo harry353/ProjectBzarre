@@ -7,15 +7,19 @@ import pandas as pd
 from scipy import stats
 
 
+# Merged training table from the preprocessing pipeline — only train split is analyzed
+# to avoid any leakage when deciding which transforms to apply.
 DEFAULT_DB = Path(
     "/home/haris/Documents/ProjectBzarre/preprocessing_pipeline/merge_features/all_preprocessed_sources.db"
 )
 DEFAULT_TABLE = "merged_train"
+# Output CSV consumed by apply_log_zscore_transforms.py to decide per-feature transforms.
 DEFAULT_OUTPUT_CSV = Path(
     "/home/haris/Documents/ProjectBzarre/regression_pipeline/log_candidates.csv"
 )
 
 # Heuristic filters for non-continuous features (explicit, conservative).
+# Any column whose lowercased name contains one of these tokens is excluded from analysis.
 NAME_EXCLUDE_TOKENS = {
     "time",
     "timestamp",
@@ -31,11 +35,15 @@ NAME_EXCLUDE_TOKENS = {
 
 
 def _load_table(db_path: Path, table: str) -> pd.DataFrame:
+    # Pull the full table from SQLite into memory as a DataFrame.
     with sqlite3.connect(db_path) as conn:
         return pd.read_sql_query(f"SELECT * FROM {table}", conn)
 
 
 def _is_integer_coded(series: pd.Series) -> bool:
+    # Non-numeric columns, explicit integer dtype columns, and float columns whose
+    # values are all whole numbers (e.g. ordinal codes stored as floats) are treated
+    # as integer-coded and excluded from log-transform candidacy.
     if not pd.api.types.is_numeric_dtype(series):
         return True
     if pd.api.types.is_integer_dtype(series):
@@ -47,6 +55,8 @@ def _is_integer_coded(series: pd.Series) -> bool:
 
 
 def _is_flag_like(series: pd.Series) -> bool:
+    # Binary or constant columns (≤2 unique non-null values, or only 0/1) behave
+    # like flags and should not be log-transformed.
     vals = series.dropna().unique()
     if vals.size == 0:
         return True
@@ -58,6 +68,8 @@ def _is_flag_like(series: pd.Series) -> bool:
 
 
 def _exclude_reason(name: str, series: pd.Series) -> str | None:
+    # Returns a short reason string if the column should be skipped, or None if it
+    # is eligible for log-transform analysis.
     lowered = name.lower()
     if any(token in lowered for token in NAME_EXCLUDE_TOKENS):
         return "name_match"
@@ -65,12 +77,15 @@ def _exclude_reason(name: str, series: pd.Series) -> str | None:
         return "flag_like"
     if _is_integer_coded(series):
         unique_count = series.dropna().nunique()
+        # Low-cardinality integer columns are almost certainly ordinal/categorical.
         if unique_count <= 20:
             return "integer_coded_low_cardinality"
     return None
 
 
 def _safe_corr(a: pd.Series, b: pd.Series) -> float:
+    # Pearson correlation between two series after dropping rows where either is NaN.
+    # Returns NaN when fewer than 3 aligned observations exist.
     aligned = pd.concat([a, b], axis=1).dropna()
     if len(aligned) < 3:
         return np.nan
@@ -78,6 +93,8 @@ def _safe_corr(a: pd.Series, b: pd.Series) -> float:
 
 
 def _sample_series(series: pd.Series, max_n: int = 5000) -> np.ndarray:
+    # Evenly subsample a non-null array to at most max_n points for speed.
+    # Uses linspace indices so the sample preserves temporal ordering.
     vals = series.dropna().to_numpy()
     if vals.size <= max_n:
         return vals
@@ -86,6 +103,7 @@ def _sample_series(series: pd.Series, max_n: int = 5000) -> np.ndarray:
 
 
 def _qq_r_value(series: pd.Series) -> float:
+    # Pearson r from a normal Q-Q plot — values close to 1.0 indicate near-Gaussian distribution.
     sample = _sample_series(series)
     if sample.size < 3:
         return np.nan
@@ -94,14 +112,18 @@ def _qq_r_value(series: pd.Series) -> float:
 
 
 def _summarize_feature(name: str, series: pd.Series, rolling_window: int) -> dict:
+    # Drop NaNs and cast to float before computing any statistics.
     clean = series.dropna().astype(float)
     if clean.empty:
         raise RuntimeError(f"No data available for feature '{name}'.")
 
+    # Fraction of values that are zero or negative — used as a gate for log eligibility.
     non_positive_frac = float((clean <= 0).mean())
     min_val = float(clean.min())
     max_val = float(clean.max())
 
+    # Orders of magnitude spanned by the feature: log10(max/min).
+    # Wide-range features benefit most from log compression.
     orders_of_mag = np.nan
     if min_val > 0 and max_val > 0:
         orders_of_mag = float(np.log10(max_val / min_val)) if max_val > min_val else 0.0
@@ -118,9 +140,12 @@ def _summarize_feature(name: str, series: pd.Series, rolling_window: int) -> dic
     roll_abs = clean.rolling(rolling_window, min_periods=max(3, rolling_window // 2)).apply(
         lambda x: np.mean(np.abs(x - np.mean(x))), raw=True
     )
+    # High positive correlations here suggest heteroscedasticity — a key motivator for log transforms.
     corr_var = _safe_corr(clean, roll_var)
     corr_abs = _safe_corr(clean, roll_abs)
 
+    # Compute the log-transformed series if the feature is strictly non-negative.
+    # log1p is used when zeros are present to avoid log(0) = -inf.
     has_negatives = (clean < 0).any()
     log_transform = None
     if has_negatives:
@@ -131,6 +156,7 @@ def _summarize_feature(name: str, series: pd.Series, rolling_window: int) -> dic
         else:
             log_transform = np.log(clean)
 
+    # Compute normality diagnostics on the log-transformed series for comparison.
     log_skew = np.nan
     log_kurt = np.nan
     qq_r = _qq_r_value(clean)
@@ -140,6 +166,7 @@ def _summarize_feature(name: str, series: pd.Series, rolling_window: int) -> dic
         log_kurt = float(stats.kurtosis(log_transform, fisher=True, bias=False))
         qq_r_log = _qq_r_value(log_transform)
 
+    # Improvement deltas: positive values mean the log transform made the distribution more Gaussian.
     skew_reduction = np.nan if log_transform is None else abs(skew_val) - abs(log_skew)
     kurt_reduction = np.nan if log_transform is None else abs(kurt_val) - abs(log_kurt)
     qq_r_improvement = np.nan if log_transform is None else qq_r_log - qq_r
@@ -159,6 +186,7 @@ def _summarize_feature(name: str, series: pd.Series, rolling_window: int) -> dic
         ):
             log_candidate = True
 
+    # Return a flat dict; all such dicts are assembled into the final report DataFrame.
     return {
         "feature": name,
         "non_positive_frac": non_positive_frac,
@@ -185,9 +213,10 @@ def _summarize_feature(name: str, series: pd.Series, rolling_window: int) -> dic
 
 
 def main() -> None:
+    # Hard-coded configuration — no CLI in this diagnostic script.
     db_path = DEFAULT_DB
     table = DEFAULT_TABLE
-    rolling_window = 24
+    rolling_window = 24  # 24-step rolling window aligns with hourly geomagnetic data cadence.
     output_csv = DEFAULT_OUTPUT_CSV
 
     if not db_path.exists():
@@ -197,12 +226,13 @@ def main() -> None:
     if df.empty:
         raise RuntimeError(f"Table '{table}' is empty.")
 
+    # Only numeric columns can be analyzed; strings and datetimes are not candidates.
     numeric_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
     if not numeric_cols:
         raise RuntimeError("No numeric columns found to analyze.")
 
-    rows = []
-    excluded = []
+    rows = []      # Summaries for columns that passed the exclusion filters.
+    excluded = []  # (name, reason) pairs for columns that were skipped.
     for col in numeric_cols:
         reason = _exclude_reason(col, df[col])
         if reason is not None:
@@ -210,6 +240,7 @@ def main() -> None:
             continue
         rows.append(_summarize_feature(col, df[col], rolling_window))
 
+    # Sort so the strongest log candidates appear first for easy review.
     report = pd.DataFrame(rows).sort_values(
         ["log_candidate", "skewness_reduction", "kurtosis_reduction"],
         ascending=[False, False, False],
@@ -228,6 +259,7 @@ def main() -> None:
     print("\n[REPORT]")
     print(report.to_string(index=False))
 
+    # Write the report CSV — this file is read by apply_log_zscore_transforms.py.
     output_csv.parent.mkdir(parents=True, exist_ok=True)
     report.to_csv(output_csv, index=False)
     print(f"\n[OK] CSV report written to {output_csv}")

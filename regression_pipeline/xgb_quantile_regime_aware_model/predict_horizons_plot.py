@@ -8,50 +8,65 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+# Resolve project root two levels above this script.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# PCA-projected feature tables produced by apply_pca_transforms.py.
 FEATURES_DB = PROJECT_ROOT / "regression_pipeline" / "pca_features.db"
+# Dst regression label tables — one column per forecast horizon.
 LABELS_DB = PROJECT_ROOT / "preprocessing_pipeline" / "labels" / "dst_regression" / "dst_regression_labels.db"
+# Full merged source DB — used to access the raw dst_dst column for regime classification.
 DST_DB = PROJECT_ROOT / "preprocessing_pipeline" / "merge_features" / "all_preprocessed_sources.db"
 
+# Table names for each split in the features DB.
 FEATURE_TABLES = {
     "train": "pca_train",
     "validation": "pca_validation",
     "test": "pca_test",
 }
+# Table names for each split in the labels DB.
 LABEL_TABLES = {
     "train": "dst_regression_train",
     "validation": "dst_regression_validation",
     "test": "dst_regression_test",
 }
+# Table names for each split in the raw merged DB (for dst_dst).
 DST_TABLES = {
     "train": "merged_train",
     "validation": "merged_validation",
     "test": "merged_test",
 }
 
+# Root directory containing the trained regime-aware quantile models.
 MODEL_BASE = PROJECT_ROOT / "regression_pipeline" / "xgb_quantile_regime_aware_model"
+# Only h1 is plotted by default — edit HORIZONS to include more.
 HORIZONS = range(1, 2)
+# Quantile levels to load and plot.
 QUANTILES = [0.1, 0.5, 0.9]
 YEAR = 2024  # edit as needed
+# Regime boundary: rows with dst_dst < threshold are storm, >= threshold are calm.
 DST_THRESHOLD = -20.0
 REGIME = "both"  # "storm", "calm", or "both"
 
 
 def _load_table(db_path: Path, table: str) -> pd.DataFrame:
+    # Read a full SQLite table into a DataFrame.
     with sqlite3.connect(db_path) as conn:
         return pd.read_sql_query(f"SELECT * FROM {table}", conn)
 
 
 def _normalize_timestamp(series: pd.Series) -> pd.Series:
+    # Parse timestamps to UTC-aware then strip timezone for consistent merging.
     ts = pd.to_datetime(series, errors="coerce", utc=True).dt.tz_convert("UTC")
     return ts.dt.tz_localize(None)
 
 
 def _load_full_split(split: str) -> tuple[pd.DataFrame, list[str]]:
+    # Load and inner-join features, labels, and the raw Dst column for a single split.
     features = _load_table(FEATURES_DB, FEATURE_TABLES[split])
     labels = _load_table(LABELS_DB, LABEL_TABLES[split])
     dst_info = _load_table(DST_DB, DST_TABLES[split])[["timestamp", "dst_dst"]]
 
+    # Identify numeric feature columns before timestamps are converted.
     feature_cols = [
         c for c in features.columns
         if c != "timestamp" and np.issubdtype(features[c].dtype, np.number)
@@ -71,12 +86,14 @@ def _load_full_split(split: str) -> tuple[pd.DataFrame, list[str]]:
 
 
 def load_year(year: int) -> tuple[pd.DataFrame, list[str]]:
+    # Concatenate all three splits and filter to the requested calendar year.
     frames = []
     feature_cols = None
     for split in ("train", "validation", "test"):
         df, fcols = _load_full_split(split)
         feature_cols = feature_cols or fcols
         frames.append(df)
+    # Ensure dst_dst is available as a model input column alongside PCA components.
     if "dst_dst" not in feature_cols:
         feature_cols.append("dst_dst")
     df_all = pd.concat(frames, ignore_index=True)
@@ -88,6 +105,7 @@ def load_year(year: int) -> tuple[pd.DataFrame, list[str]]:
 
 
 def plot_year(year: int) -> None:
+    # Validate the REGIME setting before loading any data.
     regime_lower = REGIME.lower()
     if regime_lower not in {"storm", "calm", "both"}:
         raise ValueError("REGIME must be 'storm', 'calm', or 'both'")
@@ -102,29 +120,34 @@ def plot_year(year: int) -> None:
     df_all, feature_cols = load_year(year)
 
     fig, ax = plt.subplots(figsize=(12, 5))
+    # Plot observed Dst as the black reference line.
     ax.plot(df_all["timestamp"], df_all["h1"], label="DST (actual)", color="black")
 
     rmses_all: list[float] = []
     regimes = []
     storm_color = "#ff7f7f"  # slightly more intense red
     calm_color = "#1f77b4"   # matplotlib default blue
+    # Build the list of regimes to process based on the REGIME setting.
     if regime_lower in {"storm", "both"}:
         regimes.append(("storm", storm_color, "<="))
     if regime_lower in {"calm", "both"}:
         regimes.append(("calm", calm_color, ">="))
 
+    # Accumulate per-segment prediction data for plotting after all regimes are processed.
     segments: list[dict] = []
     for regime_name, color, op in regimes:
         rmses = []
         for h in HORIZONS:
             target_col = f"h{h}"
             feat_cols_with_dst = list(feature_cols)
+            # Ensure dst_dst is always available as an input feature.
             if "dst_dst" not in feat_cols_with_dst:
                 feat_cols_with_dst.append("dst_dst")
             numeric = df_all[feat_cols_with_dst + [target_col]].dropna(axis=0, how="any")
             if target_col not in numeric.columns:
                 raise RuntimeError(f"Missing target column '{target_col}' after numeric filtering.")
 
+            # Apply the regime mask to select only storm or calm rows.
             if op == "<=":
                 mask = numeric["dst_dst"] <= DST_THRESHOLD
             else:
@@ -133,8 +156,10 @@ def plot_year(year: int) -> None:
             if numeric_pred.empty:
                 continue
 
+            # Identify contiguous segments by detecting index gaps > 1.
             segment_ids = numeric_pred.index.to_series().diff().gt(1).cumsum()
 
+            # Load and apply each quantile model to the filtered feature matrix.
             preds = {}
             for q in QUANTILES:
                 model_path = MODEL_BASE / f"h{h}_{regime_name}" / f"q{q}" / "model.joblib"
@@ -143,6 +168,7 @@ def plot_year(year: int) -> None:
                 model = joblib.load(model_path)
                 preds[q] = model.predict(numeric_pred[feature_cols].to_numpy(dtype=np.float32)).astype(float)
 
+            # Collect per-segment predictions and shift timestamps back by h hours to align with forecast origin.
             for _, seg_idx in numeric_pred.groupby(segment_ids).groups.items():
                 seg = numeric_pred.loc[seg_idx]
                 ts_seg = df_all.loc[seg.index, "timestamp"]
@@ -150,6 +176,7 @@ def plot_year(year: int) -> None:
                 q10 = preds[0.1][idx_positions]
                 q50 = preds[0.5][idx_positions]
                 q90 = preds[0.9][idx_positions]
+                # Shift timestamps back by h hours so predictions align with when they were issued.
                 ts_shifted = ts_seg + pd.Timedelta(hours=-h)
 
                 y_true = df_all.loc[seg.index, target_col].to_numpy(dtype=float)
@@ -180,6 +207,7 @@ def plot_year(year: int) -> None:
     for h in HORIZONS:
         h_segments = [s for s in segments if s["h"] == h]
         h_segments_sorted = sorted(h_segments, key=lambda s: s["start"])
+        # Insert a 3-point linear interpolation segment wherever two regimes are adjacent but not overlapping.
         for prev, nxt in zip(h_segments_sorted, h_segments_sorted[1:]):
             if prev["regime"] == nxt["regime"]:
                 continue
@@ -208,11 +236,13 @@ def plot_year(year: int) -> None:
         key = (seg["regime"], seg["h"])
         band_label = None
         line_label = None
+        # Only assign a legend label the first time a (regime, horizon) pair is encountered.
         if not seg.get("interp") and not label_tracker.get(key):
             band_label = f"{seg['regime']} h{seg['h']} q0.1–q0.9"
             line_label = f"{seg['regime']} h{seg['h']} q0.5"
             label_tracker[key] = True
 
+        # Shaded band shows the q0.1–q0.9 prediction interval.
         ax.fill_between(
             seg["ts"],
             seg["q10"],
@@ -221,6 +251,7 @@ def plot_year(year: int) -> None:
             alpha=0.2,
             label=band_label,
         )
+        # Dashed line shows the median (q0.5) forecast.
         ax.plot(
             seg["ts"],
             seg["q50"],
