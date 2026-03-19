@@ -10,6 +10,7 @@ def plot_cme_velocity(df: pd.DataFrame):
         raise ValueError("Cannot plot an empty CME dataset.")
 
     payload = df.copy()
+    # Coerce timestamp and velocity columns so invalid entries are dropped cleanly.
     payload["time_tag"] = pd.to_datetime(payload["time_tag"], errors="coerce")
     payload["median_velocity"] = pd.to_numeric(payload["median_velocity"], errors="coerce")
     payload = payload.dropna(subset=["time_tag", "median_velocity"])

@@ -12,12 +12,15 @@ class CMEDataSource(SpaceWeatherAPI):
     """
 
     def _download_impl(self):
+        # Delegate to the module-level download function using the inherited date range.
         return download_cme_catalog(self.start_date, self.end_date)
 
     def ingest(self, df, warehouse=None, db_path="space_weather.db"):
+        # Skip ingestion silently when the downloaded DataFrame is empty.
         if df.empty:
             return 0
 
+        # Create a default warehouse if the caller did not supply one.
         warehouse = warehouse or SpaceWeatherWarehouse(db_path)
         return ingest_cme_catalog(df, warehouse)
 

@@ -8,10 +8,14 @@ import requests
 
 from common.http import http_get
 
+# Within this many days of today, the realtime feed is used instead of the monthly archive.
 REALTIME_WINDOW_DAYS = 7
+# URL of the live CACTUS CME catalogue — updated in near-real time.
 REALTIME_URL = "https://www.sidc.be/cactus/out/cmecat.txt"
+# Base URL for the monthly archived CACTUS/LASCO 2.5.0 catalogues.
 CATALOG_BASE = "https://www.sidc.be/cactus/catalog/LASCO/2_5_0/"
 
+# Column names that every returned DataFrame is guaranteed to contain.
 OUTPUT_COLUMNS = [
     "event_id",
     "catalog_month",
@@ -46,6 +50,7 @@ def download_cme_catalog(
         df = parse_cme_table(text)
         if df.empty:
             continue
+        # Tag each row with the first day of the catalogue month it came from.
         df["catalog_month"] = date(target.year, target.month, 1)
         frames.append(df)
 
@@ -62,10 +67,12 @@ def build_catalog_url(target_date: date) -> str:
     Construct the catalogue URL for the specified date.
     """
     today = date.today()
+    # Dates within the realtime window are served from the live feed rather than the archive.
     if target_date <= today and (today - target_date) <= timedelta(days=REALTIME_WINDOW_DAYS):
         return REALTIME_URL
 
     base = CATALOG_BASE
+    # Quick-look (qkl) subdirectory was introduced in August 2010.
     if (target_date.year, target_date.month) >= (2010, 8):
         base += "qkl/"
     return f"{base}{target_date:%Y}/{target_date:%m}/cmecat.txt"
@@ -81,9 +88,11 @@ def parse_cme_table(raw_text: str) -> pd.DataFrame:
     data_rows: List[List[str]] = []
 
     for line in lines:
+        # The "# Flow" marker signals the end of the CME data section.
         if line.startswith("# Flow"):
             break
 
+        # The "# CME" line is the column header — start collecting data rows after it.
         if not collecting and line.startswith("# CME"):
             header_line = line
             collecting = True
@@ -92,6 +101,7 @@ def parse_cme_table(raw_text: str) -> pd.DataFrame:
         if not collecting:
             continue
 
+        # Skip blank lines and comment lines within the data section.
         if not line.strip() or line.startswith("#"):
             continue
 
@@ -102,6 +112,7 @@ def parse_cme_table(raw_text: str) -> pd.DataFrame:
         return pd.DataFrame()
 
     columns = _extract_columns(header_line)
+    # Pad short rows with empty strings so every row matches the column count.
     normalized_rows = [
         row[: len(columns)] + [""] * max(0, len(columns) - len(row)) for row in data_rows
     ]
@@ -116,6 +127,7 @@ def prepare_cme_dataframe(df: pd.DataFrame, start_date: date, end_date: date) ->
         return pd.DataFrame(columns=OUTPUT_COLUMNS)
 
     prepared = df.copy()
+    # Rename CACTUS catalogue column abbreviations to descriptive names.
     prepared = prepared.rename(
         columns={
             "CME": "cme_number",
@@ -145,9 +157,11 @@ def prepare_cme_dataframe(df: pd.DataFrame, start_date: date, end_date: date) ->
 
     prepared["cme_number"] = prepared["cme_number"].astype(str).str.strip()
     prepared["halo_class"] = prepared.get("halo_class", "").astype(str).str.strip()
+    # Normalise empty halo_class strings to NULL.
     prepared.loc[prepared["halo_class"] == "", "halo_class"] = None
     prepared["catalog_month"] = pd.to_datetime(prepared["catalog_month"], errors="coerce").dt.date
 
+    # Remove rows without a valid onset timestamp — they cannot be placed in time.
     prepared = prepared.dropna(subset=["time_tag"])
     mask = (prepared["time_tag"].dt.date >= start_date) & (prepared["time_tag"].dt.date <= end_date)
     prepared = prepared.loc[mask]
@@ -156,6 +170,7 @@ def prepare_cme_dataframe(df: pd.DataFrame, start_date: date, end_date: date) ->
         return pd.DataFrame(columns=OUTPUT_COLUMNS)
 
     prepared["event_id"] = prepared.apply(_build_event_id, axis=1)
+    # Remove any duplicate events that span multiple monthly catalogue files.
     prepared = prepared.drop_duplicates(subset=["event_id"])
     prepared = prepared.sort_values("time_tag")
 
@@ -163,6 +178,7 @@ def prepare_cme_dataframe(df: pd.DataFrame, start_date: date, end_date: date) ->
 
 
 def _build_event_id(row) -> str:
+    # Compose a stable unique identifier from the onset timestamp and zero-padded CME number.
     timestamp = row.get("time_tag")
     if pd.isna(timestamp):
         timestamp = None
@@ -175,6 +191,7 @@ def _build_event_id(row) -> str:
 
 
 def _download_catalog(url: str, session: Optional[requests.Session] = None) -> str:
+    # Fetch the raw catalogue text, raising on failure.
     response = http_get(url, session=session, log_name="CME", timeout=60)
     if response is None:
         raise RuntimeError(f"Failed to download catalogue from {url}")
@@ -182,20 +199,24 @@ def _download_catalog(url: str, session: Optional[requests.Session] = None) -> s
 
 
 def _extract_columns(header_line: str) -> List[str]:
+    # Strip the leading "# " comment marker and split on pipe delimiters to get column names.
     header = header_line.lstrip("#").strip()
     return [segment.strip() for segment in header.split("|") if segment.strip()]
 
 
 def _iter_catalog_targets(start_date: date, end_date: date) -> Iterable[date]:
+    # Yield the first day of each calendar month between start_date and end_date inclusive.
     current = date(start_date.year, start_date.month, 1)
     final = date(end_date.year, end_date.month, 1)
 
     while current <= final:
         yield current
+        # Advance by one month, wrapping December -> January correctly.
         year = current.year + (current.month // 12)
         month = (current.month % 12) + 1
         current = date(year, month, 1)
 
+    # Also yield today so the realtime feed is fetched when the range overlaps the recent window.
     today = date.today()
     recent_cutoff = today - timedelta(days=REALTIME_WINDOW_DAYS)
     if start_date <= today and end_date >= recent_cutoff:

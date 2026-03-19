@@ -10,6 +10,7 @@ def plot_dst(df: pd.DataFrame):
         raise ValueError("Cannot plot an empty Dst dataset.")
 
     payload = df.copy()
+    # Coerce timestamps so invalid entries are dropped before plotting.
     payload["time_tag"] = pd.to_datetime(payload["time_tag"], errors="coerce")
     payload = payload.dropna(subset=["time_tag"]).sort_values("time_tag")
 
@@ -22,4 +23,3 @@ def plot_dst(df: pd.DataFrame):
     # plt.ylim(-500, 100)
     plt.tight_layout()
     plt.show()
-
