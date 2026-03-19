@@ -16,17 +16,21 @@ class IMFDSCOVRDataSource(SpaceWeatherAPI):
     """
 
     def _download_impl(self):
+        # Download raw DSCOVR M1M data for the inherited date range.
         df = download_imf_discovr(self.start_date, self.end_date)
         if df.empty:
             return df
         payload = df.copy()
+        # Normalise timestamps to UTC and drop any rows that failed to parse.
         payload["time_tag"] = pd.to_datetime(payload["time_tag"], errors="coerce", utc=True)
         payload = payload.dropna(subset=["time_tag"])
         return payload.sort_values("time_tag").reset_index(drop=True)
 
     def ingest(self, df, warehouse=None, db_path="space_weather.db"):
+        # Skip ingestion silently when the downloaded DataFrame is empty.
         if df.empty:
             return 0
+        # Create a default warehouse if the caller did not supply one.
         warehouse = warehouse or SpaceWeatherWarehouse(db_path)
         return ingest_imf_discovr(df, warehouse)
 

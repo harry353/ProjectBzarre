@@ -3,10 +3,12 @@ import pandas as pd
 
 
 def _normalize_payload(df: pd.DataFrame, dataset_label: str) -> pd.DataFrame:
+    # Coerce timestamps, drop invalid rows, and rename GSM component columns for plotting.
     payload = df.copy()
     payload["time_tag"] = pd.to_datetime(payload["time_tag"], errors="coerce")
     payload = payload.dropna(subset=["time_tag"]).sort_values("time_tag")
 
+    # Map stored GSM column names to the shorter axis labels used in the plot.
     rename_map = {
         "bx_gsm": "bx",
         "by_gsm": "by",
@@ -14,6 +16,7 @@ def _normalize_payload(df: pd.DataFrame, dataset_label: str) -> pd.DataFrame:
     }
     payload = payload.rename(columns=rename_map)
 
+    # Ensure all four component columns exist even if some were absent in the source data.
     for column in ("bx", "by", "bz", "bt"):
         if column not in payload.columns:
             payload[column] = None
@@ -23,6 +26,7 @@ def _normalize_payload(df: pd.DataFrame, dataset_label: str) -> pd.DataFrame:
 
 
 def _plot_payload(payload: pd.DataFrame):
+    # Draw the four IMF components (|B|, Bx, By, Bz) on vertically stacked shared-x axes.
     label = payload["dataset_label"].iloc[0]
     times = payload["time_tag"].to_numpy()
 

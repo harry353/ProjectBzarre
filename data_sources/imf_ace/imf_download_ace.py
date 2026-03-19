@@ -13,8 +13,11 @@ import requests
 from common.http import http_get
 from database_builder.logging_utils import stamp
 
+# Base URL for the ACE/MAG Level-2 CDF archive on CDAWeb.
 BASE_URL = "https://cdaweb.gsfc.nasa.gov/pub/data/ace/mag/level_2_cdaweb/mfi_h1"
+# Column names that every returned DataFrame is guaranteed to contain.
 OUTPUT_COLUMNS = ["time_tag", "bx_gsm", "by_gsm", "bz_gsm", "bt"]
+# CDF fill value sentinel — values below this threshold are treated as missing.
 FILL_VALUE = -1e20
 
 
@@ -33,6 +36,7 @@ def download_imf_ace(
     frames = []
     missing_days = []
 
+    # Iterate day-by-day and accumulate per-day DataFrames.
     current = start_date
     while current <= end_date:
         df, missing = _fetch_day(current, session)
@@ -42,11 +46,13 @@ def download_imf_ace(
             frames.append(df)
         current += timedelta(days=1)
 
+    # Emit consolidated warning ranges for consecutive missing days.
     _emit_missing_ranges("ACE/MAG", missing_days)
     if not frames:
         return pd.DataFrame(columns=OUTPUT_COLUMNS)
 
     data = pd.concat(frames).sort_values("time_tag").reset_index(drop=True)
+    # Clip to the exact requested range in case the CDF files spill across day boundaries.
     mask = (data["time_tag"].dt.date >= start_date) & (
         data["time_tag"].dt.date <= end_date
     )
@@ -54,6 +60,7 @@ def download_imf_ace(
 
 
 def _fetch_day(day, session: requests.Session):
+    # Resolve the versioned CDF filename from the directory listing, then download and parse it.
     filename = _resolve_filename(day, session)
     if filename is None:
         return None, True
@@ -77,6 +84,7 @@ def _fetch_day(day, session: requests.Session):
 
 
 def _emit_missing_ranges(label: str, days: list[date]) -> None:
+    # Group consecutive missing days into ranges and print a single warning per range.
     if not days:
         return
     days = sorted(set(days))
@@ -101,6 +109,7 @@ def _emit_missing_ranges(label: str, days: list[date]) -> None:
 
 
 def _parse_cdf(handle: BytesIO) -> pd.DataFrame:
+    # Write the CDF bytes to a temp file (cdflib requires a file path, not a file object).
     with tempfile.NamedTemporaryFile(suffix=".cdf", delete=False) as tmp:
         tmp.write(handle.getvalue())
         tmp_path = tmp.name
@@ -114,6 +123,7 @@ def _parse_cdf(handle: BytesIO) -> pd.DataFrame:
         bgsm = cdf.varget("BGSM")
         mag = cdf.varget("Magnitude")
 
+        # Replace CDF fill values with NaN so they propagate correctly through pandas.
         bgsm = np.where(bgsm < FILL_VALUE, np.nan, bgsm)
         mag = np.where(mag < FILL_VALUE, np.nan, mag)
 
@@ -128,12 +138,14 @@ def _parse_cdf(handle: BytesIO) -> pd.DataFrame:
         )
         return df.reindex(columns=OUTPUT_COLUMNS)
     finally:
+        # Always close the CDF handle and delete the temp file, even on error.
         if cdf is not None and hasattr(cdf, "close"):
             cdf.close()
         os.remove(tmp_path)
 
 
 def _resolve_filename(day: date, session: requests.Session) -> Optional[str]:
+    # Scrape the yearly directory listing to find the versioned CDF filename for the given day.
     directory = f"{BASE_URL}/{day.year}/"
     response = http_get(
         directory,
@@ -146,6 +158,7 @@ def _resolve_filename(day: date, session: requests.Session) -> Optional[str]:
     if response is None or response.status_code == 404:
         return None
 
+    # Match the filename pattern: ac_h1_mfi_YYYYMMDD_vNN.cdf
     pattern = re.compile(rf"(ac_h1_mfi_{day:%Y%m%d}_v\d{{2}}\.cdf)", re.IGNORECASE)
     match = pattern.search(response.text)
     if not match:

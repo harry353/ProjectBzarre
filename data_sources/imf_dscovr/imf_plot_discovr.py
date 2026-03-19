@@ -10,13 +10,16 @@ def plot_imf_discovr(df: pd.DataFrame):
         raise ValueError("Cannot plot an empty IMF dataset.")
 
     payload = df.copy()
+    # Coerce timestamps so invalid entries are dropped before plotting.
     payload["time_tag"] = pd.to_datetime(payload["time_tag"], errors="coerce")
     payload = payload.dropna(subset=["time_tag"]).sort_values("time_tag")
 
+    # Ensure all four component columns exist even if some were absent in the source data.
     for column in ("bx", "by", "bz", "bt"):
         if column not in payload.columns:
             payload[column] = None
 
+    # Draw the four IMF components (|B|, Bx, By, Bz) on vertically stacked shared-x axes.
     fig, axes = plt.subplots(4, 1, figsize=(13, 10), sharex=True)
     axes[0].plot(payload["time_tag"], payload["bt"], linewidth=0.8, color="#455a64")
     axes[0].set_ylabel("|B| (nT)")

@@ -15,8 +15,11 @@ from space_weather_api import format_date
 from database_builder.logging_utils import stamp
 from database_builder.constants import BUILD_FROM_REALTIME, REALTIME_BACKFILL_DAYS
 
+# Base URL for the NOAA NGDC DSCOVR archive — files are organised by year/month.
 BASE_DIR = "https://www.ngdc.noaa.gov/dscovr/data"
+# Column names that every returned DataFrame is guaranteed to contain.
 M1M_COLUMNS = ["time_tag", "bt", "bx", "by", "bz", "source_type"]
+# NOAA SWPC JSON feed for the most recent 1-day solar-wind magnetic field readings.
 SWPC_MAG_URL = "https://services.swpc.noaa.gov/products/solar-wind/mag-1-day.json"
 
 
@@ -24,6 +27,7 @@ def download_imf_discovr(start_date, end_date, max_workers=8):
     """
     Download and concatenate DSCOVR M1M files for the date range.
     """
+    # Build the full list of calendar days to fetch.
     days = []
     current = start_date
     while current <= end_date:
@@ -37,19 +41,23 @@ def download_imf_discovr(start_date, end_date, max_workers=8):
     missing_days = []
     missing_lock = None
 
+    # Lock protecting the shared missing_days list across threads.
     missing_lock = threading.Lock()
 
     def process_day(day):
+        # Fetch the monthly directory listing and find the M1M NetCDF file for this day.
         year = day.year
         month = f"{day.month:02d}"
         directory = f"{BASE_DIR}/{year}/{month}/"
 
+        # Directory listing is cached to avoid one HTTP round-trip per day in the same month.
         response = http_get(directory, log_name="IMF DSCOVR", timeout=15, use_cache=True)
         if response is None:
             return None, True
 
         html = response.text
 
+        # Match the DSCOVR M1M filename for this specific day.
         day_str = day.strftime("%Y%m%d000000")
         pattern = rf"(oe_m1m_dscovr_s{day_str}_e\d+_p\d+_pub\.nc\.gz)"
         matches = re.findall(pattern, html)
@@ -60,11 +68,13 @@ def download_imf_discovr(start_date, end_date, max_workers=8):
         filename = matches[0]
         file_url = directory + filename
 
+        # Download the gzip-compressed NetCDF file.
         response = http_get(file_url, log_name="IMF DSCOVR", timeout=20)
         if response is None:
             return None, True
         gz_bytes = response.content
 
+        # Decompress the .nc.gz archive in memory.
         try:
             with gzip.open(BytesIO(gz_bytes), "rb") as fh:
                 nc_bytes = fh.read()
@@ -72,6 +82,7 @@ def download_imf_discovr(start_date, end_date, max_workers=8):
             print(f"[WARN] Could not decompress {filename}: {exc}")
             return None, False
 
+        # Open the NetCDF dataset with xarray using the scipy engine (no local file needed).
         try:
             ds = xr.open_dataset(BytesIO(nc_bytes), engine="scipy")
         except Exception as exc:
@@ -82,6 +93,7 @@ def download_imf_discovr(start_date, end_date, max_workers=8):
         ds.close()
         return _extract(df), False
 
+    # Fetch all days concurrently to reduce total wall-clock time.
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_map = {executor.submit(process_day, day): day for day in days}
         for future in as_completed(future_map):
@@ -96,6 +108,7 @@ def download_imf_discovr(start_date, end_date, max_workers=8):
             except Exception as exc:
                 print(f"[ERROR] Day {format_date(day)} failed: {exc}")
 
+    # Emit consolidated warning ranges for consecutive missing days.
     _emit_missing_ranges("M1M", missing_days)
 
     if not results:
@@ -105,6 +118,7 @@ def download_imf_discovr(start_date, end_date, max_workers=8):
     combined["source_type"] = "archive"
 
     if BUILD_FROM_REALTIME and REALTIME_BACKFILL_DAYS > 0 and end_date >= start_date:
+        # Overwrite the tail of the archive with fresher SWPC realtime readings.
         realtime_start = end_date - timedelta(days=REALTIME_BACKFILL_DAYS - 1)
         start_dt = datetime.combine(realtime_start, datetime.min.time(), tzinfo=timezone.utc)
         end_dt = datetime.combine(end_date, datetime.max.time(), tzinfo=timezone.utc)
@@ -113,12 +127,14 @@ def download_imf_discovr(start_date, end_date, max_workers=8):
             combined = pd.concat([combined, realtime_df], ignore_index=True)
             combined["time_tag"] = pd.to_datetime(combined["time_tag"], errors="coerce", utc=True)
             combined = combined.dropna(subset=["time_tag"]).sort_values("time_tag")
+            # Keep the realtime row when both archive and realtime rows share a timestamp.
             combined = combined.drop_duplicates(subset="time_tag", keep="last").reset_index(drop=True)
 
     return combined
 
 
 def _emit_missing_ranges(label: str, days: list) -> None:
+    # Group consecutive missing days into ranges and print a single warning per range.
     if not days:
         return
     days = sorted(set(days))
@@ -144,8 +160,10 @@ def _emit_missing_ranges(label: str, days: list) -> None:
 
 
 def _extract(df):
+    # Select the relevant columns from the raw NetCDF DataFrame and rename to standard names.
     required = ["time", "bt", "bx_gsm", "by_gsm", "bz_gsm"]
 
+    # Insert None columns for any variable the dataset does not contain.
     for col in required:
         if col not in df.columns:
             df[col] = None
@@ -160,6 +178,7 @@ def _extract(df):
 
 
 def _download_swpc_mag(start_dt: datetime, end_dt: datetime) -> pd.DataFrame:
+    # Fetch the SWPC 1-day solar-wind mag JSON feed and return rows within the requested window.
     try:
         resp = requests.get(SWPC_MAG_URL, timeout=30)
         resp.raise_for_status()
@@ -170,6 +189,7 @@ def _download_swpc_mag(start_dt: datetime, end_dt: datetime) -> pd.DataFrame:
     if not isinstance(payload, list) or not payload:
         return pd.DataFrame(columns=M1M_COLUMNS)
 
+    # SWPC JSON may use a header-row-first format or a list-of-dicts format.
     if isinstance(payload[0], list):
         header = payload[0]
         rows = payload[1:]
@@ -177,12 +197,14 @@ def _download_swpc_mag(start_dt: datetime, end_dt: datetime) -> pd.DataFrame:
     else:
         df = pd.DataFrame(payload)
 
+    # Normalise column names case-insensitively to detect the timestamp column.
     lower = {col.lower(): col for col in df.columns}
     time_col = lower.get("time_tag") or lower.get("time") or lower.get("timestamp")
     if time_col is None:
         return pd.DataFrame(columns=M1M_COLUMNS)
 
     rename = {time_col: "time_tag"}
+    # Map SWPC GSM component column names to the shorter names used internally.
     mapping = {
         "bt": "bt",
         "bx_gsm": "bx",
@@ -193,6 +215,7 @@ def _download_swpc_mag(start_dt: datetime, end_dt: datetime) -> pd.DataFrame:
         if src in lower:
             rename[lower[src]] = dst
         else:
+            # Insert a None column when the SWPC feed omits a component.
             df[dst] = None
 
     df = df.rename(columns=rename)
