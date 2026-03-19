@@ -9,18 +9,27 @@ import numpy as np
 import pandas as pd
 from xgboost import Booster, DMatrix
 
+# Resolve project root two levels above this script.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# Per-horizon feature vectors built by create_classification_vector.py.
 INPUT_DB = PROJECT_ROOT / "inference" / "classification" / "classification_horizons_vector_1m.db"
+# Directory containing per-horizon XGBoost models and feature lists.
 MODELS_DIR = PROJECT_ROOT / "classification_pipeline" / "horizon_models"
+# Output DB — stores the merged per-horizon probabilities and cumulative storm probability.
 OUTPUT_DB = PROJECT_ROOT / "inference" / "classification" / "classification_predictions.db"
+# JSON file with calibration curve thresholds for converting raw model outputs to calibrated probabilities.
 CALIBRATOR_PATH = MODELS_DIR / "calibrator.json"
+# Preprocessed inference vector DB — used to read IMF missing-data flags.
 PREPROCESSED_DB = PROJECT_ROOT / "inference" / "preprocessed_vector_1m.db"
+# Number of forecast horizons to run (h1 through h8).
 HOURS_AHEAD_PREDICTION = 8
 
+# Candidate column names that may hold timestamps across different data sources.
 TIMESTAMP_COLS = ["timestamp", "time_tag", "date"]
 
 
 def _load_selected_features(h: int) -> List[str]:
+    # Load the ordered list of feature column names required by the h{h} model.
     path = MODELS_DIR / f"h{h}" / "selected_features.json"
     with path.open("r", encoding="utf-8") as fp:
         data = json.load(fp)
@@ -30,6 +39,7 @@ def _load_selected_features(h: int) -> List[str]:
 
 
 def _load_model(h: int) -> Booster:
+    # Load the XGBoost booster for horizon h from its saved JSON file.
     model_path = MODELS_DIR / f"h{h}" / "model.json"
     booster = Booster()
     booster.load_model(str(model_path))
@@ -37,6 +47,7 @@ def _load_model(h: int) -> Booster:
 
 
 def _detect_timestamp_column(columns: List[str]) -> Optional[str]:
+    # Return the first recognised timestamp column name found in the column list.
     for col in TIMESTAMP_COLS:
         if col in columns:
             return col
@@ -44,6 +55,7 @@ def _detect_timestamp_column(columns: List[str]) -> Optional[str]:
 
 
 def _prepare_matrix(df: pd.DataFrame, feature_order: List[str]) -> DMatrix:
+    # Align DataFrame to the model's expected feature order, coerce to numeric, and wrap in DMatrix.
     X = df.reindex(columns=feature_order)
     X = X.apply(pd.to_numeric, errors="coerce")
     X = X.fillna(0.0)
@@ -51,6 +63,7 @@ def _prepare_matrix(df: pd.DataFrame, feature_order: List[str]) -> DMatrix:
 
 
 def _load_calibrator() -> Optional[dict]:
+    # Load the piecewise-linear calibration curve from JSON, or return None if absent.
     if not CALIBRATOR_PATH.exists():
         print(f"[WARN] Calibrator not found at {CALIBRATOR_PATH}. Using raw probabilities.")
         return None
@@ -59,6 +72,7 @@ def _load_calibrator() -> Optional[dict]:
 
 
 def _apply_calibration(probs: np.ndarray, calibrator: Optional[dict]) -> np.ndarray:
+    # Map raw model probabilities through the calibration curve using linear interpolation.
     if not calibrator:
         return probs
     x = np.array(calibrator.get("x_thresholds", []), dtype=float)
@@ -72,6 +86,7 @@ def _apply_calibration(probs: np.ndarray, calibrator: Optional[dict]) -> np.ndar
 def _predict_horizon(
     h: int, conn_in: sqlite3.Connection, calibrator: Optional[dict]
 ) -> Optional[pd.DataFrame]:
+    # Run inference for one horizon: load its feature vector table, predict, calibrate, and return.
     table = f"h{h}_vector"
     available_tables = {
         row[0]
@@ -106,6 +121,7 @@ def _predict_horizon(
     if timestamp is not None:
         out.insert(0, ts_col, timestamp)
 
+    # Rename calibrated probability column to a horizon-specific name for later merging.
     out = out.rename(columns={"y_prob_calibrated": f"p_h{h}"})
     keep_cols = [c for c in out.columns if c == ts_col or c == f"p_h{h}"]
     return out[keep_cols]
@@ -116,6 +132,7 @@ def main() -> None:
         raise FileNotFoundError(f"Input DB not found: {INPUT_DB}")
 
     OUTPUT_DB.parent.mkdir(parents=True, exist_ok=True)
+    # Start fresh — remove any stale predictions DB before writing new results.
     OUTPUT_DB.unlink(missing_ok=True)
 
     calibrator = _load_calibrator()
@@ -133,6 +150,7 @@ def main() -> None:
         print("[ERROR] No horizon predictions available.")
         return
 
+    # Outer-join all per-horizon probability frames on the shared timestamp column.
     merged = frames[0]
     ts_col = next((c for c in merged.columns if c in TIMESTAMP_COLS), None)
     for frame in frames[1:]:
@@ -145,6 +163,7 @@ def main() -> None:
     if ts_col and ts_col in merged.columns:
         merged = merged.sort_values(ts_col).reset_index(drop=True)
 
+    # Compute cumulative storm probability using the survival function: P(storm) = 1 - prod(1 - p_h{i}).
     prob_cols = [c for c in merged.columns if c.startswith("p_h")]
     surv = 1.0
     for col in prob_cols:
@@ -153,6 +172,7 @@ def main() -> None:
 
     if PREPROCESSED_DB.exists():
         with sqlite3.connect(PREPROCESSED_DB) as p_conn:
+            # Load IMF missing-data flags to suppress predictions when solar wind data is absent.
             flags_df = pd.read_sql_query(
                 "SELECT timestamp, imf_solar_wind_bx_gse_missing_flag, "
                 "imf_solar_wind_by_gse_missing_flag, imf_solar_wind_bz_gse_missing_flag "
@@ -163,7 +183,7 @@ def main() -> None:
                 if ts_col and ts_col in merged.columns:
                     merged[ts_col] = pd.to_datetime(merged[ts_col], utc=True, errors="coerce")
                     merged = merged.merge(flags_df, left_on=ts_col, right_on="timestamp", how="left", suffixes=("", "_drop"))
-                    
+
                     # Drop duplicate timestamp from merge if present
                     if "timestamp_drop" in merged.columns:
                         merged = merged.drop(columns=["timestamp_drop"])
@@ -192,6 +212,7 @@ def main() -> None:
                 "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
             )
         }:
+            # If a predictions table already exists, merge and deduplicate by timestamp.
             existing = pd.read_sql_query("SELECT * FROM predictions", out_conn)
             combined = pd.concat([existing, merged], ignore_index=True)
             if ts_col and ts_col in combined.columns:

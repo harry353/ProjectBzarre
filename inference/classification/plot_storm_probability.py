@@ -10,14 +10,20 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import pandas as pd
 
+# Resolve project root two levels above this script.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# DB containing the per-horizon calibrated probabilities and cumulative storm probability.
 PRED_DB = PROJECT_ROOT / "inference" / "classification" / "classification_predictions.db"
+# Preprocessed inference vector DB — source of observed Dst and IMF values for the plot.
 DST_DB = PROJECT_ROOT / "inference" / "preprocessed_vector_1m.db"
+# Path where the output PNG is saved.
 OUTPUT_PATH = PROJECT_ROOT / "inference" / "classification" / "predicted_probabilities.png"
+# Candidate column names that may hold timestamps across different data sources.
 TIMESTAMP_COLS = ["timestamp", "time_tag", "date"]
 
 
 def _load_predictions() -> pd.DataFrame:
+    # Load the predictions table and normalise the timestamp column to a single name.
     if not PRED_DB.exists():
         raise FileNotFoundError(f"Prediction DB not found: {PRED_DB}")
 
@@ -32,6 +38,7 @@ def _load_predictions() -> pd.DataFrame:
         df = df.dropna(subset=[ts_col]).sort_values(ts_col)
         df = df.rename(columns={ts_col: "timestamp"})
     else:
+        # Fall back to a sequential integer index when no timestamp column is present.
         df["timestamp"] = range(len(df))
 
     if "p_cumulative" not in df.columns:
@@ -41,6 +48,7 @@ def _load_predictions() -> pd.DataFrame:
 
 
 def _load_dst() -> pd.DataFrame:
+    # Load the observed Dst values from the inference vector DB.
     if not DST_DB.exists():
         raise FileNotFoundError(f"DST DB not found: {DST_DB}")
     with sqlite3.connect(DST_DB) as conn:
@@ -65,6 +73,7 @@ def _load_dst() -> pd.DataFrame:
 
 
 def _load_imf() -> pd.DataFrame:
+    # Load IMF Bz and |B| columns from the inference vector DB.
     if not DST_DB.exists():
         raise FileNotFoundError(f"Inference DB not found: {DST_DB}")
     with sqlite3.connect(DST_DB) as conn:
@@ -79,6 +88,7 @@ def _load_imf() -> pd.DataFrame:
     else:
         df["timestamp"] = range(len(df))
 
+    # Detect whichever Bz and |B| column names are present in this data source.
     bz_col = next((c for c in ["bz", "bz_gse", "imf_solar_wind_bz_gse"] if c in df.columns), None)
     bt_col = next((c for c in ["bt", "imf_solar_wind_bt"] if c in df.columns), None)
     if not bz_col or not bt_col:
@@ -88,6 +98,7 @@ def _load_imf() -> pd.DataFrame:
 
 
 def _plot_dst(ax, dst: pd.DataFrame) -> None:
+    # Draw the observed Dst time series with reference lines at 0 and -50 nT.
     ax.plot(dst["timestamp"], dst["dst_value"], color="C0", label="DST")
     ax.set_ylabel("Dst (nT)")
     ax.axhline(0, color="0.2", linestyle="-", linewidth=1.0)
@@ -98,6 +109,7 @@ def _plot_dst(ax, dst: pd.DataFrame) -> None:
 
 
 def _plot_imf(ax, imf: pd.DataFrame) -> None:
+    # Draw IMF Bz (southward component) and total field magnitude |B|.
     ax.plot(imf["timestamp"], imf["bz"], color="C2", label="Bz (nT)")
     ax.plot(imf["timestamp"], imf["bt"], color="C3", label="|B| (nT)")
     ax.set_ylabel("B (nT)")
@@ -107,6 +119,7 @@ def _plot_imf(ax, imf: pd.DataFrame) -> None:
 
 
 def _plot_probs(ax, preds: pd.DataFrame) -> None:
+    # Draw the calibrated cumulative storm probability over the forecast window.
     ax.plot(
         preds["timestamp"],
         preds["p_cumulative"],
@@ -125,6 +138,7 @@ def _plot_probs(ax, preds: pd.DataFrame) -> None:
 
 
 def _apply_time_limits(fig, axes, series_list: list[pd.Series]) -> None:
+    # Set shared x-axis limits to the union of all data series, padded by one day.
     locator = mdates.DayLocator(interval=1)
     formatter = mdates.DateFormatter("%b-%d")
     axes[-1].xaxis.set_major_locator(locator)
@@ -162,6 +176,7 @@ def plot() -> Path:
     plotters.append(("probs", preds, _plot_probs))
 
     fig, axes = plt.subplots(len(plotters), 1, figsize=(10, 8), sharex=True)
+    # Ensure axes is always a list even when there is only a single subplot.
     if len(plotters) == 1:
         axes = [axes]
 

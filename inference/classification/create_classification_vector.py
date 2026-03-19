@@ -4,9 +4,13 @@ import json
 import sqlite3
 from pathlib import Path
 
+# Resolve project root two levels above this script.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# Preprocessed inference vector DB produced by the preprocessing pipeline.
 INPUT_DB = PROJECT_ROOT / "inference" / "preprocessed_vector_1m.db"
+# Output DB — one table per horizon containing only that horizon's selected features.
 OUTPUT_DB = PROJECT_ROOT / "inference" / "classification" / "classification_horizons_vector_1m.db"
+# Directory containing per-horizon model artefacts and selected_features.json files.
 HORIZON_MODELS_DIR = PROJECT_ROOT / "classification_pipeline" / "horizon_models"
 
 # Table preference order if multiple merged tables exist
@@ -19,6 +23,7 @@ SOURCE_TABLE_PREFERENCE = [
 
 
 def _load_features(horizon: int) -> list[str]:
+    # Load the list of selected feature column names for a given forecast horizon.
     path = HORIZON_MODELS_DIR / f"h{horizon}" / "selected_features.json"
     if not path.exists():
         raise FileNotFoundError(f"Missing selected_features.json for h{horizon}: {path}")
@@ -30,6 +35,7 @@ def _load_features(horizon: int) -> list[str]:
 
 
 def _choose_source_table(conn: sqlite3.Connection) -> str:
+    # Pick the highest-priority available table from the attached input DB.
     tables = {
         row[0]
         for row in conn.execute(
@@ -41,10 +47,12 @@ def _choose_source_table(conn: sqlite3.Connection) -> str:
             return name
     if not tables:
         raise RuntimeError("No tables found in input DB.")
+    # Fallback: use the first table alphabetically if none of the preferred names exist.
     return sorted(tables)[0]
 
 
 def _available_columns(conn: sqlite3.Connection, table: str) -> list[str]:
+    # Return the list of column names for a table in the attached input DB.
     return [row[1] for row in conn.execute(f"PRAGMA inputdb.table_info({table})")]
 
 
@@ -54,6 +62,7 @@ def _build_table(
     dest_table: str,
     keep_cols: list[str],
 ) -> None:
+    # Drop and recreate the destination table selecting only the specified columns.
     columns_sql = ", ".join(keep_cols)
     conn_out.execute(f"DROP TABLE IF EXISTS {dest_table}")
     conn_out.execute(
@@ -65,10 +74,12 @@ def main() -> None:
     if not INPUT_DB.exists():
         raise FileNotFoundError(f"Input DB not found: {INPUT_DB}")
 
+    # Start fresh — remove any stale output DB before rebuilding.
     OUTPUT_DB.unlink(missing_ok=True)
     OUTPUT_DB.parent.mkdir(parents=True, exist_ok=True)
 
     with sqlite3.connect(OUTPUT_DB) as conn_out:
+        # Attach the input DB so its tables can be queried directly.
         conn_out.execute(f"ATTACH DATABASE '{INPUT_DB}' AS inputdb")
 
         source_table = _choose_source_table(conn_out)
@@ -80,14 +91,17 @@ def main() -> None:
             f"CREATE TABLE original_vector AS SELECT * FROM inputdb.{source_table}"
         )
 
+        # Detect which timestamp column is present in the source table.
         timestamp_cols = ["timestamp", "time_tag", "date"]
         ts_col = next((c for c in timestamp_cols if c in available), None)
 
         for horizon in range(1, 9):
             features = _load_features(horizon)
             keep = []
+            # Always include the timestamp column first if one exists.
             if ts_col:
                 keep.append(ts_col)
+            # Only include features that actually exist in the source table.
             keep.extend([f for f in features if f in available and f not in keep])
 
             if not keep:
