@@ -7,12 +7,16 @@ import requests
 from common.http import http_get
 from database_builder.constants import BUILD_FROM_REALTIME, REALTIME_BACKFILL_DAYS
 
+# GFZ Potsdam JSON API endpoint for the definitive/provisional Kp index.
 BASE_URL = "https://kp.gfz.de/app/json/"
+# NOAA SWPC JSON feed for the most recent Kp readings (realtime, ~15-min latency).
 SWPC_KP_URL = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"
+# Column names that every returned DataFrame is guaranteed to contain.
 KP_COLUMNS = ["time_tag", "kp_index", "source_type"]
 
 
 def _format_day(value: date) -> str:
+    # Format a date as an ISO 8601 date string for use in the GFZ query URL.
     return value.strftime("%Y-%m-%d")
 
 
@@ -25,6 +29,7 @@ def download_kp_index(
     if start_date > end_date:
         raise ValueError("start_date must be on or before end_date.")
 
+    # Build the GFZ query URL covering the full day range (inclusive).
     start = _format_day(start_date)
     end = _format_day(end_date)
     url = f"{BASE_URL}?start={start}T00:00:00Z&end={end}T23:59:00Z&index=Kp"
@@ -35,6 +40,7 @@ def download_kp_index(
         return pd.DataFrame(columns=KP_COLUMNS)
 
     payload = response.json()
+    # GFZ returns parallel arrays: "datetime" for timestamps and "Kp" for values.
     times = payload.get("datetime", [])
     values = payload.get("Kp", [])
 
@@ -52,6 +58,7 @@ def download_kp_index(
         df["source_type"] = "archive"
 
     if BUILD_FROM_REALTIME and REALTIME_BACKFILL_DAYS > 0 and end_date >= start_date:
+        # Overwrite the tail of the archive with fresher SWPC realtime readings.
         realtime_start = end_date - timedelta(days=REALTIME_BACKFILL_DAYS - 1)
         start_dt = datetime.combine(realtime_start, datetime.min.time(), tzinfo=timezone.utc)
         end_dt = datetime.combine(end_date, datetime.max.time(), tzinfo=timezone.utc)
@@ -61,8 +68,10 @@ def download_kp_index(
                 df = realtime_df
             else:
                 df = pd.concat([df, realtime_df], ignore_index=True)
+                # Keep the realtime row when both archive and realtime share a timestamp.
                 df = df.sort_values("time_tag").drop_duplicates(subset="time_tag", keep="last").reset_index(drop=True)
 
+    # Final date-range clip in case the API returned records outside the requested window.
     mask = (df["time_tag"].dt.date >= start_date) & (df["time_tag"].dt.date <= end_date)
     df = df.loc[mask].reset_index(drop=True)
 
@@ -72,26 +81,29 @@ def download_kp_index(
 def _fetch_swpc_kp(
     start_dt: datetime, end_dt: datetime, session: requests.Session
 ) -> pd.DataFrame:
+    # Fetch the SWPC planetary K-index JSON feed and return rows within the requested window.
     resp = http_get(SWPC_KP_URL, session=session, log_name="Kp SWPC", timeout=30)
     if resp is None:
         return pd.DataFrame(columns=KP_COLUMNS)
-    
+
     try:
         payload = resp.json()
     except Exception:
         return pd.DataFrame(columns=KP_COLUMNS)
 
+    # SWPC uses a header-row-first format: first element is column names, remainder are data rows.
     if not isinstance(payload, list) or len(payload) < 2:
         return pd.DataFrame(columns=KP_COLUMNS)
 
     header = payload[0]
     rows = payload[1:]
     df = pd.DataFrame(rows, columns=header)
-    
+
+    # Normalise column names case-insensitively to locate the timestamp and Kp columns.
     lower = {col.lower(): col for col in df.columns}
     time_col = lower.get("time_tag")
     kp_col = lower.get("kp")
-    
+
     if time_col is None or kp_col is None:
         return pd.DataFrame(columns=KP_COLUMNS)
 
@@ -99,7 +111,8 @@ def _fetch_swpc_kp(
     df["time_tag"] = pd.to_datetime(df["time_tag"], errors="coerce", utc=True)
     df["kp_index"] = pd.to_numeric(df["kp_index"], errors="coerce")
     df = df.dropna(subset=["time_tag", "kp_index"])
-    
+
+    # Clip to the caller's requested window before returning.
     df = df[(df["time_tag"] >= start_dt) & (df["time_tag"] <= end_dt)]
     df["source_type"] = "realtime"
     return df[KP_COLUMNS].reset_index(drop=True)

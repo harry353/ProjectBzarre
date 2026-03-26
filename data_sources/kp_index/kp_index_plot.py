@@ -17,14 +17,18 @@ def plot_kp_index(df: pd.DataFrame):
         raise ValueError("Cannot plot an empty Kp data frame.")
 
     payload = df.copy()
+    # Parse timestamps to UTC and drop any rows where parsing failed.
     payload["time_tag"] = pd.to_datetime(payload["time_tag"], utc=True, errors="coerce")
     payload = payload.dropna(subset=["time_tag", "kp_index"]).sort_values("time_tag")
     payload = payload.set_index("time_tag")
 
+    # Resample the 3-hourly Kp readings to daily means before smoothing.
     daily = payload["kp_index"].resample("1D").mean()
     if daily.empty:
         raise ValueError("Daily resampling produced no Kp values to plot.")
 
+    # Apply a centered rolling average over SMOOTHING_WINDOW_DAYS days.
+    # center=True aligns the window symmetrically; min_periods=1 avoids NaN at boundaries.
     smoothed = daily.rolling(
         window=SMOOTHING_WINDOW_DAYS, center=True, min_periods=1
     ).mean()
@@ -46,6 +50,7 @@ def plot_kp_index(df: pd.DataFrame):
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
 
+    # Add a small padding around the y-axis range so the line is not clipped at the edges.
     ymin = float(smoothed.min())
     ymax = float(smoothed.max())
     if pd.notna(ymin) and pd.notna(ymax):
@@ -53,4 +58,3 @@ def plot_kp_index(df: pd.DataFrame):
         plt.ylim(max(0, ymin - padding), ymax + padding)
 
     plt.show()
-
