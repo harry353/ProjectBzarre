@@ -12,11 +12,14 @@ def plot_solar_wind_ace(df: pd.DataFrame) -> None:
 
     frame = df.copy()
     idx = pd.to_datetime(frame["time_tag"], errors="coerce", utc=True)
+    # Strip timezone info so matplotlib can render axis labels without offset
     if getattr(idx, "tz", None) is not None:
         idx = idx.tz_convert(None)
     frame = frame.assign(time_tag=idx).dropna(subset=["time_tag"]).set_index("time_tag")
+    # Three stacked subplots sharing a common time axis
     fig, axes = plt.subplots(3, 1, figsize=(14, 10), sharex=True)
 
+    # Resample to hourly means to smooth high-frequency noise
     speed = frame["speed"].resample("1h").mean().dropna()
     density = frame["density"].resample("1h").mean().dropna()
     temperature = frame["temperature"].resample("1h").mean().dropna()
@@ -39,5 +42,6 @@ def plot_solar_wind_ace(df: pd.DataFrame) -> None:
         ax.xaxis.set_major_formatter(date_formatter)
 
     plt.tight_layout()
+    # Rotate date labels to prevent overlap
     fig.autofmt_xdate()
     plt.show()
